@@ -1,0 +1,7 @@
+*~
+venv/
+gz2_data/
+*pyc
+.DS_store
+.ipynb_checkpoints/
+data/
