@@ -23,20 +23,26 @@ class Encoder(nn.Module):
         self.height = height
         self.width = width
         self.channels = channels
-        self.layer1 = nn.Conv2d(3, 10, 6)
-        self.layer2 = nn.Conv2d(10, 6, 5)
-        self.layer3 = nn.Conv2d(6, 1, 5)
-        self.layer41 = nn.Linear(411, z_dim)
-        self.layer42 = nn.Linear(411, z_dim)
+        self.layer1 = nn.Conv2d(3, 10, 6, 2)
+        self.layer2 = nn.Conv2d(10, 6, 5, 2)
+        self.layer3 = nn.Conv2d(6, 1, 5, 2)
+        self.layer41 = nn.Linear(2500, z_dim)
+        self.layer42 = nn.Linear(2500, z_dim)
         # setup the non-linearities
         self.softplus = nn.Softplus()
 
     def forward(self, x):
         x = self.layer1(x)
         x = self.layer2(x)
+        print("encoder layer 2", x.shape)
         x = self.layer3(x)
+        print("encoder layer 3", x.shape)
+        x = x.reshape(-1, 1, 2500)
+        print("after reshape", x.shape)
         z_loc = self.layer41(x)
         z_scale = torch.exp(self.layer42(x))
+        print("z scale shape", z_scale.shape)
+        print("z_loc shape", z_loc.shape)
         return z_loc, z_scale
 
 
@@ -44,19 +50,24 @@ class Decoder(nn.Module):
     def __init__(self, hidden_dim=200, z_dim=100,
                  height=424, width=424, channels=3):
         super().__init__()
-        self.layer4 = nn.Linear(z_dim, hidden_dim)
-        self.layer3 = nn.ConvTranspose2d(1, 6, 5)
-        self.layer2 = nn.ConvTranspose2d(6, 10, 5)
-        self.layer1 = nn.ConvTranspose2d(10, 3, 6)
+        self.layer4 = nn.Linear(z_dim, 2500)
+        self.layer3 = nn.ConvTranspose2d(1, 6, 5, 2, output_padding=1)
+        self.layer2 = nn.ConvTranspose2d(6, 10, 5, 4, output_padding=2)
+        self.layer1 = nn.ConvTranspose2d(10, 3, 6, 1)
         self.softplus = nn.Softplus()
         self.sigmoid = nn.Sigmoid()
 
     def forward(self, z):
         z = self.softplus(self.layer4(z))
+        print("z shape 4", z.shape)
+        z = z.reshape(-1, 1, 50, 50)
+        print("after reshape", z.shape)
         z = self.layer3(z)
+        print("z shape 3", z.shape)
         z = self.layer2(z)
+        print("z shape2 ", z.shape)
         z = self.layer1(z)
-        print(z.shape)
+        print("z shape1", z.shape)
         z = self.sigmoid(z)
         hidden = self.softplus(z)
         loc_img = self.sigmoid(z)
