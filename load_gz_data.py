@@ -1,5 +1,4 @@
 import pandas as pd
-from PIL import Image
 import torch
 import os
 from skimage import io
@@ -25,6 +24,8 @@ class Gz2_data(torch.utils.data.Dataset):
         data = self.file.iloc[idx][self.list_of_interest]
         data = torch.tensor(data.values.astype('int32'))
         image = torch.tensor(image)
+        # permute to NCHW
+        image = image.permute(2,0,1).float()
         sample = {'image': image, 'data': data}
 
         return sample
