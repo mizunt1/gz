@@ -38,7 +38,7 @@ class Decoder(nn.Module):
         return loc_img
 
 class Encoder(nn.Module):
-    def __init__(self, hidden_dim=200, z_dim=100,
+    def __init__(self, hidden_dim=200, z_dim=50,
                  height=424, width=424, channels=3):
         super().__init__()
         self.height = height
@@ -62,7 +62,7 @@ class Encoder(nn.Module):
         return z_loc, z_scale
 
 class VAE(nn.Module):
-    def __init__(self, z_dim=100, hidden_dim=200, use_cuda=False):
+    def __init__(self, z_dim=50, hidden_dim=200, use_cuda=False):
         super().__init__()
         self.encoder = Encoder(z_dim, hidden_dim)
         self.decoder = Decoder(z_dim, hidden_dim)
@@ -78,28 +78,19 @@ class VAE(nn.Module):
         # register PyTorch module `decoder` with Pyro
         pyro.module("decoder", self.decoder)
         with pyro.plate("data", x.shape[0]):
-            # setup hyperparameters for prior p(z)
             z_loc = x.new_zeros(torch.Size((x.shape[0], self.z_dim)))
             z_scale = x.new_ones(torch.Size((x.shape[0], self.z_dim)))
-            # sample from prior (value will be sampled by guide when computing the ELBO)
             z = pyro.sample("latent", dist.Normal(z_loc, z_scale).to_event(1))
-            # decode the latent code z
             loc_img = self.decoder.forward(z)
-            # score against actual images
-            # decoder is where the image goes 
             pyro.sample("obs", dist.Bernoulli(loc_img).to_event(1), obs=x.reshape(-1, 784))
 
     # define the guide (i.e. variational distribution) q(z|x)
     def guide(self, x):
-        # register PyTorch module `encoder` with Pyro
         pyro.module("encoder", self.encoder)
         with pyro.plate("data", x.shape[0]):
-            # use the encoder to get the parameters used to define q(z|x)
             z_loc, z_scale = self.encoder.forward(x)
-            # sample the latent code z
             pyro.sample("latent", dist.Normal(z_loc, z_scale).to_event(1))
 
-    # define a helper function for reconstructing images
     def reconstruct_img(self, x):
         # encode image x
         z_loc, z_scale = self.encoder(x)
@@ -125,6 +116,6 @@ if __name__ == "__main__":
     sample_of_data = data[1]
     # image or data    
     one_image = sample_of_data['image']
-#    vae = VAE()
-#    z_loc, z_scale = vae.encoder(one_image)
-#    out = vae.decoder(z_loc)
+    vae = VAE()
+    z_loc, z_scale = vae.encoder(one_image)
+    out = vae.decoder(z_loc)
