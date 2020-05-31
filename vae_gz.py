@@ -109,7 +109,7 @@ if __name__ == "__main__":
     a03 = "t01_smooth_or_features_a03_star_or_artifact_count"
     
     data = Gz2_data(csv_file="gz2_4.csv",
-                    root_dir="~/diss/gz2_mini",
+                    root_dir="~/diss/gz/gz2_mini",
                     list_of_interest=[a01,
                                       a02,
                                       a03])
