@@ -38,7 +38,6 @@ class Encoder(nn.Module):
         x = x.reshape(-1, 2500)
         z_loc = self.layer41(x)
         z_scale = torch.exp(self.layer42(x))
-        print("zloc in encoder", z_loc.shape)
         return z_loc, z_scale
 
 
@@ -54,7 +53,6 @@ class Decoder(nn.Module):
         self.sigmoid = nn.Sigmoid()
 
     def forward(self, z):
-        print("z in decoder", z.shape)
         z = self.softplus(self.layer4(z))
         z = z.reshape(-1, 1, 50, 50)
         z = self.layer3(z)
@@ -85,19 +83,14 @@ class VAE(nn.Module):
             # setup hyperparameters for prior p(z)
             z_loc = x.new_zeros(torch.Size((x.shape[0], self.z_dim)))
             z_scale = x.new_ones(torch.Size((x.shape[0], self.z_dim)))
-            print("z loc shape", z_loc.shape)
             # sample from prior (value will be sampled by guide when computing the ELBO)
             z = pyro.sample("latent", dist.Normal(z_loc, z_scale).to_event(1))
             # decode the latent code z
-            print("z sample shape", z.shape)
             loc_img = self.decoder.forward(z)
-            print("loc_image", loc_img.shape)
             # score against actual images
             # decoder is where the image goes
-            print("x shape")
             # is this correct?
             # Ask lewis, channel, and h and w are dependent, go to event
-            print("bern shape", dist.Bernoulli(loc_img).to_event(3))
             pyro.sample(
                 "obs",
                 dist.Bernoulli(loc_img).to_event(3),

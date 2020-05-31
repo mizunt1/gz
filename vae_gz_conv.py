@@ -34,15 +34,10 @@ class Encoder(nn.Module):
     def forward(self, x):
         x = self.layer1(x)
         x = self.layer2(x)
-        print("encoder layer 2", x.shape)
         x = self.layer3(x)
-        print("encoder layer 3", x.shape)
         x = x.reshape(-1, 1, 2500)
-        print("after reshape", x.shape)
         z_loc = self.layer41(x)
         z_scale = torch.exp(self.layer42(x))
-        print("z scale shape", z_scale.shape)
-        print("z_loc shape", z_loc.shape)
         return z_loc, z_scale
 
 
@@ -59,19 +54,13 @@ class Decoder(nn.Module):
 
     def forward(self, z):
         z = self.softplus(self.layer4(z))
-        print("z shape 4", z.shape)
         z = z.reshape(-1, 1, 50, 50)
-        print("after reshape", z.shape)
         z = self.layer3(z)
-        print("z shape 3", z.shape)
         z = self.layer2(z)
-        print("z shape2 ", z.shape)
         z = self.layer1(z)
-        print("z shape1", z.shape)
         z = self.sigmoid(z)
         hidden = self.softplus(z)
         loc_img = self.sigmoid(z)
-        print(loc_img.shape)
         return loc_img
 
 
@@ -100,8 +89,12 @@ class VAE(nn.Module):
             # decode the latent code z
             loc_img = self.decoder.forward(z)
             # score against actual images
-            # decoder is where the image goes 
-            pyro.sample("obs", dist.Bernoulli(loc_img).to_event(1), obs=x.reshape(-1, 784))
+            # decoder is where the image goes
+            print("x shape")
+            pyro.sample(
+                "obs",
+                dist.Bernoulli(loc_img).to_event(1),
+                obs=x.reshape(-1, 3, 424, 424))
 
     # define the guide (i.e. variational distribution) q(z|x)
     def guide(self, x):
@@ -122,6 +115,34 @@ class VAE(nn.Module):
         # decode the image (note we don't sample in image space)
         loc_img = self.decoder(z)
         return loc_img
+
+vae = VAE()
+
+optimizer = Adam({"lr": 1.0e-3})
+
+svi = SVI(vae.model, vae.guide, optimizer, loss=Trace_ELBO())
+
+def train(svi, train_loader, use_cuda=False):
+    epoch_loss = 0.
+    for x in train_loader:
+        x = x['image']
+        if use_cuda:
+            x = x.cuda()
+        epoch_loss += svi.step(x)
+    normalizer_train = len(train_loader.dataset)
+    total_epoch_loss_train = epoch_loss / normalizer_train
+    return total_epoch_loss_train
+
+def evaluate(svi, test_loader, use_cuda=False):
+    test_loss = 0.
+    for x, _ in test_loader:
+        if use_cuda:
+            x = x.cuda()
+        test_loss += svi.evaluate_loss(x)
+    normalizer_test = len(test_loader.dataset)
+    total_epoch_loss_test = test_loss / normalizer_test
+    return total_epoch_loss_test
+
 
 
 
