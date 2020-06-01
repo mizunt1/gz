@@ -116,6 +116,7 @@ class VAE(nn.Module):
         loc_img = self.decoder(z)
         return loc_img
 
+
 vae = VAE()
 
 optimizer = Adam({"lr": 1.0e-3})
@@ -143,8 +144,6 @@ def evaluate(svi, test_loader, use_cuda=False):
     normalizer_test = len(test_loader.dataset)
     total_epoch_loss_test = test_loss / normalizer_test
     return total_epoch_loss_test
-
-
 
 
 if __name__ == "__main__":
