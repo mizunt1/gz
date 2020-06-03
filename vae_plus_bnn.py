@@ -386,10 +386,6 @@ def predict(x):
     # yhats seem to be a dictionary of weights
     return mean, std
 
-
-# In[15]:
-
-
 def evaluate_test(test_loader, encoder):
     accuracy = 0
     for x, y in test_loader:
@@ -400,12 +396,6 @@ def evaluate_test(test_loader, encoder):
         accuracy += num_correct_in_batch.numpy()/len(y)
     return accuracy / (len(test_loader))
         
-
-
-# In[16]:
-
-
-# Training
 
 num_epochs = 1000
 
