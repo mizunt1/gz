@@ -16,13 +16,14 @@ pyro.enable_validation(True)
 pyro.distributions.enable_validation(False)
 pyro.set_rng_seed(0)
 
-def setup_data_loaders(batch_size=128, use_cuda=False):
+def setup_data_loaders(batch_size=128, use_cuda=False, trans=False):
     root = './data'
     download = True
-    trans = transforms.ToTensor()
+    if transform == False:
+        trans = transforms.ToTensor()
     train_set = dset.MNIST(root=root, train=True, transform=trans,
                            download=download)
-    test_set = dset.MNIST(root=root, train=False, transform=trans)
+    test_set = dset.MNIST(root=root, train=False, transform=transform)
 
     kwargs = {'num_workers': 1, 'pin_memory': use_cuda}
     train_loader = torch.utils.data.DataLoader(dataset=train_set,
