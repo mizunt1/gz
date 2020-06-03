@@ -335,8 +335,6 @@ class ClassifierBnn(PyroModule):
         return z
 
 
-# In[12]:
-
 
 # validate NN
 
@@ -416,7 +414,8 @@ epoch_loss = np.zeros(shape=(num_epochs,))
 
 test_freq = 10
 # training
-for epoch in range(25):
+bnn_train_epoch = 150
+for epoch in range(150):
     i = 0
     for x, y in train_loader:
         i +=1
@@ -433,8 +432,6 @@ for epoch in range(25):
         mean, std = predict(combined_z)
         accuracy_per_batch = torch.sum(torch.eq(mean.int(),y)).numpy()/len(y)
 
-
-# In[ ]:
 
 
 
