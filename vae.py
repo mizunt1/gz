@@ -19,11 +19,11 @@ pyro.set_rng_seed(0)
 def setup_data_loaders(batch_size=128, use_cuda=False, trans=False):
     root = './data'
     download = True
-    if transform == False:
+    if trans == False:
         trans = transforms.ToTensor()
     train_set = dset.MNIST(root=root, train=True, transform=trans,
                            download=download)
-    test_set = dset.MNIST(root=root, train=False, transform=transform)
+    test_set = dset.MNIST(root=root, train=False, transform=trans)
 
     kwargs = {'num_workers': 1, 'pin_memory': use_cuda}
     train_loader = torch.utils.data.DataLoader(dataset=train_set,
