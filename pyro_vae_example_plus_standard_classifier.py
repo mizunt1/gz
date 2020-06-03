@@ -318,7 +318,7 @@ def test(encoder, classifier, test_loader):
     
     return correct / len(test_loader.dataset)
 
-def train_classifier(train_loader, test_loader, use_cuda=False):
+def train_classifier(train_loader, test_loader, encoder=False, use_cuda=False):
     # initialize loss accumulator
     running_loss = 0.
     # do a training epoch over each mini-batch x returned
@@ -333,7 +333,7 @@ def train_classifier(train_loader, test_loader, use_cuda=False):
             if use_cuda:
                 x = x.cuda()
             optimizer.zero_grad()
-            z_loc, z_scale = vae.encoder(x)
+            z_loc, z_scale = encoder(x)
             combined_z = torch.cat((z_loc, z_scale), 1)
     
             
@@ -350,6 +350,6 @@ def train_classifier(train_loader, test_loader, use_cuda=False):
                 print("test accuracy", accuracy)
             
         i+=1
-train_classifier(train_loader, test_loader)
+train_classifier(train_loader, test_loader, vae.encoder)
             
 
