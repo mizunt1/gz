@@ -35,7 +35,6 @@ class ClassifierBnn(PyroModule):
         #self.activation = torch.nn.functional.softmax()
         
     def forward(self, x, y = None):
-            
         # latent variable
         z = self.linear_layer(x)
         z = self.output_layer(z)
