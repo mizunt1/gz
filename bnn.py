@@ -51,8 +51,6 @@ class ClassifierBnn(PyroModule):
         # when model is sampled, is Z returned, or a single category? Not sure
         return z
 
-
-
 def validate_model(train_loader, encoder=False, transform=False):
     pyro.enable_validation(True)
     model = ClassifierBnn()
@@ -81,11 +79,13 @@ def predict(x,model, guide, transform=False):
     #yhats shape is 20, 256
     # predictions for each item in batch and each model
     # take a mean across 20 models
-    mean = torch.mean(yhats, axis=0)
+    # Doesnt make sense to take mean, should take mode
+    mode = torch.mode(yhats, axis=0)
+
     std = torch.std(yhats.float(), 0).numpy()
     # yhats outputs a batch size number of predictions for 20 models
     # yhats seem to be a dictionary of weights
-    return mean, std
+    return mode
 
 def evaluate_test(test_loader, model, guide, encoder=False, transform=False):
     accuracy = 0
@@ -95,11 +95,8 @@ def evaluate_test(test_loader, model, guide, encoder=False, transform=False):
         if encoder != False:
             z_loc, z_scale = encoder(x)
             x = torch.cat((z_loc, z_scale), 1)
-        mean, std = predict(x, model, guide, transform=transform)
-
-        #print("mean type", type(mean))
-        #print("mean type2", type(mean[0][0]))
-        num_correct_in_batch = torch.sum(torch.eq(mean.int(),y))
+        mode = predict(x, model, guide, transform=transform)
+        num_correct_in_batch = torch.sum(torch.eq(mode.values,y))
         accuracy += num_correct_in_batch.numpy()/len(y)
     return accuracy / (len(test_loader))
         
@@ -130,8 +127,8 @@ def train_bnn(num_epochs, train_loader, test_loader, model, guide, encoder=False
             if i % test_freq == 0:
                 test_acc = evaluate_test(test_loader, model, guide, encoder, transform=transform)
                 print("test acc", test_acc)
-                print("loss", loss)
-                print("mean", mean[0], "y is", y[0])
                 print("train acc", accuracy_per_batch)
+                print("loss", loss)
+
             mean, std = predict(x, model, guide)
             accuracy_per_batch = torch.sum(torch.eq(mean.int(),y)).numpy()/len(y)
