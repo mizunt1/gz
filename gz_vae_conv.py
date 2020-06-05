@@ -160,7 +160,8 @@ if __name__ == "__main__":
     dataloader = DataLoader(data, batch_size=2)
     
    # image or data   
-    one_image = next(iter(dataloader))['image']
+   # one pass of image through vae
+   one_image = next(iter(dataloader))['image']
     vae = VAE()
     z_loc, z_scale = vae.encoder(one_image)
     out = vae.decoder(z_loc)
