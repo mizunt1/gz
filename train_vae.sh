@@ -4,12 +4,13 @@
 
 #SBATCH --output=slurm-%j.out
 #SBATCH --error=slurm-%j.err
-#SBATCH --job-name="big-bayesian-model"
+#SBATCH --job-name="gz_vae"
+#SBATCH --partition="msc"
 
 export CONDA_ENVS_PATH=/scratch-ssd/$USER/conda_envs
 export CONDA_PKGS_DIRS=/scratch-ssd/$USER/conda_pkgs
 
-/scratch-ssd/oatml/scripts/run_locked.sh /scratch-ssd/oatml/miniconda3/bin/conda-env update -f environment.yml
+/scratch-ssd/oatml/scripts/run_locked.sh /scratch-ssd/oatml/miniconda3/bin/conda-env update -f my_env.yml
 source /scratch-ssd/oatml/miniconda3/bin/activate my_env.yml
 
 srun python gz_vae_train.py\
