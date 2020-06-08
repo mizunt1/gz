@@ -6,8 +6,8 @@ from pyro.optim import Adam
 from pyro.infer import SVI, Trace_ELBO
 import argparse
 parser = argparse.ArgumentParser()
-csv = "~/diss/gz2_data/gz_amended.csv"
-img = "/Users/Mizunt/diss/gz2_data"
+csv = "gz2_mini/gz2_4.csv"
+img = "gz2_mini/"
 parser.add_argument('--csv_file', metavar='c', type=str, default=csv)
 parser.add_argument('--img_file', metavar='i', type=str, default=img)
 parser.add_argument('--use_cuda', type=bool, default=False)
@@ -17,8 +17,8 @@ args = parser.parse_args()
 a01 = "t01_smooth_or_features_a01_smooth_count"
 a02 = "t01_smooth_or_features_a02_features_or_disk_count"
 a03 = "t01_smooth_or_features_a03_star_or_artifact_count"
-data = Gz2_data(csv_dir="~/diss/gz2_data/gz_amended.csv",
-                image_dir="/Users/Mizunt/diss/gz2_data",
+data = Gz2_data(csv_dir=csv,
+                image_dir=img,
                 list_of_interest=[a01,
                                   a02,
                                   a03])
@@ -33,7 +33,7 @@ train_elbo = []
 test_elbo = []
 TEST_FREQUENCY = 1
 
-train_loader, test_loader = return_data_loader(data, 0.2, 20)
+train_loader, test_loader = return_data_loader(data, 0.5, 20)
 
 
 # training VAE
