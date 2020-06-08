@@ -4,6 +4,16 @@ from simple_classifier import Classifier
 import torch
 from pyro.optim import Adam
 from pyro.infer import SVI, Trace_ELBO
+import argparse
+parser = argparse.ArgumentParser()
+csv = "~/diss/gz2_data/gz_amended.csv"
+img = "/Users/Mizunt/diss/gz2_data"
+parser.add_argument('--csv_file', metavar='c', type=str, default=csv)
+parser.add_argument('--img_file', metavar='i', type=str, default=img)
+parser.add_argument('--use_cuda', type=bool, default=False)
+
+args = parser.parse_args()
+
 a01 = "t01_smooth_or_features_a01_smooth_count"
 a02 = "t01_smooth_or_features_a02_features_or_disk_count"
 a03 = "t01_smooth_or_features_a03_star_or_artifact_count"
@@ -14,14 +24,13 @@ data = Gz2_data(csv_dir="~/diss/gz2_data/gz_amended.csv",
                                   a03])
 
 
-vae = VAE()
+vae = VAE(use_cuda=args.use_cuda)
 
 optimizer = Adam({"lr": 1.0e-3})
 
 svi = SVI(vae.model, vae.guide, optimizer, loss=Trace_ELBO())
 train_elbo = []
 test_elbo = []
-USE_CUDA = False
 TEST_FREQUENCY = 1
 
 train_loader, test_loader = return_data_loader(data, 0.2, 20)
@@ -31,14 +40,14 @@ train_loader, test_loader = return_data_loader(data, 0.2, 20)
 
 for epoch in range(10):
     print("training")
-    total_epoch_loss_train = train(svi, train_loader, use_cuda=USE_CUDA)
+    total_epoch_loss_train = train(svi, train_loader, use_cuda=args.use_cuda)
     print("end train")
     train_elbo.append(-total_epoch_loss_train)
     print("[epoch %03d]  average training loss: %.4f" % (epoch, total_epoch_loss_train))
     if epoch % TEST_FREQUENCY == 0:
         # report test diagnostics
         print("evaluating")
-        total_epoch_loss_test = evaluate(svi, test_loader, use_cuda=USE_CUDA)
+        total_epoch_loss_test = evaluate(svi, test_loader, args.use_cuda)
         test_elbo.append(-total_epoch_loss_test)
         print("[epoch %03d] average test loss: %.4f" % (epoch, total_epoch_loss_test))
         print("evaluate end")
