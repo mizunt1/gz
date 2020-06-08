@@ -121,7 +121,6 @@ class VAE(nn.Module):
         loc_img = self.decoder(z)
         return loc_img
 
-
 vae = VAE()
 
 optimizer = Adam({"lr": 1.0e-3})

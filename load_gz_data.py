@@ -2,7 +2,6 @@ import pandas as pd
 import torch
 import os
 from PIL import Image
-from skimage import io
 import torchvision as tv
 
 class Gz2_data(torch.utils.data.Dataset):
