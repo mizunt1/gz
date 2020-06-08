@@ -14,7 +14,8 @@ from pyro.optim import Adam
 import argparse
 
 parser = argparse.ArgumentParser()
-parser.add_argument('file_path', metavar='f', type=str)
+parser.add_argument('csv_file', metavar='c', type=str)
+parser.add_argument('img_file', metavar='i', type=str)
 
 pyro.enable_validation(True)
 pyro.distributions.enable_validation(False)
@@ -156,22 +157,17 @@ if __name__ == "__main__":
     a01 = "t01_smooth_or_features_a01_smooth_count"
     a02 = "t01_smooth_or_features_a02_features_or_disk_count"
     a03 = "t01_smooth_or_features_a03_star_or_artifact_count"
-    file_path = args.file_path
-    #data = Gz2_data(csv_file="gz2_4.csv",
-    #                root_dir="~/diss/gz/gz2_mini",
-    #                list_of_interest=[a01,
-    #                                  a02,
-    #                                  a03])
-data = Gz2_data(csv_file=,"gz2_4.csv"
-                    root_dir=file_path,
+    data = Gz2_data(csv_dir=args.csv_file,
+                    image_dir=args.img_file,
                     list_of_interest=[a01,
                                       a02,
+                                      a03])
     
+    # one pass through vae
     dataloader = DataLoader(data, batch_size=2)
-    
-   # image or data   
-   # one pass of image through vae
-   one_image = next(iter(dataloader))['image']
+    one_image = next(iter(dataloader))['image']
     vae = VAE()
     z_loc, z_scale = vae.encoder(one_image)
     out = vae.decoder(z_loc)
+    # run:
+    # python gz_vae_conv.py ~/diss/gz2_data/gz_amended.csv /Users/Mizunt/diss/gz2_data

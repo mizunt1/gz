@@ -1,5 +1,5 @@
 from gz_vae_conv import VAE, train, evaluate
-from load_gz_data import Gz2_data
+from load_gz_data import Gz2_data, return_data_loader
 from simple_classifier import Classifier
 import torch
 from pyro.optim import Adam
@@ -7,8 +7,8 @@ from pyro.infer import SVI, Trace_ELBO
 a01 = "t01_smooth_or_features_a01_smooth_count"
 a02 = "t01_smooth_or_features_a02_features_or_disk_count"
 a03 = "t01_smooth_or_features_a03_star_or_artifact_count"
-data = Gz2_data(csv_file="gz_amended.csv",
-                root_dir="~/diss/gz2_data/",
+data = Gz2_data(csv_dir="~/diss/gz2_data/gz_amended.csv",
+                image_dir="/Users/Mizunt/diss/gz2_data",
                 list_of_interest=[a01,
                                   a02,
                                   a03])
@@ -24,12 +24,7 @@ test_elbo = []
 USE_CUDA = False
 TEST_FREQUENCY = 1
 
-train_indices = list(i for i in range(0,800))
-test_indices = list(i for i in range(800, 1000))
-train_set = torch.utils.data.Subset(data, train_indices)
-test_set =  torch.utils.data.Subset(data, test_indices)
-train_loader = torch.utils.data.DataLoader(dataset=train_set, batch_size=20)
-test_loader = torch.utils.data.DataLoader(dataset=test_set, batch_size=20)
+train_loader, test_loader = return_data_loader(data, 0.2, 20)
 
 
 # training VAE

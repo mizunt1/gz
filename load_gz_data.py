@@ -37,10 +37,19 @@ class Gz2_data(torch.utils.data.Dataset):
         data = torch.tensor(data.values.astype('int32'))
         trans = tv.transforms.ToTensor()
         image = trans(image)
-        print(image.shape)
         sample = {'image': image, 'data': data}
-
         return sample
+
+def return_data_loader(data, test_proportion, batch_size):
+    len_data = len(data)
+    num_tests = int(len_data * test_proportion)
+    test_indices = list(i for i in range(0,num_tests))
+    train_indices = list(i for i in range(0, num_tests))
+    test_set = torch.utils.data.Subset(data, test_indices)
+    train_set = torch.utils.data.Subset(data, train_indices)
+    test_loader = torch.utils.data.DataLoader(dataset=test_set, batch_size=batch_size)
+    train_loader = torch.utils.data.DataLoader(dataset=train_set, batch_size=batch_size)
+    return train_loader, test_loader
     
 if __name__ == "__main__":
     a01 = "t01_smooth_or_features_a01_smooth_count"
@@ -56,3 +65,4 @@ if __name__ == "__main__":
     print(type(sample_of_data['data']))
     print(sample_of_data['image'].shape)
     print(type(sample_of_data['image']))
+    train_loader, test_loader = return_data_loader(data, 0.2, 20)
