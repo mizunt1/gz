@@ -11,6 +11,10 @@ import pyro.distributions as dist
 import pyro.contrib.examples.util  # patches torchvision
 from pyro.infer import SVI, Trace_ELBO
 from pyro.optim import Adam
+import argparse
+
+parser = argparse.ArgumentParser()
+parser.add_argument('file_path', metavar='f', type=str)
 
 pyro.enable_validation(True)
 pyro.distributions.enable_validation(False)
@@ -23,8 +27,8 @@ class Encoder(nn.Module):
         self.height = height
         self.width = width
         self.channels = channels
-        self.layer1 = nn.Conv2d(3, 10, 6, 2)
-        self.layer2 = nn.Conv2d(10, 6, 5, 2)
+        self.layer1 = nn.Conv2d(1, 3, 6, 2)
+        self.layer2 = nn.Conv2d(3, 6, 5, 2)
         self.layer3 = nn.Conv2d(6, 1, 5, 2)
         self.layer41 = nn.Linear(2500, z_dim)
         self.layer42 = nn.Linear(2500, z_dim)
@@ -148,15 +152,21 @@ def evaluate(svi, test_loader, use_cuda=False):
 
 if __name__ == "__main__":
     # test vae
+    args = parser.parse_args()
     a01 = "t01_smooth_or_features_a01_smooth_count"
     a02 = "t01_smooth_or_features_a02_features_or_disk_count"
     a03 = "t01_smooth_or_features_a03_star_or_artifact_count"
-    
-    data = Gz2_data(csv_file="gz2_4.csv",
-                    root_dir="~/diss/gz/gz2_mini",
+    file_path = args.file_path
+    #data = Gz2_data(csv_file="gz2_4.csv",
+    #                root_dir="~/diss/gz/gz2_mini",
+    #                list_of_interest=[a01,
+    #                                  a02,
+    #                                  a03])
+data = Gz2_data(csv_file=,"gz2_4.csv"
+                    root_dir=file_path,
                     list_of_interest=[a01,
                                       a02,
-                                      a03])
+    
     dataloader = DataLoader(data, batch_size=2)
     
    # image or data   
