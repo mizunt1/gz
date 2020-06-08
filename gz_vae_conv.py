@@ -51,9 +51,9 @@ class Decoder(nn.Module):
                  height=424, width=424, channels=3):
         super().__init__()
         self.layer4 = nn.Linear(z_dim, 2500)
-        self.layer3 = nn.ConvTranspose2d(1, 6, 5, 2, output_padding=1)
-        self.layer2 = nn.ConvTranspose2d(6, 10, 5, 4, output_padding=2)
-        self.layer1 = nn.ConvTranspose2d(10, 3, 6, 1)
+        self.layer3 = nn.ConvTranspose2d(1, 3, 5, 2, output_padding=1)
+        self.layer2 = nn.ConvTranspose2d(3, 6, 5, 4, output_padding=2)
+        self.layer1 = nn.ConvTranspose2d(6, 1, 6, 1)
         self.softplus = nn.Softplus()
         self.sigmoid = nn.Sigmoid()
 
