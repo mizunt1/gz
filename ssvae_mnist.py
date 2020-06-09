@@ -1,8 +1,8 @@
-from load_mnist import setup_data_loaders, get_semi_supervised_data, transform, SemiSupervisedData
+from load_mnist import setup_data_loaders, transform, return_data_loader
 import pyro.distributions as dist
 from vae import evaluate
 from pyro.optim import Adam
-from pyro.infer import SVI, TraceEnum_ELBO, config_enumerate
+from pyro.infer import SVI, TraceEnum_ELBO, config_enumerate, Trace_ELBO
 import torch.nn as nn
 import torch
 import pyro
@@ -40,7 +40,7 @@ class Encoder_z(nn.Module):
         self.softplus = nn.Softplus()
 
     def forward(self, x):
-        x = torch.cat((x[0], x[1]), 1)
+        x = torch.cat((x[0], x[1].unsqueeze(1)),1)
         z = self.fc1(x)
         z = self.fc2(z)
         z = self.softplus(z)
@@ -62,7 +62,7 @@ class Decoder(nn.Module):
         self.sigmoid = nn.Sigmoid()
     
     def forward(self, z):
-        x = torch.cat((z[0], z[1]), 1)
+        x = torch.cat((z[0], z[1].unsqueeze(1)), 1)
         x = self.fc1(x)
         x = self.fc2(x)
         x = self.fc3(x)
@@ -76,13 +76,11 @@ class SSVAE(nn.Module):
         super().__init__()
         self.output_size_y = output_size_y
         self.output_size_z = output_size_z
-        self.input_size_z = self.output_size_y + self.output_size_z
+        self.input_size_z = 1 + input_size
+        self.decoder_in_size = 1 + output_size_z
         self.encoder_y = Encoder_y(input_size, self.output_size_y)
         self.encoder_z = Encoder_z(self.input_size_z, self.output_size_z)
-
-        self.decoder = Decoder(self.input_size_z, output_size_d)
-
-
+        self.decoder = Decoder(self.decoder_in_size, output_size_d)
         
     def model(self, xs, ys=None):
         # register this pytorch module and all of its sub-modules with pyro
@@ -142,49 +140,41 @@ def validate_model(train_loader, model, encoder=False, transform=False):
     #pyro.enable_validation(True)
     #pyro.clear_param_store()
 
-def train(svi, train_loader, use_cuda=False, transform=False):
+def train_ss(svi, train_loader, use_cuda=False, transform=False):
+    labelled = True
     # initialize loss accumulator
     epoch_loss = 0.
     # do a training epoch over each mini-batch x returned
     # by the data loader
     for data in train_loader:
-        if len(data) == 2:
-            x = data[0]
-            y = data[1]
-        else:
-            x = data
-            y = None
+        x, y = data
+        y = y.float()
         if transform != False:
             x = transform(x)
         # if on GPU put mini-batch into CUDA memory
         if use_cuda:
             x = x.cuda()
-        
+            y = y.cuda()
         # do ELBO gradient and accumulate loss
-        epoch_loss += svi.step(x,y)
-
+        if labelled == True:
+            epoch_loss += svi.step(x, y)
+            labelled = False
+        else:
+            epoch_loss += svi.step(x)
+            labelled = True
     # return epoch loss
     normalizer_train = len(train_loader.dataset)
     total_epoch_loss_train = epoch_loss / normalizer_train
     return total_epoch_loss_train
 
 if __name__ == "__main__":
-    
-    #train_loader, test_loader = setup_data_loaders()
-    semi_sup_data = SemiSupervisedData()
-    train_indices = list(i for i in range(0,800))
-    test_indices = list(i for i in range(800, 1000))
-    train_set = torch.utils.data.Subset(semi_sup_data, train_indices)
-    test_set =  torch.utils.data.Subset(semi_sup_data, test_indices)
-    train_loader = torch.utils.data.DataLoader(dataset=train_set, batch_size=20)
-    test_loader = torch.utils.data.DataLoader(dataset=test_set, batch_size=20)
+    train_loader, test_loader = setup_data_loaders(batch_size=72)
     ssvae = SSVAE()
+    
     optimizer = Adam({"lr": 1.0e-3})
-
-    #pyro.enable_validation(True)
     svi = SVI(ssvae.model, config_enumerate(ssvae.guide), optimizer, loss=TraceEnum_ELBO())
     for epoch in range(20):
-        total_epoch_loss_train = train(svi, train_loader, use_cuda=False, transform=transform)
+        total_epoch_loss_train = train_ss(svi, train_loader, use_cuda=False, transform=transform)
         print("epoch loss", total_epoch_loss_train)
 
         if epoch % 2 == 0:
