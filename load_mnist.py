@@ -43,7 +43,6 @@ def return_data_loader(data, test_proportion, batch_size):
     train_loader = torch.utils.data.DataLoader(dataset=train_set, batch_size=batch_size)
     return train_loader, test_loader
 
-def setup_data_loaders_oatml()
 
 
 if __name__ == "__main__":
