@@ -11,8 +11,9 @@ def transform(x):
     x = x.reshape(batch,784)
     return x
 
-def setup_data_loaders(batch_size=128, use_cuda=False):
-    root = './data'
+def setup_data_loaders(batch_size=128, use_cuda=False, root=None):
+    if root == None:
+        root = './data'
     download = True
     trans = transforms.ToTensor()
     train_set = dset.MNIST(root=root, train=True, transform=trans,
@@ -42,7 +43,7 @@ def return_data_loader(data, test_proportion, batch_size):
     train_loader = torch.utils.data.DataLoader(dataset=train_set, batch_size=batch_size)
     return train_loader, test_loader
 
-
+def setup_data_loaders_oatml()
 
 
 if __name__ == "__main__":

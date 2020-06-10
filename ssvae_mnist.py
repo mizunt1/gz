@@ -193,9 +193,7 @@ def evaluate(svi, test_loader, use_cuda=False, transform=transform):
     return total_epoch_loss_test
 
 if __name__ == "__main__":
-#    pyro.enable_validation(True)
-
-    train_loader, test_loader = setup_data_loaders(batch_size=72)
+    train_loader, test_loader = setup_data_loaders(batch_size=72, root="/scratch-ssd/oatml/data")
     ssvae = SSVAE()
     
     optimizer = Adam({"lr": 1.0e-2})
