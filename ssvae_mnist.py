@@ -99,16 +99,13 @@ class SSVAE(nn.Module):
             # its a uniform prior
             # making labels one hot for onehotcat
             # not sure if this correct, maybe there is a better way as lewis
-            if ys != None:
-                ys = ys.reshape(batch_size, 1)
-                ys = (ys == torch.arange(self.output_size_y).reshape(1, self.output_size_y)).float()
-            ys_s = pyro.sample("y", dist.OneHotCategorical(alpha_prior).to_event(1), obs=ys)
+            ys = pyro.sample("y", dist.OneHotCategorical(alpha_prior).to_event(1), obs=ys)
             # one of the categories will be sampled, according to the distribution specified by alpha prior    
             # finally, score the image (x) using the handwriting style (z) and
             # the class label y (which digit to write) against the
             # parametrized distribution p(x|y,z) = bernoulli(decoder(y,z))
             # where `decoder` is a neural network
-            loc = self.decoder.forward([zs, ys_s])
+            loc = self.decoder.forward([zs, ys])
             # decoder networks takes a category, and a latent variable and outputs an observation x.
             pyro.sample("x", dist.Bernoulli(loc).to_event(1), obs=xs)
 
@@ -133,9 +130,6 @@ class SSVAE(nn.Module):
                 # sample (and score) the latent handwriting-style with the variational
                 # distribution q(z|x,y) = normal(loc(x,y),scale(x,y))
             # change ys to one hot should do this somewhere else TODO
-            else:
-                ys = ys.reshape(batch_size, 1)
-                ys = (ys == torch.arange(self.output_size_y).reshape(1, self.output_size_y)).float()
             loc, scale = self.encoder_z.forward([xs, ys])
             pyro.sample("z", dist.Normal(loc, scale).to_event(1))
 
@@ -156,7 +150,10 @@ def train_ss(svi, train_loader, use_cuda=False, transform=False):
     # by the data loader
     for data in train_loader:
         x, y = data
-        y = y.float()
+        batch_size = x.size(0)
+        y = y.reshape(batch_size, 1)
+        y = (y == torch.arange(10).reshape(1, 10)).float()
+
         if transform != False:
             x = transform(x)
         # if on GPU put mini-batch into CUDA memory
@@ -181,6 +178,10 @@ def evaluate(svi, test_loader, use_cuda=False, transform=transform):
     # compute the loss over the entire test set
     for x, y in test_loader:
         # if on GPU put mini-batch into CUDA memory
+        batch_size = x.size(0)
+        y = y.reshape(batch_size, 1)
+        y = (y == torch.arange(10).reshape(1, 10)).float()
+
         if use_cuda:
             x = x.cuda()
             y = y.cuda()
@@ -193,10 +194,10 @@ def evaluate(svi, test_loader, use_cuda=False, transform=transform):
     return total_epoch_loss_test
 
 if __name__ == "__main__":
-    train_loader, test_loader = setup_data_loaders(batch_size=72, root="/scratch-ssd/oatml/data")
+    train_loader, test_loader = setup_data_loaders(batch_size=72)
     ssvae = SSVAE()
     
-    optimizer = Adam({"lr": 1.0e-2})
+    optimizer = Adam({"lr": 1.0e-4})
 #    svi = SVI(ssvae.model, ssvae.guide, optimizer, loss=Trace_ELBO())
     svi = SVI(ssvae.model, config_enumerate(ssvae.guide), optimizer, loss=TraceEnum_ELBO(max_plate_nesting=1))
     for epoch in range(20):
