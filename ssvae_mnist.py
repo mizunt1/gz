@@ -193,17 +193,20 @@ def evaluate(svi, test_loader, use_cuda=False, transform=transform):
     total_epoch_loss_test = test_loss / normalizer_test
     return total_epoch_loss_test
 
-if __name__ == "__main__":
-    train_loader, test_loader = setup_data_loaders(batch_size=72)
-    ssvae = SSVAE()
-    
-    optimizer = Adam({"lr": 1.0e-4})
-#    svi = SVI(ssvae.model, ssvae.guide, optimizer, loss=Trace_ELBO())
-    svi = SVI(ssvae.model, config_enumerate(ssvae.guide), optimizer, loss=TraceEnum_ELBO(max_plate_nesting=1))
-    for epoch in range(20):
-        total_epoch_loss_train = train_ss(svi, train_loader, use_cuda=False, transform=transform)
-        print("epoch loss", total_epoch_loss_train)
 
-        if epoch % 2 == 0:
-            test_loss = evaluate(svi, test_loader, use_cuda=False, transform=transform)
-            print("test loss", test_loss)
+print("loading data")
+use_cuda = True
+train_loader, test_loader = setup_data_loaders(batch_size=72, root="/scratch-ssd/oatml/data", use_cuda=use_cuda)
+print("data loaded")
+ssvae = SSVAE(use_cuda=use_cuda)
+optimizer = Adam({"lr": 1.0e-3})
+
+#    svi = SVI(ssvae.model, ssvae.guide, optimizer, loss=Trace_ELBO())
+svi = SVI(ssvae.model, config_enumerate(ssvae.guide), optimizer, loss=TraceEnum_ELBO(max_plate_nesting=1))
+for epoch in range(1000):
+    total_epoch_loss_train = train_ss(svi, train_loader, use_cuda=use_cuda, transform=transform)
+    print("epoch loss", total_epoch_loss_train)
+    
+    if epoch % 2 == 0:
+        test_loss = evaluate(svi, test_loader, use_cuda=use_cuda, transform=transform)
+        print("test loss", test_loss)
