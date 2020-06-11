@@ -1,4 +1,6 @@
+print("ssvae")
 from load_mnist import setup_data_loaders, transform, return_data_loader
+from torch.utils.tensorboard import SummaryWriter
 import pyro.distributions as dist
 from pyro.optim import Adam
 from pyro.infer import SVI, TraceEnum_ELBO, config_enumerate, Trace_ELBO
@@ -6,6 +8,7 @@ import torch.nn as nn
 import torch
 import pyro
 
+print("ssvae mnist")
 class Encoder_y(nn.Module):
     # outputs a y given an x.
     # the classifier. distribution for y given an input x
@@ -81,6 +84,9 @@ class SSVAE(nn.Module):
         self.encoder_z = Encoder_z(self.input_size_z, self.output_size_z)
         self.decoder = Decoder(self.decoder_in_size, output_size_d)
         
+        if use_cuda:
+            self.cuda()
+
     def model(self, xs, ys=None):
         # register this pytorch module and all of its sub-modules with pyro
         pyro.module("ss_vae", self)
@@ -124,7 +130,6 @@ class SSVAE(nn.Module):
                 # output an observation y
                 # and the latents alpha are given by an encoder
                 ys = pyro.sample("y", dist.OneHotCategorical(alpha))
-                print("ys sampled in g", ys.shape)
                 # if the labels y is known, then we dont have to sample from the above,
                 # we just feed the actual y in to the encoder that takes x and y.
         
@@ -135,15 +140,6 @@ class SSVAE(nn.Module):
             loc, scale = self.encoder_z.forward([xs, ys])
             pyro.sample("z", dist.Normal(loc, scale).to_event(1))
 
-def validate_model(train_loader, model, encoder=False, transform=False):
-    x, y = next(iter(train_loader))
-    if transform != False:
-        x = transform(x)
-
-    #print(pyro.poutine.trace(model).get_trace(x, y).format_shapes())
-    #pyro.enable_validation(True)
-    #pyro.clear_param_store()
-
 def train_ss(svi, train_loader, use_cuda=False, transform=False):
     # trains for one single epoch and returns normalised loss for one epoch
     labelled = True
@@ -151,26 +147,30 @@ def train_ss(svi, train_loader, use_cuda=False, transform=False):
     epoch_loss = 0.
     # do a training epoch over each mini-batch x returned
     # by the data loader
-    for data in train_loader:
-        x, y = data
-        print("y", y.shape)
+    for x, y in train_loader:
         batch_size = x.size(0)
-        print("y was", y[0])
+        # changing labels to one hot encoding
+        # I think this is necessary when using dist.OneHotCategorical but not sure 
         y = y.reshape(batch_size, 1)
         y = (y == torch.arange(10).reshape(1, 10)).float()
         print("y shape trans", y[0])
         if transform != False:
+            # flattens images to 1d vector
             x = transform(x)
         # if on GPU put mini-batch into CUDA memory
         if use_cuda:
             x = x.cuda()
+            # not really sure what Im doing here and not sure if necessary 
             y = y.cuda()
-        # do ELBO gradient and accumulate loss
+        # feeding in data. At times, omit labels
+        # TODO seperate data set tolabelled and unlabelled rather than alternating as below
         if labelled == True:
-            epoch_loss += svi.step(x, y)
+            batch_loss = svi.step(x, y)
+            epoch_loss += batch_loss
             labelled = False
         else:
-            epoch_loss += svi.step(x)
+            batch_loss = svi.step(x)
+            epoch_loss += batch_loss
             labelled = True
     # return epoch loss
     normalizer_train = len(train_loader.dataset)
@@ -194,25 +194,42 @@ def evaluate(svi, test_loader, use_cuda=False, transform=transform):
             x = transform(x)
         # compute ELBO estimate and accumulate loss
         test_loss += svi.evaluate_loss(x)
+
     normalizer_test = len(test_loader.dataset)
     total_epoch_loss_test = test_loss / normalizer_test
     return total_epoch_loss_test
 
+def reconstruct_img(self, x):
+    # encode image x
+    z_loc, z_scale = self.encoder(x)
+    # sample in latent space
+    z = dist.Normal(z_loc, z_scale).sample()
+    # decode the image (note we don't sample in image space)
+    loc_img = self.decoder(z)
+    return loc_img
 
+writer = SummaryWriter("tb_data/")
+pyro.clear_param_store()
 print("loading data")
 use_cuda = False
 
 train_loader, test_loader = setup_data_loaders(batch_size=72, root="./data", use_cuda=use_cuda)
 print("data loaded")
 ssvae = SSVAE(use_cuda=use_cuda)
-optimizer = Adam({"lr": 1.0e-4})
+optimizer = Adam({"lr": 3.0e-4})
 svi = SVI(ssvae.model, ssvae.guide, optimizer, loss=Trace_ELBO())
 #svi = SVI(ssvae.model, config_enumerate(ssvae.guide), optimizer, loss=TraceEnum_ELBO(max_plate_nesting=1))
-for epoch in range(1000):
+print("start train")
+for epoch in range(2):
     total_epoch_loss_train = train_ss(svi, train_loader, use_cuda=use_cuda, transform=transform)
     print("epoch loss", total_epoch_loss_train)
     
     if epoch % 2 == 0:
         test_loss = evaluate(svi, test_loader, use_cuda=use_cuda, transform=transform)
         print("test loss", test_loss)
-BB
+
+smaller_batch = test_loader[0:9]
+images = reconstruct_img(smaller_batch)
+img_grid = torchvision.utils.make_grid(images)
+writer.add_image('images', img_grid)
+
