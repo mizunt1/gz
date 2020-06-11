@@ -1,5 +1,6 @@
 print("ssvae")
 from load_mnist import setup_data_loaders, transform, return_data_loader
+from torch.utils.tensorboard import SummaryWriter
 import pyro.distributions as dist
 from pyro.optim import Adam
 from pyro.infer import SVI, TraceEnum_ELBO, config_enumerate, Trace_ELBO
@@ -196,20 +197,35 @@ def evaluate(svi, test_loader, use_cuda=False, transform=transform):
     total_epoch_loss_test = test_loss / normalizer_test
     return total_epoch_loss_test
 
+def reconstruct_img(self, x):
+    # encode image x
+    z_loc, z_scale = self.encoder(x)
+    # sample in latent space
+    z = dist.Normal(z_loc, z_scale).sample()
+    # decode the image (note we don't sample in image space)
+    loc_img = self.decoder(z)
+    return loc_img
+
+writer = SummaryWriter("tb_data/")
 pyro.clear_param_store()
 print("loading data")
 use_cuda = True
 train_loader, test_loader = setup_data_loaders(batch_size=72, root="/scratch-ssd/oatml/data", use_cuda=use_cuda)
 print("data loaded")
 ssvae = SSVAE(use_cuda=use_cuda)
-optimizer = Adam({"lr": 1.0e-3})
+optimizer = Adam({"lr": 3.0e-4})
 svi = SVI(ssvae.model, ssvae.guide, optimizer, loss=Trace_ELBO())
 #svi = SVI(ssvae.model, config_enumerate(ssvae.guide), optimizer, loss=TraceEnum_ELBO(max_plate_nesting=1))
 print("start train")
-for epoch in range(20):
+for epoch in range(2):
     total_epoch_loss_train = train_ss(svi, train_loader, use_cuda=use_cuda, transform=transform)
     print("epoch loss", total_epoch_loss_train)
     
     if epoch % 2 == 0:
         test_loss = evaluate(svi, test_loader, use_cuda=use_cuda, transform=transform)
         print("test loss", test_loss)
+
+smaller_batch = test_loader[0:9]
+images = reconstruct_img(smaller_batch)
+img_grid = torchvision.utils.make_grid(images)
+writer.add_image('images', img_grid)
