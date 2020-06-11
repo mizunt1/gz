@@ -144,20 +144,23 @@ def train_ss(svi, train_loader, use_cuda=False, transform=False):
     epoch_loss = 0.
     # do a training epoch over each mini-batch x returned
     # by the data loader
-    for data in train_loader:
-        x, y = data
+    for x, y in train_loader:
         batch_size = x.size(0)
+        # changing labels to one hot encoding
+        # I think this is necessary when using dist.OneHotCategorical but not sure 
         y = y.reshape(batch_size, 1)
         y = (y == torch.arange(10).reshape(1, 10)).float()
 
         if transform != False:
+            # flattens images to 1d vector
             x = transform(x)
         # if on GPU put mini-batch into CUDA memory
         if use_cuda:
             x = x.cuda()
+            # not really sure what Im doing here and not sure if necessary 
             y = y.cuda()
-        # do ELBO gradient and accumulate loss
-
+        # feeding in data. At times, omit labels
+        # TODO seperate data set tolabelled and unlabelled rather than alternating as below
         if labelled == True:
             batch_loss = svi.step(x, y)
             epoch_loss += batch_loss
