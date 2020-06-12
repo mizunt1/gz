@@ -228,13 +228,16 @@ optimizer = Adam({"lr": 3.0e-4})
 svi = SVI(ssvae.model, ssvae.guide, optimizer, loss=Trace_ELBO())
 #svi = SVI(ssvae.model, config_enumerate(ssvae.guide), optimizer, loss=TraceEnum_ELBO(max_plate_nesting=1))
 print("start train")
-for epoch in range(2):
+num_epochs = 10
+for epoch in range(num_epochs):
     total_epoch_loss_train = train_ss(svi, train_loader, use_cuda=use_cuda, transform=transform)
     print("epoch loss", total_epoch_loss_train)
-    
+    writer.add_scalar('Train loss', total_epoch_loss_train, epoch)
     if epoch % 2 == 0:
         test_loss = evaluate(svi, test_loader, use_cuda=use_cuda, transform=transform)
+        writer.add_scalar('test loss', test_loss, epoch)
         print("test loss", test_loss)
+        
 
 train_loader, test_loader = setup_data_loaders(batch_size=9, root="/scratch-ssd/oatml/data", use_cuda=use_cuda)
 images, labels = next(iter(train_loader))
@@ -242,3 +245,6 @@ images_out = ssvae.reconstruct_img(images, labels, use_cuda=use_cuda)
 img_grid = torchvision.utils.make_grid(images_out)
 writer.add_image('images', img_grid)
 writer.close()
+torch.save(ssvae.encoder_y.state_dict(), "checkpoints/encoder_y.checkpoint")
+torch.save(ssvae.encoder_z.state_dict(), "checkpoints/encoder_z.checkpoint")
+torch.save(ssvae.decoder.state_dict(), "checkpoints/decoder.checkpoint")
