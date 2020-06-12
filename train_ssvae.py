@@ -4,10 +4,13 @@ from torch.utils.tensorboard import SummaryWriter
 import pyro.distributions as dist
 from pyro.optim import Adam
 from pyro.infer import SVI, TraceEnum_ELBO, config_enumerate, Trace_ELBO
+import os
 import torchvision
 import torch.nn as nn
 import torch
 import pyro
+import argparse
+parser = argparse.ArgumentParser()
 
 print("ssvae mnist")
 class Encoder_y(nn.Module):
@@ -215,20 +218,26 @@ def evaluate(svi, test_loader, use_cuda=False, transform=transform):
     total_epoch_loss_test = test_loss / normalizer_test
     return total_epoch_loss_test
 
-
-writer = SummaryWriter("tb_data/")
+parser.add_argument('--data_save', default="tb_data/")
+parser.add_argument('--data_load', default="/scratch-ssd/oatml/data")
+parser.add_argument('--data_type', default="digits")
+parser.add_argument('--epochs', default=20, type=int)
+parser.add_argument('--use_cuda', default=True, type=bool)
+parser.add_argument('--checkpoint_dir', default="checkpoints/")
+args = parser.parse_args()
+writer = SummaryWriter(args.data_save)
 pyro.clear_param_store()
 print("loading data")
-use_cuda = False
+use_cuda = args.use_cuda
 
-train_loader, test_loader = setup_data_loaders(batch_size=72, root="./data", use_cuda=use_cuda)
+train_loader, test_loader = setup_data_loaders(data_type=args.data_type, batch_size=72, root=args.data_load, use_cuda=use_cuda)
 print("data loaded")
 ssvae = SSVAE(use_cuda=use_cuda)
 optimizer = Adam({"lr": 3.0e-4})
 svi = SVI(ssvae.model, ssvae.guide, optimizer, loss=Trace_ELBO())
 #svi = SVI(ssvae.model, config_enumerate(ssvae.guide), optimizer, loss=TraceEnum_ELBO(max_plate_nesting=1))
 print("start train")
-num_epochs = 10
+num_epochs = args.epochs
 for epoch in range(num_epochs):
     total_epoch_loss_train = train_ss(svi, train_loader, use_cuda=use_cuda, transform=transform)
     print("epoch loss", total_epoch_loss_train)
@@ -239,12 +248,13 @@ for epoch in range(num_epochs):
         print("test loss", test_loss)
         
 
-train_loader, test_loader = setup_data_loaders(batch_size=9, root="/scratch-ssd/oatml/data", use_cuda=use_cuda)
+train_loader, test_loader = setup_data_loaders(data_type=args.data_type, batch_size=9, root=args.data_load, use_cuda=use_cuda)
 images, labels = next(iter(train_loader))
 images_out = ssvae.reconstruct_img(images, labels, use_cuda=use_cuda)
 img_grid = torchvision.utils.make_grid(images_out)
 writer.add_image('images', img_grid)
 writer.close()
-torch.save(ssvae.encoder_y.state_dict(), "checkpoints/encoder_y.checkpoint")
-torch.save(ssvae.encoder_z.state_dict(), "checkpoints/encoder_z.checkpoint")
-torch.save(ssvae.decoder.state_dict(), "checkpoints/decoder.checkpoint")
+os.makedirs(args.checkpoint_dir)
+torch.save(ssvae.encoder_y.state_dict(), args.checkpoint_dir + "/encoder_y.checkpoint")
+torch.save(ssvae.encoder_z.state_dict(),  args.checkpoint_dir +  "/encoder_z.checkpoint")
+torch.save(ssvae.decoder.state_dict(),  args.checkpoint_dir +  "/decoder.checkpoint")
