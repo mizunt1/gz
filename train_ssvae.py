@@ -237,9 +237,8 @@ for epoch in range(2):
         print("test loss", test_loss)
 
 train_loader, test_loader = setup_data_loaders(batch_size=9, root="/scratch-ssd/oatml/data", use_cuda=use_cuda)
-dataiter = iter(train_loader)
-x, y = dataiter.next()
-#images = ssvae.reconstruct_img(x, y, use_cuda=use_cuda)
-img_grid = torchvision.utils.make_grid(x)
+images, labels = next(iter(train_loader))
+images_out = ssvae.reconstruct_img(images, labels, use_cuda=use_cuda)
+img_grid = torchvision.utils.make_grid(images_out)
 writer.add_image('images', img_grid)
-
+writer.close()
