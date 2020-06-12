@@ -196,6 +196,49 @@ def train_ss(svi, train_loader, use_cuda=False, transform=False):
     total_epoch_loss_train = epoch_loss / normalizer_train
     return total_epoch_loss_train
 
+def train_ss2(svi, train_s_loader, train_us_loader, use_cuda=False, transform=False):
+    # trains for one single epoch and returns normalised loss for one epoch
+    labelled = True
+    # initialize loss accumulator
+    epoch_loss_s = 0.
+    epoch_loss_us = 0.
+    # do a training epoch over each mini-batch x returned
+    # by the data loader
+    for data_sup, data_unsup in zip(train_s_loader, train_us_loader):
+        xs, ys = data_sup
+        xus, yus = data_unsup
+        batch_size = xs.size(0)
+        # changing labels to one hot encoding
+        # I think this is necessary when using dist.OneHotCategorical but not sure 
+        ys = ys.reshape(batch_size, 1)
+        ys = (ys == torch.arange(10).reshape(1, 10)).float()
+        yus = yus.reshape(batch_size, 1)
+        yus = (yus == torch.arange(10).reshape(1, 10)).float()
+
+        if transform != False:
+            # flattens images to 1d vector
+            xs = transform(xs)
+            xus = transform(xus)
+            
+        # if on GPU put mini-batch into CUDA memory
+        if use_cuda:
+            xs = xs.cuda()
+            xus = xus.cuda
+            # not really sure what Im doing here and not sure if necessary 
+            ys = ys.cuda()
+        # feeding in data. At times, omit labels
+        # TODO seperate data set tolabelled and unlabelled rather than alternating as below
+        batch_loss_s = svi.step(xs, ys)
+        epoch_loss_s += batch_loss
+        batch_loss_us = svi.step(xus)
+        epoch_loss_us += batch_loss_us
+    # return epoch loss
+    normalizer_train_s = len(train_s_loader.dataset)
+    total_epoch_loss_s = epoch_loss_s / normalizer_train_s
+    normalizer_train_s = len(train_us_loader.dataset)
+    total_epoch_loss_us = epoch_loss_us /normalizer_train_us
+    return total_epoch_loss_train_s + total_epoch_loss_us
+
 def evaluate(svi, test_loader, use_cuda=False, transform=transform):
     # initialize loss accumulator
     test_loss = 0.
@@ -250,11 +293,14 @@ for epoch in range(num_epochs):
 
 train_loader, test_loader = setup_data_loaders(data_type=args.data_type, batch_size=9, root=args.data_load, use_cuda=use_cuda)
 images, labels = next(iter(train_loader))
+
 images_out = ssvae.reconstruct_img(images, labels, use_cuda=use_cuda)
 img_grid = torchvision.utils.make_grid(images_out)
 writer.add_image('images', img_grid)
 writer.close()
+print(labels)
 os.makedirs(args.checkpoint_dir)
+
 torch.save(ssvae.encoder_y.state_dict(), args.checkpoint_dir + "/encoder_y.checkpoint")
 torch.save(ssvae.encoder_z.state_dict(),  args.checkpoint_dir +  "/encoder_z.checkpoint")
 torch.save(ssvae.decoder.state_dict(),  args.checkpoint_dir +  "/decoder.checkpoint")
