@@ -54,4 +54,6 @@ dependencies:
     - torch==1.5.0
     - torchvision==0.6.0
     - tqdm==4.46.1
+    - tensorboard-plugin-wit==1.6.0.post3
+    - tensorboard==2.2.2
 prefix: /users/ms19mnt/.conda/envs/gz_mizu
