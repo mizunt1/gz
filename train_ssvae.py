@@ -137,6 +137,7 @@ class SSVAE(nn.Module):
                 # sample (and score) the latent handwriting-style with the variational
                 # distribution q(z|x,y) = normal(loc(x,y),scale(x,y))
             # change ys to one hot should do this somewhere else TODO
+
             loc, scale = self.encoder_z.forward([xs, ys])
             pyro.sample("z", dist.Normal(loc, scale).to_event(1))
 
@@ -157,6 +158,7 @@ class SSVAE(nn.Module):
         return loc_img.reshape([batch_size, 1, 28, 28])
 
 def train_ss(svi, train_loader, use_cuda=False, transform=False):
+    # trains for one single epoch and returns normalised loss for one epoch
     labelled = True
     # initialize loss accumulator
     epoch_loss = 0.
@@ -168,7 +170,7 @@ def train_ss(svi, train_loader, use_cuda=False, transform=False):
         # I think this is necessary when using dist.OneHotCategorical but not sure 
         y = y.reshape(batch_size, 1)
         y = (y == torch.arange(10).reshape(1, 10)).float()
-
+        print("y shape trans", y[0])
         if transform != False:
             # flattens images to 1d vector
             x = transform(x)
@@ -201,7 +203,7 @@ def evaluate(svi, test_loader, use_cuda=False, transform=transform):
         batch_size = x.size(0)
         y = y.reshape(batch_size, 1)
         y = (y == torch.arange(10).reshape(1, 10)).float()
-
+        
         if use_cuda:
             x = x.cuda()
             y = y.cuda()
@@ -218,8 +220,9 @@ def evaluate(svi, test_loader, use_cuda=False, transform=transform):
 writer = SummaryWriter("tb_data/")
 pyro.clear_param_store()
 print("loading data")
-use_cuda = True
-train_loader, test_loader = setup_data_loaders(batch_size=72, root="/scratch-ssd/oatml/data", use_cuda=use_cuda)
+use_cuda = False
+
+train_loader, test_loader = setup_data_loaders(batch_size=72, root="./data", use_cuda=use_cuda)
 print("data loaded")
 ssvae = SSVAE(use_cuda=use_cuda)
 optimizer = Adam({"lr": 3.0e-4})
@@ -240,3 +243,4 @@ x, y = dataiter.next()
 #images = ssvae.reconstruct_img(x, y, use_cuda=use_cuda)
 img_grid = torchvision.utils.make_grid(x)
 writer.add_image('images', img_grid)
+
