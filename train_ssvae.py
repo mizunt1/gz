@@ -4,6 +4,7 @@ from torch.utils.tensorboard import SummaryWriter
 import pyro.distributions as dist
 from pyro.optim import Adam
 from pyro.infer import SVI, TraceEnum_ELBO, config_enumerate, Trace_ELBO
+import torchvision
 import torch.nn as nn
 import torch
 import pyro
@@ -140,6 +141,22 @@ class SSVAE(nn.Module):
             loc, scale = self.encoder_z.forward([xs, ys])
             pyro.sample("z", dist.Normal(loc, scale).to_event(1))
 
+    def reconstruct_img(self, x, y, use_cuda=False):
+        # encode image x
+        batch_size = x.size(0)
+        y = y.reshape(batch_size, 1)
+        y = (y == torch.arange(10).reshape(1, 10)).float()
+        x = transform(x)
+        if use_cuda == True:
+            x = x.cuda()
+            y = y.cuda()
+        z_loc, z_scale = self.encoder_z([x,y])
+        # sample in latent space
+        z = dist.Normal(z_loc, z_scale).sample()
+        # decode the image (note we don't sample in image space)
+        loc_img = self.decoder([z,y])
+        return loc_img.reshape([batch_size, 1, 28, 28])
+
 def train_ss(svi, train_loader, use_cuda=False, transform=False):
     # trains for one single epoch and returns normalised loss for one epoch
     labelled = True
@@ -198,14 +215,6 @@ def evaluate(svi, test_loader, use_cuda=False, transform=transform):
     total_epoch_loss_test = test_loss / normalizer_test
     return total_epoch_loss_test
 
-def reconstruct_img(self, x):
-    # encode image x
-    z_loc, z_scale = self.encoder(x)
-    # sample in latent space
-    z = dist.Normal(z_loc, z_scale).sample()
-    # decode the image (note we don't sample in image space)
-    loc_img = self.decoder(z)
-    return loc_img
 
 writer = SummaryWriter("tb_data/")
 pyro.clear_param_store()
@@ -227,8 +236,10 @@ for epoch in range(2):
         test_loss = evaluate(svi, test_loader, use_cuda=use_cuda, transform=transform)
         print("test loss", test_loss)
 
-smaller_batch = test_loader[0:9]
-images = reconstruct_img(smaller_batch)
-img_grid = torchvision.utils.make_grid(images)
+train_loader, test_loader = setup_data_loaders(batch_size=9, root="/scratch-ssd/oatml/data", use_cuda=use_cuda)
+dataiter = iter(train_loader)
+x, y = dataiter.next()
+#images = ssvae.reconstruct_img(x, y, use_cuda=use_cuda)
+img_grid = torchvision.utils.make_grid(x)
 writer.add_image('images', img_grid)
 
