@@ -11,14 +11,20 @@ def transform(x):
     x = x.reshape(batch,784)
     return x
 
-def setup_data_loaders(batch_size=128, use_cuda=False, root=None):
+def setup_data_loaders(data_type="digits", batch_size=128, use_cuda=False, root=None):
     if root == None:
         root = './data'
     download = True
     trans = transforms.ToTensor()
-    train_set = dset.MNIST(root=root, train=True, transform=trans,
-                           download=download)
-    test_set = dset.MNIST(root=root, train=False, transform=trans)
+    if data_type == "digits":
+        train_set = dset.MNIST(root=root, train=True, transform=trans,
+                               download=download)
+        test_set = dset.MNIST(root=root, train=False, transform=trans)
+    if data_type == "fashion":
+        train_set = dset.FashionMNIST(root=root, train=True, transform=trans,
+                               download=download)
+        test_set = dset.FashionMNIST(root=root, train=False, transform=trans)
+
 
     kwargs = {'num_workers': 0, 'pin_memory': use_cuda}
     train_loader = torch.utils.data.DataLoader(dataset=train_set,
