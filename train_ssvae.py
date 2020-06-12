@@ -153,7 +153,6 @@ def train_ss(svi, train_loader, use_cuda=False, transform=False):
         # I think this is necessary when using dist.OneHotCategorical but not sure 
         y = y.reshape(batch_size, 1)
         y = (y == torch.arange(10).reshape(1, 10)).float()
-        print("y shape trans", y[0])
         if transform != False:
             # flattens images to 1d vector
             x = transform(x)
