@@ -45,7 +45,7 @@ class Encoder_z(nn.Module):
         self.softplus = nn.Softplus()
 
     def forward(self, x):
-        print("encoder z shape", x[0].shape, x[1].shape)
+
         x = utils.cat(x[0], x[1] ,-1)
 
         z = self.fc1(x)
@@ -264,11 +264,11 @@ def evaluate(svi, test_loader, use_cuda=False, transform=transform):
     return total_epoch_loss_test
 
 parser.add_argument('--data_save', default="tb_data/")
-parser.add_argument('--data_load', default="/scratch-ssd/oatml/data")
+parser.add_argument('--data_load', default="/scratch-ssd/ms19mnt/")
 parser.add_argument('--data_type', default="digits")
 parser.add_argument('--epochs', default=20, type=int)
 parser.add_argument('--no_cuda', default=False, action='store_true')
-parser.add_argument('--checkpoint_dir', default="checkpoints/")
+parser.add_argument('--checkpoint', default=False, action='store_true')
 args = parser.parse_args()
 writer = SummaryWriter(args.data_save)
 pyro.clear_param_store()
@@ -303,9 +303,10 @@ images_out = ssvae.reconstruct_img(images, labels, use_cuda=use_cuda)
 img_grid = torchvision.utils.make_grid(images_out)
 writer.add_image('images', img_grid)
 writer.close()
-print(labels)
-os.makedirs(args.checkpoint_dir)
 
-torch.save(ssvae.encoder_y.state_dict(), args.checkpoint_dir + "/encoder_y.checkpoint")
-torch.save(ssvae.encoder_z.state_dict(),  args.checkpoint_dir +  "/encoder_z.checkpoint")
-torch.save(ssvae.decoder.state_dict(),  args.checkpoint_dir +  "/decoder.checkpoint")
+print(labels)
+if args.checkpoint is True:
+    os.makedirs("checkpoints/")
+    torch.save(ssvae.encoder_y.state_dict(),"checkpoints/encoder_y.checkpoint")
+    torch.save(ssvae.encoder_z.state_dict(),  args.checkpoint_dir +  "checkpoints/encoder_z.checkpoint")
+    torch.save(ssvae.decoder.state_dict(),  args.checkpoint_dir +  "checkpoints/decoder.checkpoint")
