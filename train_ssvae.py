@@ -1,9 +1,9 @@
-print("ssvae")
 from load_mnist import setup_data_loaders, transform, return_data_loader
 from torch.utils.tensorboard import SummaryWriter
 import pyro.distributions as dist
 from pyro.optim import Adam
 from pyro.infer import SVI, TraceEnum_ELBO, config_enumerate, Trace_ELBO
+import utils
 import os
 import torchvision
 import torch.nn as nn
@@ -12,7 +12,6 @@ import pyro
 import argparse
 parser = argparse.ArgumentParser()
 
-print("ssvae mnist")
 class Encoder_y(nn.Module):
     # outputs a y given an x.
     # the classifier. distribution for y given an input x
@@ -46,7 +45,9 @@ class Encoder_z(nn.Module):
         self.softplus = nn.Softplus()
 
     def forward(self, x):
-        x = torch.cat((x[0], x[1]),1)
+        print("encoder z shape", x[0].shape, x[1].shape)
+        x = utils.cat(x[0], x[1] ,-1)
+
         z = self.fc1(x)
         z = self.fc2(z)
         z = self.softplus(z)
@@ -68,7 +69,7 @@ class Decoder(nn.Module):
         self.sigmoid = nn.Sigmoid()
     
     def forward(self, z):
-        x = torch.cat((z[0], z[1]), 1)
+        x = utils.cat(z[0], z[1], -1)
         x = self.fc1(x)
         x = self.fc2(x)
         x = self.fc3(x)
@@ -86,8 +87,7 @@ class SSVAE(nn.Module):
         self.decoder_in_size = self.output_size_z + output_size_y
         self.encoder_y = Encoder_y(input_size, self.output_size_y)
         self.encoder_z = Encoder_z(self.input_size_z, self.output_size_z)
-        self.decoder = Decoder(self.decoder_in_size, output_size_d)
-        
+        self.decoder = Decoder(self.decoder_in_size, output_size_d)        
         if use_cuda:
             self.cuda()
 
@@ -132,7 +132,9 @@ class SSVAE(nn.Module):
                 # then we sample a classification using this parameterisation of the classifier.
                 # the classifier is also like a generative model, where given the latents alpha, we 
                 # output an observation y
+
                 # and the latents alpha are given by an encoder
+
                 ys = pyro.sample("y", dist.OneHotCategorical(alpha))
                 # if the labels y is known, then we dont have to sample from the above,
                 # we just feed the actual y in to the encoder that takes x and y.
@@ -265,20 +267,23 @@ parser.add_argument('--data_save', default="tb_data/")
 parser.add_argument('--data_load', default="/scratch-ssd/oatml/data")
 parser.add_argument('--data_type', default="digits")
 parser.add_argument('--epochs', default=20, type=int)
-parser.add_argument('--use_cuda', default=True, type=bool)
+parser.add_argument('--no_cuda', default=False, action='store_true')
 parser.add_argument('--checkpoint_dir', default="checkpoints/")
 args = parser.parse_args()
 writer = SummaryWriter(args.data_save)
 pyro.clear_param_store()
 print("loading data")
-use_cuda = args.use_cuda
+print("data load", args.data_load)
 
+use_cuda = not args.no_cuda
 train_loader, test_loader = setup_data_loaders(data_type=args.data_type, batch_size=72, root=args.data_load, use_cuda=use_cuda)
-print("data loaded")
 ssvae = SSVAE(use_cuda=use_cuda)
 optimizer = Adam({"lr": 3.0e-4})
-svi = SVI(ssvae.model, ssvae.guide, optimizer, loss=Trace_ELBO())
-#svi = SVI(ssvae.model, config_enumerate(ssvae.guide), optimizer, loss=TraceEnum_ELBO(max_plate_nesting=1))
+#svi = SVI(ssvae.model, ssvae.guide, optimizer, loss=Trace_ELBO())
+ 
+guide = config_enumerate(ssvae.guide, "parallel", expand=True)
+svi = SVI(ssvae.model, guide, optimizer, loss=TraceEnum_ELBO(max_plate_nesting=1))
+
 print("start train")
 num_epochs = args.epochs
 for epoch in range(num_epochs):
