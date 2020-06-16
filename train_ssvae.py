@@ -3,6 +3,7 @@ from torch.utils.tensorboard import SummaryWriter
 import pyro.distributions as dist
 from pyro.optim import Adam
 from pyro.infer import SVI, TraceEnum_ELBO, config_enumerate, Trace_ELBO
+import utils
 import os
 import torchvision
 import torch.nn as nn
@@ -45,7 +46,7 @@ class Encoder_z(nn.Module):
 
     def forward(self, x):
         print("encoder z shape", x[0].shape, x[1].shape)
-        x = torch.cat((x[0], x[1]),1)
+        x = utils.cat(x[0], x[1] ,-1)
 
         z = self.fc1(x)
         z = self.fc2(z)
@@ -68,8 +69,7 @@ class Decoder(nn.Module):
         self.sigmoid = nn.Sigmoid()
     
     def forward(self, z):
-        print("decoder shape", z[0].shape, z[1].shape)
-        x = torch.cat((z[0], z[1]), 1)
+        x = utils.cat(z[0], z[1], -1)
         x = self.fc1(x)
         x = self.fc2(x)
         x = self.fc3(x)
@@ -110,8 +110,6 @@ class SSVAE(nn.Module):
             # making labels one hot for onehotcat
             # not sure if this correct, maybe there is a better way as lewis
             ys = pyro.sample("y", dist.OneHotCategorical(alpha_prior), obs=ys)
-            print("model, y sample", ys.shape)
-            print("model batch", dist.OneHotCategorical(alpha_prior).batch_shape)
             # one of the categories will be sampled, according to the distribution specified by alpha prior    
             # finally, score the image (x) using the handwriting style (z) and
             # the class label y (which digit to write) against the
@@ -131,16 +129,13 @@ class SSVAE(nn.Module):
                 # if there is an unlabbeld datapoint, we take the values for x the observations,
                 # and we output an alpha which parameterises the classifier.
                 alpha = self.encoder_y.forward(xs)
-                print("alpha", alpha.shape)
-                print("xs", xs.shape)
                 # then we sample a classification using this parameterisation of the classifier.
                 # the classifier is also like a generative model, where given the latents alpha, we 
                 # output an observation y
+
                 # and the latents alpha are given by an encoder
+
                 ys = pyro.sample("y", dist.OneHotCategorical(alpha))
-                print("guide ys sample", ys.shape)
-                print("ys guide batch shape",dist.OneHotCategorical(alpha).batch_shape)
-                print("y", ys[0][0])
                 # if the labels y is known, then we dont have to sample from the above,
                 # we just feed the actual y in to the encoder that takes x and y.
         
@@ -242,6 +237,7 @@ train_loader, test_loader = setup_data_loaders(data_type=args.data_type, batch_s
 ssvae = SSVAE(use_cuda=use_cuda)
 optimizer = Adam({"lr": 3.0e-4})
 #svi = SVI(ssvae.model, ssvae.guide, optimizer, loss=Trace_ELBO())
+ 
 guide = config_enumerate(ssvae.guide, "parallel", expand=True)
 svi = SVI(ssvae.model, guide, optimizer, loss=TraceEnum_ELBO(max_plate_nesting=1))
 
