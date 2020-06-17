@@ -1,4 +1,5 @@
-from load_mnist import setup_data_loaders, transform, return_data_loader
+from load_mnist import setup_data_loaders, transform, return_data_loader, return_ss_loader
+from itertools import cycle
 from torch.utils.tensorboard import SummaryWriter
 import pyro.distributions as dist
 from pyro.optim import Adam
@@ -206,7 +207,7 @@ def train_ss2(svi, train_s_loader, train_us_loader, use_cuda=False, transform=Fa
     epoch_loss_us = 0.
     # do a training epoch over each mini-batch x returned
     # by the data loader
-    for data_sup, data_unsup in zip(train_s_loader, train_us_loader):
+    for data_sup, data_unsup in zip(cycle(train_s_loader), train_us_loader):
         xs, ys = data_sup
         xus, yus = data_unsup
         batch_size = xs.size(0)
@@ -214,9 +215,7 @@ def train_ss2(svi, train_s_loader, train_us_loader, use_cuda=False, transform=Fa
         # I think this is necessary when using dist.OneHotCategorical but not sure 
         ys = ys.reshape(batch_size, 1)
         ys = (ys == torch.arange(10).reshape(1, 10)).float()
-        yus = yus.reshape(batch_size, 1)
-        yus = (yus == torch.arange(10).reshape(1, 10)).float()
-
+ 
         if transform != False:
             # flattens images to 1d vector
             xs = transform(xs)
@@ -231,7 +230,7 @@ def train_ss2(svi, train_s_loader, train_us_loader, use_cuda=False, transform=Fa
         # feeding in data. At times, omit labels
         # TODO seperate data set tolabelled and unlabelled rather than alternating as below
         batch_loss_s = svi.step(xs, ys)
-        epoch_loss_s += batch_loss
+        epoch_loss_s += batch_loss_s
         batch_loss_us = svi.step(xus)
         epoch_loss_us += batch_loss_us
     # return epoch loss
@@ -263,6 +262,37 @@ def evaluate(svi, test_loader, use_cuda=False, transform=transform):
     total_epoch_loss_test = test_loss / normalizer_test
     return total_epoch_loss_test
 
+def evaluate2(svi, test_s_loader, test_us_loader, use_cuda=False, transform=transform):
+    # initialize loss accumulator
+    test_loss = 0.
+    # compute the loss over the entire test set
+    for data_sup, data_unsup in zip(cycle(test_s_loader), test_us_loader):
+        xs, ys = data_sup
+        xus, yus = data_unsup
+        batch_size = xs.size(0)
+
+        # if on GPU put mini-batch into CUDA memory
+        batch_size = x.size(0)
+         
+        ys = ys.reshape(batch_size, 1)
+        ys = (ys == torch.arange(10).reshape(1, 10)).float()
+
+        if use_cuda:
+            xs = xs.cuda()
+            ys = ys.cuda()
+            xus = xus.cuda()
+        if transform != False:
+            xs = transform(xs)
+            xus = transform(xus)
+        # compute ELBO estimate and accumulate loss
+        test_loss += svi.evaluate_loss(xus)
+        
+        test_loss += svi.evaluate_loss(xs, ys)
+
+    normalizer_test = len(test_s_loader.dataset) + len(test_us_loader.dataset)
+    total_epoch_loss_test = test_loss / normalizer_test
+    return total_epoch_loss_test
+
 parser.add_argument('--data_save', default="tb_data/")
 parser.add_argument('--data_load', default="/scratch-ssd/ms19mnt/")
 parser.add_argument('--data_type', default="digits")
@@ -277,6 +307,7 @@ print("data load", args.data_load)
 
 use_cuda = not args.no_cuda
 train_loader, test_loader = setup_data_loaders(data_type=args.data_type, batch_size=72, root=args.data_load, use_cuda=use_cuda)
+test_s_loader, test_us_loader, train_s_loader, train_us_loader = return_ss_loader(0.5, 10)
 ssvae = SSVAE(use_cuda=use_cuda)
 optimizer = Adam({"lr": 3.0e-4})
 #svi = SVI(ssvae.model, ssvae.guide, optimizer, loss=Trace_ELBO())
@@ -287,7 +318,7 @@ svi = SVI(ssvae.model, guide, optimizer, loss=TraceEnum_ELBO(max_plate_nesting=1
 print("start train")
 num_epochs = args.epochs
 for epoch in range(num_epochs):
-    total_epoch_loss_train = train_ss(svi, train_loader, use_cuda=use_cuda, transform=transform)
+    total_epoch_loss_train = train_ss2(svi, train_s_loader, train_us_loader, use_cuda=use_cuda, transform=transform)
     print("epoch loss", total_epoch_loss_train)
     writer.add_scalar('Train loss', total_epoch_loss_train, epoch)
     if epoch % 2 == 0:
