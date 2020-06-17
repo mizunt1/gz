@@ -1,4 +1,5 @@
 from gz_vae_conv import VAE, train, evaluate
+from torch.utils.tensorboard import SummaryWriter
 from load_gz_data import Gz2_data, return_data_loader
 from simple_classifier import Classifier
 import torch
@@ -17,12 +18,11 @@ args = parser.parse_args()
 a01 = "t01_smooth_or_features_a01_smooth_count"
 a02 = "t01_smooth_or_features_a02_features_or_disk_count"
 a03 = "t01_smooth_or_features_a03_star_or_artifact_count"
-data = Gz2_data(csv_dir=csv,
-                image_dir=img,
+data = Gz2_data(csv_dir=args.csv_file,
+                image_dir=args.img_file,
                 list_of_interest=[a01,
                                   a02,
                                   a03])
-
 
 vae = VAE(use_cuda=args.use_cuda)
 
@@ -37,9 +37,9 @@ train_loader, test_loader = return_data_loader(data, 0.5, 20)
 
 
 # training VAE
-plot_img_freq = 3
+plot_img_freq = 1
 writer = SummaryWriter("conv_gz")
-for epoch in range(10):
+for epoch in range(3):
     print("training")
     total_epoch_loss_train = train(svi, train_loader, use_cuda=args.use_cuda)
     print("end train")
@@ -56,7 +56,9 @@ for epoch in range(10):
         writer.add_scalar('Test loss', total_epoch_loss_test, epoch)
 
     if epoch % plot_img_freq == 0:
-        images_out = ssvae.reconstruct_img(images, labels, use_cuda=use_cuda)
+        one_image = next(iter(train_loader))['image'][0:9]
+        print("one_image", one_image.shape)
+        images_out = vae.sample_img(one_image, use_cuda=True)
         img_grid = torchvision.utils.make_grid(images_out)
         writer.add_image('images from epoch'+ int(epoch), img_grid)
     writer.close()
