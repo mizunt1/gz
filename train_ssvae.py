@@ -166,8 +166,8 @@ class SSVAE(nn.Module):
             y = y.cuda()
         ys = self.encoder_y.forward(x)
         _, max_ind = torch.max(ys, 1)
-        acc_per_batch = np.sum(ys == max_ind) /len(y)
-        return acc_per_batch
+        acc_per_batch = torch.sum(y == max_ind)
+        return acc_per_batch.item()/ len(y)
 
 def train_ss(svi, train_loader, use_cuda=False, transform=False):
     # trains for one single epoch and returns normalised loss for one epoch
@@ -322,7 +322,7 @@ optimizer = Adam({"lr": 3.0e-4})
 guide = config_enumerate(ssvae.guide, "parallel", expand=True)
 svi = SVI(ssvae.model, guide, optimizer, loss=TraceEnum_ELBO(max_plate_nesting=1))
 checkpoint_freq = 2
-write_freq = 2
+write_freq = 1
 
 print("start train")
 num_epochs = args.epochs
@@ -334,12 +334,14 @@ for epoch in range(num_epochs):
         test_loss = evaluate2(svi, test_s_loader, test_us_loader, use_cuda=use_cuda, transform=transform)
         writer.add_scalar('test loss', test_loss, epoch)
         print("test loss", test_loss)
-        train_loader, test_loader = setup_data_loaders(data_type=args.data_type, batch_size=9, root=args.data_load, use_cuda=use_cuda)
+        train_loader, test_loader = setup_data_loaders(data_type=args.data_type, batch_size=100, root=args.data_load, use_cuda=use_cuda)
         images, labels = next(iter(train_loader))
-        print("labels were:", labels)
-        images_out = ssvae.reconstruct_img(images, labels, use_cuda=use_cuda)
+        print("labels were:", labels[0:9])
+        images_tran = transform(images[0:9])
+        images_out = ssvae.reconstruct_img(images_tran, labels[0:9], use_cuda=use_cuda)
         img_grid = torchvision.utils.make_grid(images_out)
         writer.add_image('images', img_grid)
+        ssvae.test_acc(images, labels, use_cuda=use_cuda)
 
     if epoch % checkpoint_freq == 0:
         torch.save(ssvae.encoder_y.state_dict(), "checkpoints/" + args.checkpoint + "/encoder_y.checkpoint")
