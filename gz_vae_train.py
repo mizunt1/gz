@@ -65,8 +65,7 @@ for epoch in range(args.num_epochs):
         writer.add_scalar('Test loss', total_epoch_loss_test, epoch)
         print(epoch)
     if epoch % plot_img_freq == 0:
-        one_image = next(iter(train_loader))['image'][0:1]
-        print("one_image", one_image.shape)
+        one_image = next(iter(train_loader))['image'][0:10]
         images_out = vae.sample_img(one_image, use_cuda=use_cuda)
         img_grid = torchvision.utils.make_grid(images_out)
         writer.add_image('images from epoch'+ str(epoch), img_grid)
