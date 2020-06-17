@@ -13,7 +13,9 @@ export CONDA_PKGS_DIRS=/scratch-ssd/$USER/conda_pkgs
 /scratch-ssd/oatml/scripts/run_locked.sh /scratch-ssd/oatml/miniconda3/bin/conda-env update -f gz_mizu.yml
 source /scratch-ssd/oatml/miniconda3/bin/activate gz_mizu
 
-srun python gz_vae_train.py\
-     --csv_file /scratch-ssd/oatml/data/gz2/gz2_classifications_and_subjects.csv\
-     --img_file /scratch-ssd/oatml/data/gz2\
-     --use_cuda True
+# srun python gz_vae_train.py\
+#     --csv_file /scratch-ssd/oatml/data/gz2/gz2_classifications_and_subjects.csv\
+#     --img_file /scratch-ssd/oatml/data/gz2\
+#     --use_cuda True
+
+srun python gz_vae_train.py --writer conv_test
