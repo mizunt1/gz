@@ -112,14 +112,14 @@ class VAE(nn.Module):
             pyro.sample("latent", dist.Normal(z_loc, z_scale).to_event(1))
 
     # define a helper function for reconstructing images
-    def reconstruct_img(self, x):
+    def sample_img(self, x):
         # encode image x
         z_loc, z_scale = self.encoder(x)
         # sample in latent space
         z = dist.Normal(z_loc, z_scale).sample()
         # decode the image (note we don't sample in image space)
         loc_img = self.decoder(z)
-        return loc_img
+        return loc_img.reshape([1, 424, 424])
 
 vae = VAE()
 
