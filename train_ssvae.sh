@@ -4,7 +4,7 @@
 
 #SBATCH --output=slurm-%j.out
 #SBATCH --error=slurm-%j.err
-#SBATCH --job-name="mnist_ssvae"
+#SBATCH --job-name="mnist_ssvae_0.2"
 #SBATCH --partition="msc"
 
 export CONDA_ENVS_PATH=/scratch-ssd/$USER/conda_envs
@@ -14,5 +14,5 @@ export CONDA_PKGS_DIRS=/scratch-ssd/$USER/conda_pkgs
 echo 'env created'
 source /scratch-ssd/oatml/miniconda3/bin/activate gz_mizu
 echo 'env activated'
-srun python train_ssvae.py
+srun python train_ssvae.py --data_save tb_data_unsup_0.2
 echo 'script ran'
