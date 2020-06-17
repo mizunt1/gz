@@ -115,12 +115,13 @@ class VAE(nn.Module):
     def sample_img(self, x,use_cuda=False):
         # encode image x
         x = x.cuda()
+        batch_shape = x.shape[0]
         z_loc, z_scale = self.encoder(x)
         # sample in latent space
         z = dist.Normal(z_loc, z_scale).sample()
         # decode the image (note we don't sample in image space)
         loc_img = self.decoder(z)
-        return loc_img.reshape([1, 424, 424])
+        return loc_img.reshape([batch_shape, 1, 424, 424])
 
 vae = VAE()
 
