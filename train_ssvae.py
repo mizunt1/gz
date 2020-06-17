@@ -122,7 +122,6 @@ class SSVAE(nn.Module):
 
     def guide(self, xs, ys=None):
         with pyro.plate("data"):
-            print(type(xs))
             batch_size = xs.size(0)
 
             # if the class label (the digit) is not supervised, sample
@@ -203,16 +202,14 @@ def train_ss(svi, train_loader, use_cuda=False, transform=False):
 
 def train_ss2(svi, train_s_loader, train_us_loader, use_cuda=False, transform=False):
     # trains for one single epoch and returns normalised loss for one epoch
-    labelled = True
     # initialize loss accumulator
     epoch_loss_s = 0.
     epoch_loss_us = 0.
     # do a training epoch over each mini-batch x returned
     # by the data loader
-    for data_sup, data_unsup in zip(cycle(train_s_loader), train_us_loader):
-        
-        xs, ys = data_sup
-        
+    zip_list = zip(train_s_loader, cycle(train_us_loader)) if len(train_s_loader) > len(train_us_loader) else zip(cycle(train_s_loader), train_us_loader)
+    for data_sup, data_unsup in zip_list:
+        xs, ys = data_sup        
         xus, yus = data_unsup
         batch_size = xs.size(0)
         # changing labels to one hot encoding
@@ -310,8 +307,7 @@ print("loading data")
 print("data load", args.data_load)
 
 use_cuda = not args.no_cuda
-train_loader, test_loader = setup_data_loaders(data_type=args.data_type, batch_size=72, root=args.data_load, use_cuda=use_cuda)
-test_s_loader, test_us_loader, train_s_loader, train_us_loader = return_ss_loader(0.5, 10)
+test_s_loader, test_us_loader, train_s_loader, train_us_loader = return_ss_loader(0.2, 10)
 ssvae = SSVAE(use_cuda=use_cuda)
 optimizer = Adam({"lr": 3.0e-4})
 #svi = SVI(ssvae.model, ssvae.guide, optimizer, loss=Trace_ELBO())
