@@ -37,7 +37,8 @@ train_loader, test_loader = return_data_loader(data, 0.5, 20)
 
 
 # training VAE
-
+plot_img_freq = 3
+writer = SummaryWriter("conv_gz")
 for epoch in range(10):
     print("training")
     total_epoch_loss_train = train(svi, train_loader, use_cuda=args.use_cuda)
@@ -51,5 +52,11 @@ for epoch in range(10):
         test_elbo.append(-total_epoch_loss_test)
         print("[epoch %03d] average test loss: %.4f" % (epoch, total_epoch_loss_test))
         print("evaluate end")
-        #torch.save(vae.encoder.state_dict(), "encoder.checkpoint")
-        #torch.save(vae.decoder.state_dict(), "decoder.checkpoint")
+        writer.add_scalar('Train loss', total_epoch_loss_train, epoch)
+        writer.add_scalar('Test loss', total_epoch_loss_test, epoch)
+
+    if epoch % plot_img_freq == 0:
+        images_out = ssvae.reconstruct_img(images, labels, use_cuda=use_cuda)
+        img_grid = torchvision.utils.make_grid(images_out)
+        writer.add_image('images from epoch'+ int(epoch), img_grid)
+    writer.close()
