@@ -46,17 +46,13 @@ class Encoder_z(nn.Module):
         self.softplus = nn.Softplus()
 
     def forward(self, x):
-
         x = utils.cat(x[0], x[1] ,-1)
-
         z = self.fc1(x)
         z = self.fc2(z)
         z = self.softplus(z)
         z_loc = self.fc31(z)
         z_scale = torch.exp(self.fc32(z))
         return z_loc, z_scale    
-
-
 
 class Decoder(nn.Module):
     # takes y and z and outputs a x
@@ -163,6 +159,15 @@ class SSVAE(nn.Module):
         # decode the image (note we don't sample in image space)
         loc_img = self.decoder([z,y])
         return loc_img.reshape([batch_size, 1, 28, 28])
+
+    def test_acc(self, x, y, use_cuda=True):
+        if use_cuda == True:
+            x = x.cuda()
+            y = y.cuda()
+        ys = self.encoder_y.forward(x)
+        _, max_ind = torch.max(ys, 1)
+        acc_per_batch = np.sum(ys == max_ind) /len(y)
+        return acc_per_batch
 
 def train_ss(svi, train_loader, use_cuda=False, transform=False):
     # trains for one single epoch and returns normalised loss for one epoch
@@ -294,18 +299,19 @@ def evaluate2(svi, test_s_loader, test_us_loader, use_cuda=False, transform=tran
     total_epoch_loss_test = test_loss / normalizer_test
     return total_epoch_loss_test
 
-parser.add_argument('--data_save', default="tb_data/")
+parser.add_argument('--writer', required=True)
+parser.add_argument('--checkpoint', required=True)
 parser.add_argument('--data_load', default="/scratch-ssd/ms19mnt/")
 parser.add_argument('--data_type', default="digits")
 parser.add_argument('--epochs', default=20, type=int)
 parser.add_argument('--no_cuda', default=False, action='store_true')
-parser.add_argument('--checkpoint', default=False, action='store_true')
+
 args = parser.parse_args()
-writer = SummaryWriter(args.data_save)
+writer = SummaryWriter("tb_data_all/" + args.writer)
 pyro.clear_param_store()
 print("loading data")
 print("data load", args.data_load)
-
+os.makedirs("checkpoints/" + args.checkpoint)
 use_cuda = not args.no_cuda
 test_s_loader, test_us_loader, train_s_loader, train_us_loader = return_ss_loader(0.2, 10)
 ssvae = SSVAE(use_cuda=use_cuda)
@@ -314,7 +320,7 @@ optimizer = Adam({"lr": 3.0e-4})
  
 guide = config_enumerate(ssvae.guide, "parallel", expand=True)
 svi = SVI(ssvae.model, guide, optimizer, loss=TraceEnum_ELBO(max_plate_nesting=1))
-
+checkpoint_freq = 2
 print("start train")
 num_epochs = args.epochs
 for epoch in range(num_epochs):
@@ -325,7 +331,11 @@ for epoch in range(num_epochs):
         test_loss = evaluate2(svi, test_s_loader, test_us_loader, use_cuda=use_cuda, transform=transform)
         writer.add_scalar('test loss', test_loss, epoch)
         print("test loss", test_loss)
-        
+    if epoch % checkpoint_freq == 0:
+        torch.save(ssvae.encoder_y.state_dict(), "checkpoints/" + args.checkpoint + "/encoder_y.checkpoint")
+        torch.save(ssvae.encoder_z.state_dict(), "checkpoints/" + args.checkpoint +  "/encoder_z.checkpoint")
+        torch.save(ssvae.decoder.state_dict(), "checkpoints/" + args.checkpoint +  "/decoder.checkpoint")
+
 
 train_loader, test_loader = setup_data_loaders(data_type=args.data_type, batch_size=9, root=args.data_load, use_cuda=use_cuda)
 images, labels = next(iter(train_loader))
@@ -336,8 +346,7 @@ writer.add_image('images', img_grid)
 writer.close()
 
 print(labels)
-if args.checkpoint is True:
-    os.makedirs("checkpoints/")
-    torch.save(ssvae.encoder_y.state_dict(),"checkpoints/encoder_y.checkpoint")
-    torch.save(ssvae.encoder_z.state_dict(),  args.checkpoint_dir +  "checkpoints/encoder_z.checkpoint")
-    torch.save(ssvae.decoder.state_dict(),  args.checkpoint_dir +  "checkpoints/decoder.checkpoint")
+
+torch.save(ssvae.encoder_y.state_dict(), "checkpoints/" + args.checkpoint + "/encoder_y.checkpoint")
+torch.save(ssvae.encoder_z.state_dict(), "checkpoints/" + args.checkpoint +  "/encoder_z.checkpoint")
+torch.save(ssvae.decoder.state_dict(), "checkpoints/" + args.checkpoint +  "/decoder.checkpoint")
