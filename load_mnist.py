@@ -51,33 +51,52 @@ def return_data_loader(data, test_proportion, batch_size):
     train_loader = torch.utils.data.DataLoader(dataset=train_set, batch_size=batch_size)
     return train_loader, test_loader
 
-def return_ss_loader(data, test_proportion, ss_portion, batch_size):
-    len_data = len(data)
-    num_tests = int(len_data * test_proportion)
-    num_train = len_data - num_tests
-    semisupervised_tests = int(num_test * ss_portion)
-    supervised_tests = num_tests - semisupervised_portion
-    
-    semisupervised_train = num_train - semisupervised_tests
-    supervised_train = num_train - supervised_tests
-    
-    test_supervised = list(i for i in range(0,num_test - semisupervised_tests))
-    test_unsup = list(i for i in range(semisupervised_tests, num_test))
-    
-    train_supervised = list(i for i in range(num_test,len_data - semisupervised_train))
-    train_unsup = list(i for i in range(num_test + supervised_train,len_data))
+def return_ss_loader(us_portion, batch_size, use_cuda=False, root=None, data_type="digits"):
+    if root == None:
+        root = './data'
+    download = True
+    trans = transforms.ToTensor()
+    if data_type == "digits":
+        train_set = dset.MNIST(root=root, train=True, transform=trans,
+                               download=download)
+        test_set = dset.MNIST(root=root, train=False, transform=trans)
+    if data_type == "fashion":
+        train_set = dset.FashionMNIST(root=root, train=True, transform=trans,
+                               download=download)
+        test_set = dset.FashionMNIST(root=root, train=False, transform=trans)
 
-    test_s_set = torch.utils.data.Subset(data, test_supervised)
-    test_us_set = torch.utils.data.Subset(data, test_unsup)
-    train_s_set = torch.utils.data.Subset(data, train_supervised)
-    train_us_set = torch.utils.data.Subset(data, train_upsup)
-    test_s_loader = torch.utils.data.DataLoader(dataset=test_s_set, batch_size=batch_size)
-    test_us_loader = torch.utils.data.DataLoader(dataset=test_us_set, batch_size=batch_size)
-    train_s_loader = torch.utils.data.DataLoader(dataset=train_s_set, batch_size=batch_size)
-    train_us_loader = torch.utils.data.DataLoader(dataset=train_us_set, batch_size=batch_size)
+    kwargs = {'num_workers': 0, 'pin_memory': use_cuda}
+    len_train = len(train_set)
+    len_test = len(test_set)
+
+    
+    unsupervised_tests = int(len_test * us_portion)
+    supervised_tests = len_test - unsupervised_tests
+    
+    unsupervised_train = int(len_train * us_portion)
+    supervised_train = len_train - unsupervised_train
+    
+    # lists for test
+    test_unsup = list(i for i in range(0, unsupervised_tests))
+    test_supervised = list(i for i in range(unsupervised_tests,len_test))
+
+    # lists for train
+    train_unsup = list(i for i in range(0, unsupervised_train))
+    train_supervised = list(i for i in range(unsupervised_train, len_train))
+
+
+    test_s_set = torch.utils.data.Subset(test_set, test_supervised)
+    test_us_set = torch.utils.data.Subset(test_set, test_unsup)
+    train_s_set = torch.utils.data.Subset(train_set, train_supervised)
+    train_us_set = torch.utils.data.Subset(train_set, train_unsup)
+
+    test_s_loader = torch.utils.data.DataLoader(dataset=test_s_set, batch_size=batch_size, **kwargs)
+    test_us_loader = torch.utils.data.DataLoader(dataset=test_us_set, batch_size=batch_size, **kwargs)
+    train_s_loader = torch.utils.data.DataLoader(dataset=train_s_set, batch_size=batch_size, **kwargs)
+    train_us_loader = torch.utils.data.DataLoader(dataset=train_us_set, batch_size=batch_size, **kwargs)
 
     return test_s_loader, test_us_loader, train_s_loader, train_us_loader
 
 
 if __name__ == "__main__":
-    a, b = get_semi_supervised_data(100, 0.5, False)
+    a, b, c, d = return_ss_loader(0.8, 100)

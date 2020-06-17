@@ -15,5 +15,5 @@ echo 'env created'
 source /scratch-ssd/oatml/miniconda3/bin/activate gz_mizu
 echo 'env activated'
 srun python train_ssvae.py \
-     --data_save tb_data_fash --data_type "fashion" --epochs 200 --checkpoint
+     --data_save tb_data_fash --data_type "fashion" --epochs 200
 echo 'script ran'
