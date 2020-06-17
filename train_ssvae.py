@@ -122,7 +122,9 @@ class SSVAE(nn.Module):
 
     def guide(self, xs, ys=None):
         with pyro.plate("data"):
+            print(type(xs))
             batch_size = xs.size(0)
+
             # if the class label (the digit) is not supervised, sample
             # (and score) the digit with the variational distribution
             # q(y|x) = categorical(alpha(x))
@@ -208,7 +210,9 @@ def train_ss2(svi, train_s_loader, train_us_loader, use_cuda=False, transform=Fa
     # do a training epoch over each mini-batch x returned
     # by the data loader
     for data_sup, data_unsup in zip(cycle(train_s_loader), train_us_loader):
+        
         xs, ys = data_sup
+        
         xus, yus = data_unsup
         batch_size = xs.size(0)
         # changing labels to one hot encoding
@@ -224,7 +228,7 @@ def train_ss2(svi, train_s_loader, train_us_loader, use_cuda=False, transform=Fa
         # if on GPU put mini-batch into CUDA memory
         if use_cuda:
             xs = xs.cuda()
-            xus = xus.cuda
+            xus = xus.cuda()
             # not really sure what Im doing here and not sure if necessary 
             ys = ys.cuda()
         # feeding in data. At times, omit labels
@@ -236,9 +240,9 @@ def train_ss2(svi, train_s_loader, train_us_loader, use_cuda=False, transform=Fa
     # return epoch loss
     normalizer_train_s = len(train_s_loader.dataset)
     total_epoch_loss_s = epoch_loss_s / normalizer_train_s
-    normalizer_train_s = len(train_us_loader.dataset)
+    normalizer_train_us = len(train_us_loader.dataset)
     total_epoch_loss_us = epoch_loss_us /normalizer_train_us
-    return total_epoch_loss_train_s + total_epoch_loss_us
+    return total_epoch_loss_s + total_epoch_loss_us
 
 def evaluate(svi, test_loader, use_cuda=False, transform=transform):
     # initialize loss accumulator
@@ -272,7 +276,7 @@ def evaluate2(svi, test_s_loader, test_us_loader, use_cuda=False, transform=tran
         batch_size = xs.size(0)
 
         # if on GPU put mini-batch into CUDA memory
-        batch_size = x.size(0)
+        batch_size = xs.size(0)
          
         ys = ys.reshape(batch_size, 1)
         ys = (ys == torch.arange(10).reshape(1, 10)).float()
@@ -322,7 +326,7 @@ for epoch in range(num_epochs):
     print("epoch loss", total_epoch_loss_train)
     writer.add_scalar('Train loss', total_epoch_loss_train, epoch)
     if epoch % 2 == 0:
-        test_loss = evaluate(svi, test_loader, use_cuda=use_cuda, transform=transform)
+        test_loss = evaluate2(svi, test_s_loader, test_us_loader, use_cuda=use_cuda, transform=transform)
         writer.add_scalar('test loss', test_loss, epoch)
         print("test loss", test_loss)
         
