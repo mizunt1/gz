@@ -7,3 +7,5 @@ gz2_data/
 data/
 *#
 *.checkpoint
+slurm*
+*.ox.ac*
