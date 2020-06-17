@@ -49,7 +49,8 @@ test_freq = 1
 # training VAE
 plot_img_freq = 1
 checkpoint_freq = 3
-
+if not os.path.exists("checkpoints/" + args.checkpoint_dir):
+    os.makedirs("checkpoints/" + args.checkpoint_dir)
 for epoch in range(args.num_epochs):
     print("training")
     total_epoch_loss_train = train(svi, train_loader, use_cuda=use_cuda)
@@ -71,7 +72,7 @@ for epoch in range(args.num_epochs):
         writer.add_image('images from epoch'+ str(epoch), img_grid)
 
     if epoch % checkpoint_freq == 0:
-        os.makedirs("checkpoints/" + args.checkpoint_dir)
+
         torch.save(vae.encoder.state_dict(), "checkpoints/" + args.checkpoint_dir + "/encoder.checkpoint")
         torch.save(vae.decoder.state_dict(),  "checkpoints/" + args.checkpoint_dir +  "/decoder.checkpoint")
     
