@@ -311,7 +311,8 @@ writer = SummaryWriter("tb_data_all/" + args.writer)
 pyro.clear_param_store()
 print("loading data")
 print("data load", args.data_load)
-os.makedirs("checkpoints/" + args.checkpoint)
+if not os.path.exists("checkpoints/" + args.checkpoint):
+    os.makedirs("checkpoints/" + args.checkpoint)
 use_cuda = not args.no_cuda
 test_s_loader, test_us_loader, train_s_loader, train_us_loader = return_ss_loader(0.2, 10)
 ssvae = SSVAE(use_cuda=use_cuda)
@@ -321,31 +322,32 @@ optimizer = Adam({"lr": 3.0e-4})
 guide = config_enumerate(ssvae.guide, "parallel", expand=True)
 svi = SVI(ssvae.model, guide, optimizer, loss=TraceEnum_ELBO(max_plate_nesting=1))
 checkpoint_freq = 2
+write_freq = 2
+
 print("start train")
 num_epochs = args.epochs
 for epoch in range(num_epochs):
     total_epoch_loss_train = train_ss2(svi, train_s_loader, train_us_loader, use_cuda=use_cuda, transform=transform)
     print("epoch loss", total_epoch_loss_train)
     writer.add_scalar('Train loss', total_epoch_loss_train, epoch)
-    if epoch % 2 == 0:
+    if epoch % write_freq == 0:
         test_loss = evaluate2(svi, test_s_loader, test_us_loader, use_cuda=use_cuda, transform=transform)
         writer.add_scalar('test loss', test_loss, epoch)
         print("test loss", test_loss)
+        train_loader, test_loader = setup_data_loaders(data_type=args.data_type, batch_size=9, root=args.data_load, use_cuda=use_cuda)
+        images, labels = next(iter(train_loader))
+        print("labels were:", labels)
+        images_out = ssvae.reconstruct_img(images, labels, use_cuda=use_cuda)
+        img_grid = torchvision.utils.make_grid(images_out)
+        writer.add_image('images', img_grid)
+
     if epoch % checkpoint_freq == 0:
         torch.save(ssvae.encoder_y.state_dict(), "checkpoints/" + args.checkpoint + "/encoder_y.checkpoint")
         torch.save(ssvae.encoder_z.state_dict(), "checkpoints/" + args.checkpoint +  "/encoder_z.checkpoint")
         torch.save(ssvae.decoder.state_dict(), "checkpoints/" + args.checkpoint +  "/decoder.checkpoint")
 
-
-train_loader, test_loader = setup_data_loaders(data_type=args.data_type, batch_size=9, root=args.data_load, use_cuda=use_cuda)
-images, labels = next(iter(train_loader))
-
-images_out = ssvae.reconstruct_img(images, labels, use_cuda=use_cuda)
-img_grid = torchvision.utils.make_grid(images_out)
-writer.add_image('images', img_grid)
 writer.close()
 
-print(labels)
 
 torch.save(ssvae.encoder_y.state_dict(), "checkpoints/" + args.checkpoint + "/encoder_y.checkpoint")
 torch.save(ssvae.encoder_z.state_dict(), "checkpoints/" + args.checkpoint +  "/encoder_z.checkpoint")
