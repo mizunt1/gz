@@ -5,13 +5,15 @@ from PIL import Image
 import torchvision as tv
 
 class Gz2_data(torch.utils.data.Dataset):
-    def __init__(self, csv_dir, image_dir, list_of_interest, faulty_data_set=False):
+    def __init__(self, csv_dir, image_dir, list_of_interest, faulty_data_set=False, crop=180, resize=128):
         self.csv_dir = csv_dir
         self.faulty_data_set = faulty_data_set
         self.image_dir = image_dir
         self.file = pd.read_csv(self.csv_dir)
         self.list_of_interest = list_of_interest
-
+        self.resize = resize
+        self.crop = crop
+        
     def __len__(self):
         return len(self.file)
 
@@ -24,7 +26,7 @@ class Gz2_data(torch.utils.data.Dataset):
                 try:
                     img_name = os.path.join(self.image_dir, self.file['png_loc'][idx])
                     img_name = img_name.replace(".png", ".jpg")
-                    image = Image.open(img_name).convert('L')
+                    image = Image.open(img_name)
                 except FileNotFoundError:
                     idx += 1
         else:
@@ -34,8 +36,10 @@ class Gz2_data(torch.utils.data.Dataset):
 
         data = self.file.iloc[idx][self.list_of_interest]
         data = torch.tensor(data.values.astype('int32'))
-        trans = tv.transforms.ToTensor()
-        image = trans(image)
+        transforms = tv.transforms.Compose(
+            [tv.transforms.CenterCrop(self.crop),
+             tv.transforms.Resize(self.resize), tv.transforms.Grayscale(), tv.transforms.ToTensor()])
+        image = transforms(image)
         sample = {'image': image, 'data': data}
         return sample
 
