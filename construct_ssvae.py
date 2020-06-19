@@ -7,7 +7,7 @@ from load_mnist import setup_data_loaders, transform, return_data_loader, return
 from torch.utils.tensorboard import SummaryWriter
 from itertools import cycle
 import utils
-
+import torchvision as tv
 class SSVAE(nn.Module):
     def __init__(self, encoder_y, encoder_z, decoder, z_dim, y_dim, encoder_y_args, encoder_z_args, decoder_args, use_cuda=False):
         super().__init__()
@@ -74,7 +74,7 @@ class SSVAE(nn.Module):
             loc, scale = self.encoder_z.forward([xs, ys])
             pyro.sample("z", dist.Normal(loc, scale).to_event(1))
 
-    def sample_img(self, x, y, use_cuda=False):
+    def sample_img(self, x, y, use_cuda=False, transform=transform):
         # encode image x
         batch_size = x.size(0)
         y = y.reshape(batch_size, 1)
@@ -91,6 +91,7 @@ class SSVAE(nn.Module):
         return loc_img.reshape([batch_size, 1, 28, 28])
 
     def test_acc(self, x, y, use_cuda=True):
+        x = transform(x)
         if use_cuda == True:
             x = x.cuda()
             y = y.cuda()
@@ -245,15 +246,15 @@ def train_log(dir_name, ssvae, svi, train_s_loader, train_us_loader,
             print("test loss", test_loss)
         if epoch % plot_img_freq == 0:
             image_in, labels  = next(iter(test_s_loader))[0:num_img_plt]
-            images_tran = transform(image_in['image'][0:9])
-            images_out = ssvae.reconstruct_img(images_tran, labels, use_cuda=use_cuda)
-            img_grid = torchvision.utils.make_grid(images_out)
+
+            images_out = ssvae.sample_img(image_in, labels, use_cuda=use_cuda, transform=transform)
+            img_grid = tv.utils.make_grid(images_out)
             writer.add_image('images', img_grid)
             acc = ssvae.test_acc(image_in, labels, use_cuda=use_cuda)
             print("accuracy:", acc)
             writer.add_scalar('test accuracy', acc, epoch)
             if epoch % checkpoint_freq == 0:
-                torch.save(ssvae.encoder_y.state_dict(), "checkpoints/" + args.checkpoint + "/encoder_y.checkpoint")
-                torch.save(ssvae.encoder_z.state_dict(), "checkpoints/" + args.checkpoint +  "/encoder_z.checkpoint")
-                torch.save(ssvae.decoder.state_dict(), "checkpoints/" + args.checkpoint +  "/decoder.checkpoint")
+                torch.save(ssvae.encoder_y.state_dict(), "checkpoints/" + dir_name + "/encoder_y.checkpoint")
+                torch.save(ssvae.encoder_z.state_dict(), "checkpoints/" + dir_name +  "/encoder_z.checkpoint")
+                torch.save(ssvae.decoder.state_dict(), "checkpoints/" + dir_name +  "/decoder.checkpoint")
         writer.close()

@@ -18,7 +18,6 @@ parser.add_argument('--csv_file', metavar='c', type=str, default=csv)
 parser.add_argument('--img_file', metavar='i', type=str, default=img)
 parser.add_argument('--no_cuda', default=False, action='store_true')
 parser.add_argument('--num_epochs', type=int, default=10)
-parser.add_argument('--img_size', default=56, type=int)
 parser.add_argument('--lr', default=1.0e-3, type=float)
 parser.add_argument('--input_size_y', default=784, type=int)
 # input to encoder_y. i.e. for fully connected, flattened img size
@@ -31,23 +30,23 @@ parser.add_argument('--output_size_z', default=100, type=int)
 parser.add_argument('--input_size_de', default=110, type=int)
 # input to the decoder. Y and Z catted to output X
 # output from decoder, same as image 
-
+parser.add_argument('--img_size', default=56, type=int)
 parser.add_argument('--crop_size', default=56, type=int)
 parser.add_argument('--batch_size', default=100, type=int)
 
 args = parser.parse_args()
 use_cuda = not args.no_cuda
 
-a01 = "t01_smooth_or_features_a01_smooth_count"
-a02 = "t01_smooth_or_features_a02_features_or_disk_count"
-a03 = "t01_smooth_or_features_a03_star_or_artifact_count"
-data = Gz2_data(csv_dir=args.csv_file,
-                image_dir=args.img_file,
-                list_of_interest=[a01,
-                                  a02,
-                                  a03],
-                crop=args.img_size,
-                resize=args.crop_size)
+#a01 = "t01_smooth_or_features_a01_smooth_count"
+#a02 = "t01_smooth_or_features_a02_features_or_disk_count"
+#a03 = "t01_smooth_or_features_a03_star_or_artifact_count"
+#data = Gz2_data(csv_dir=args.csv_file,
+#                image_dir=args.img_file,
+#                list_of_interest=[a01,
+#                                  a02,
+#                                  a03],
+#                crop=args.img_size,
+#                resize=args.crop_size)
 
 
 encoder_y_args = {'input_size':args.input_size_y, 'output_size':args.output_size_y}
