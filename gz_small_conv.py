@@ -14,55 +14,62 @@ from pyro.optim import Adam
 import argparse
 
 parser = argparse.ArgumentParser()
-parser.add_argument('csv_file', metavar='c', type=str)
-parser.add_argument('img_file', metavar='i', type=str)
 
 pyro.enable_validation(True)
 pyro.distributions.enable_validation(False)
 pyro.set_rng_seed(0)
 
 class Encoder(nn.Module):
-    def __init__(self, hidden_dim=200, z_dim=100,
-                 height=424, width=424, channels=3):
+    """
+    Will take any insize as long as it is divisible by 8
+    """
+    def __init__(self,
+                 insize=56,
+                 z_dim=10):
         super().__init__()
-        self.height = height
-        self.width = width
-        self.channels = channels
-        self.layer1 = nn.Conv2d(1, 3, 6, 2)
-        self.layer2 = nn.Conv2d(3, 6, 5, 2)
-        self.layer3 = nn.Conv2d(6, 1, 5, 2)
-        self.layer41 = nn.Linear(2500, z_dim)
-        self.layer42 = nn.Linear(2500, z_dim)
-        # setup the non-linearities
+        self.insize = insize
+        self.linear_size = int((insize/8)**2)
+        self.layer1 = nn.Conv2d(1, 3, 3, 1, 1)
+        self.maxpool = nn.MaxPool2d(2)
+        self.layer2 = nn.Conv2d(3, 6, 3, 1, 1)
+        self.layer3 = nn.Conv2d(6, 1, 3, 1, 1)
+        self.layer41 = nn.Linear(self.linear_size, z_dim)
+        self.layer42 = nn.Linear(self.linear_size, z_dim)
         self.softplus = nn.Softplus()
 
     def forward(self, x):
         x = self.layer1(x)
+        x = self.maxpool(x)
         x = self.layer2(x)
+        x = self.maxpool(x)
         x = self.layer3(x)
-        x = x.reshape(-1, 2500)
+        x = self.maxpool(x)
+        x = x.view(x.shape[0],-1)
         z_loc = self.layer41(x)
         z_scale = torch.exp(self.layer42(x))
         return z_loc, z_scale
 
 
 class Decoder(nn.Module):
-    def __init__(self, hidden_dim=200, z_dim=100,
-                 height=424, width=424, channels=3):
+    def __init__(self, z_dim=10, outsize=56):
         super().__init__()
-        self.layer4 = nn.Linear(z_dim, 2500)
-        self.layer3 = nn.ConvTranspose2d(1, 3, 5, 2, output_padding=1)
-        self.layer2 = nn.ConvTranspose2d(3, 6, 5, 4, output_padding=2)
-        self.layer1 = nn.ConvTranspose2d(6, 1, 6, 1)
+        self.outsize = outsize
+        self.linear_size = int((outsize/8)**2)
+        self.layer1 = nn.Linear(z_dim, self.linear_size)
+        self.layer2 = nn.ConvTranspose2d(1, 3, 3, 2, 1)
+        self.layer3 = nn.ConvTranspose2d(3, 6, 3, 2)
+        self.layer4 = nn.ConvTranspose2d(6, 1, 4, 2)
         self.softplus = nn.Softplus()
         self.sigmoid = nn.Sigmoid()
-
+        
     def forward(self, z):
-        z = self.softplus(self.layer4(z))
-        z = z.reshape(-1, 1, 50, 50)
-        z = self.layer3(z)
+        import pdb
+        pdb.set_trace()
+        z = self.softplus(self.layer1(z))
+        z = torch.reshape(z, (-1, 1, int(self.outsize/8), int(self.outsize/8)))
         z = self.layer2(z)
-        z = self.layer1(z)
+        z = self.layer3(z)
+        z = self.layer4(z)
         z = self.sigmoid(z)
         hidden = self.softplus(z)
         loc_img = self.sigmoid(z)
@@ -72,8 +79,8 @@ class Decoder(nn.Module):
 class VAE(nn.Module):
     def __init__(self, z_dim=200, hidden_dim=200, use_cuda=False):
         super().__init__()
-        self.encoder = Encoder(z_dim, hidden_dim)
-        self.decoder = Decoder(z_dim, hidden_dim)
+        self.encoder = Encoder()
+        self.decoder = Decoder()
         if use_cuda:
             self.cuda()
         self.use_cuda = use_cuda
@@ -161,6 +168,12 @@ def evaluate(svi, test_loader, use_cuda=False):
 
 if __name__ == "__main__":
     # test vae
+    csv = "gz2_data/gz2_20.csv"
+    img = "gz2_data/"
+
+    parser.add_argument('--csv_file', metavar='c', type=str, default=csv)
+    parser.add_argument('--img_file', metavar='i', type=str, default=img)
+
     args = parser.parse_args()
     a01 = "t01_smooth_or_features_a01_smooth_count"
     a02 = "t01_smooth_or_features_a02_features_or_disk_count"
@@ -169,7 +182,11 @@ if __name__ == "__main__":
                     image_dir=args.img_file,
                     list_of_interest=[a01,
                                       a02,
-                                      a03])
+                                      a03],
+                    crop=56,
+                    resize=56
+                    
+    )
     
     # one pass through vae
     dataloader = DataLoader(data, batch_size=2)
