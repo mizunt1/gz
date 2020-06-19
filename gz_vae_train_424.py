@@ -1,4 +1,4 @@
-from gz_vae_conv import VAE, train, evaluate
+from gz_vae_conv_424 import VAE, train, evaluate
 from torch.utils.tensorboard import SummaryWriter
 from load_gz_data import Gz2_data, return_data_loader
 from simple_classifier import Classifier
