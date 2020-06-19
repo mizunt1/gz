@@ -15,6 +15,7 @@ parser.add_argument('--img_file', metavar='i', type=str, default=img)
 parser.add_argument('--no_cuda', default=False, action='store_true')
 parser.add_argument('--num_epochs', type=int, default=10)
 parser.add_argument('--img_size', default=56, type=int)
+parser.add_argument('--lr', default=1.0e-3, type=float)
 parser.add_argument('--z_size', default=10, type=int)
 parser.add_argument('--crop_size', default=56, type=int)
 parser.add_argument('--batch_size', default=100, type=int)
@@ -33,7 +34,7 @@ data = Gz2_data(csv_dir=args.csv_file,
 
 encoder_args = {'insize':args.img_size, 'z_dim':args.z_size}
 decoder_args = {'z_dim':args.z_size, 'outsize':args.img_size}
-optimizer = Adam({"lr": 1.0e-3})
+optimizer = Adam({"lr": 1.0e-4})
 vae = VAE(Encoder, Decoder, args.z_size, encoder_args, decoder_args, use_cuda=use_cuda)
 test_proportion = 0.5
 train_loader, test_loader  = return_data_loader(data, test_proportion, batch_size=args.batch_size)
