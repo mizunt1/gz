@@ -341,7 +341,9 @@ for epoch in range(num_epochs):
         images_out = ssvae.reconstruct_img(images_tran, labels[0:9], use_cuda=use_cuda)
         img_grid = torchvision.utils.make_grid(images_out)
         writer.add_image('images', img_grid)
-        ssvae.test_acc(images, labels, use_cuda=use_cuda)
+        acc = ssvae.test_acc(images, labels, use_cuda=use_cuda)
+        print("accuracy:", acc)
+        writer.add_scalar('test accuracy', acc, epoch)
 
     if epoch % checkpoint_freq == 0:
         torch.save(ssvae.encoder_y.state_dict(), "checkpoints/" + args.checkpoint + "/encoder_y.checkpoint")
