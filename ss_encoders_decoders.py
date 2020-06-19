@@ -1,10 +1,12 @@
 import torch.nn as nn
+import utils
+import torch
 class Encoder_y(nn.Module):
     # outputs a y given an x.
     # the classifier. distribution for y given an input x
     # input dim is whatever the input image size is,
     # output will be the probabilities a that parameterise y ~ cat(a)
-    def __init__(self, input_size, output_size):
+    def __init__(self, input_size=784, output_size=10):
         super().__init__()
         self.fc1 = nn.Linear(input_size, 400)
         self.fc2 = nn.Linear(400, output_size)
@@ -23,7 +25,7 @@ class Encoder_z(nn.Module):
     # input a x and a y, outputs a z
     # input x and y as flattened vector
     # inputsize should therefore be len(x) + len(y)
-    def __init__(self, input_size, output_size):
+    def __init__(self, input_size=794, output_size=100):
         super().__init__()
         self.fc1 = nn.Linear(input_size, 400)
         self.fc2 = nn.Linear(400, 200)
@@ -43,7 +45,7 @@ class Encoder_z(nn.Module):
 class Decoder(nn.Module):
     # takes y and z and outputs a x
     # input shape is therefore y and z concatenated
-    def __init__(self, input_size, output_size):
+    def __init__(self, input_size=110, output_size=784):
         super().__init__()
         self.fc1 = nn.Linear(input_size, 300)
         self.fc2 = nn.Linear(300, 500)

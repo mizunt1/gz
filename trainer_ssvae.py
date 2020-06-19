@@ -1,7 +1,8 @@
 from construct_ssvae import SSVAE, train_log
+
 from ss_encoders_decoders import Encoder_y, Encoder_z, Decoder
 from construct_ssvae import SSVAE, train_log
-from small_conv import Encoder, Decoder
+from pyro.infer import SVI, TraceEnum_ELBO, config_enumerate, Trace_ELBO
 from load_gz_data import Gz2_data, return_data_loader
 from torch.utils.data import DataLoader
 from load_mnist import return_ss_loader, transform
@@ -54,13 +55,14 @@ encoder_z_args = {'input_size':args.input_size_z, 'output_size':args.output_size
 decoder_args =  {'input_size':args.input_size_z, 'output_size':args.output_size_z}
 decoder_args = {'input_size':args.input_size_de, 'output_size':args.input_size_y}
 optimizer = Adam({"lr": 1.0e-4})
-ssvae = SSVAE(encoder_y, encoder_z, decoder, args.output_size_z, args.output_size_y,
+ssvae = SSVAE(Encoder_y, Encoder_z, Decoder, args.output_size_z, args.output_size_y,
               encoder_y_args, encoder_z_args, decoder_args, use_cuda=use_cuda)
 us_portion = 0.2
 batch_size = 100
 test_s_loader, test_us_loader, train_s_loader, train_us_loader = return_ss_loader(us_portion, args.batch_size)
 guide = config_enumerate(ssvae.guide, "parallel", expand=True)
-svi = SVI(vae.model, guide, optimizer, loss=Trace_ELBO())
+svi = SVI(ssvae.model, guide, optimizer, loss=TraceEnum_ELBO())
 print("train and log")
-train_log(args.dir_name, ssvae, svi, train_s_loader, train_us_loader, use_cuda=use_cuda, transform=transform)
+train_log(args.dir_name, ssvae, svi, train_s_loader, train_us_loader, test_s_loader, test_us_loader,
+          10, use_cuda=use_cuda)
 
