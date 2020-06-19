@@ -63,5 +63,5 @@ guide = config_enumerate(ssvae.guide, "parallel", expand=True)
 svi = SVI(ssvae.model, guide, optimizer, loss=TraceEnum_ELBO())
 print("train and log")
 train_log(args.dir_name, ssvae, svi, train_s_loader, train_us_loader, test_s_loader, test_us_loader,
-          10, use_cuda=use_cuda)
+          args.num_epochs, use_cuda=use_cuda, plot_img_freq=100, checkpoint_freq=50, test_freq=10)
 

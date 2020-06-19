@@ -249,12 +249,12 @@ def train_log(dir_name, ssvae, svi, train_s_loader, train_us_loader,
 
             images_out = ssvae.sample_img(image_in, labels, use_cuda=use_cuda, transform=transform)
             img_grid = tv.utils.make_grid(images_out)
-            writer.add_image('images', img_grid)
+            writer.add_image('images from epoch ' + str(epoch), img_grid)
             acc = ssvae.test_acc(image_in, labels, use_cuda=use_cuda)
             print("accuracy:", acc)
             writer.add_scalar('test accuracy', acc, epoch)
-            if epoch % checkpoint_freq == 0:
-                torch.save(ssvae.encoder_y.state_dict(), "checkpoints/" + dir_name + "/encoder_y.checkpoint")
-                torch.save(ssvae.encoder_z.state_dict(), "checkpoints/" + dir_name +  "/encoder_z.checkpoint")
-                torch.save(ssvae.decoder.state_dict(), "checkpoints/" + dir_name +  "/decoder.checkpoint")
+        if epoch % checkpoint_freq == 0:
+            torch.save(ssvae.encoder_y.state_dict(), "checkpoints/" + dir_name + "/encoder_y.checkpoint")
+            torch.save(ssvae.encoder_z.state_dict(), "checkpoints/" + dir_name +  "/encoder_z.checkpoint")
+            torch.save(ssvae.decoder.state_dict(), "checkpoints/" + dir_name +  "/decoder.checkpoint")
         writer.close()
