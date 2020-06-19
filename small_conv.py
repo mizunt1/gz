@@ -18,6 +18,8 @@ class Encoder(nn.Module):
         self.softplus = nn.Softplus()
 
     def forward(self, x):
+        x = x - 0.222
+        x = x / 0.156
         x = self.layer1(x)
         x = self.maxpool(x)
         x = self.layer2(x)
