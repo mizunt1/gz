@@ -12,7 +12,7 @@ class Encoder(nn.Module):
         self.layer1 = nn.Conv2d(1, 32, 3, 1, 1)
         self.maxpool = nn.MaxPool2d(2)
         self.layer2 = nn.Conv2d(32, 32, 3, 1, 1)
-        self.layer3 = nn.Conv2d(24, 1, 3, 1, 1)
+        self.layer3 = nn.Conv2d(32, 1, 3, 1, 1)
         self.layer41 = nn.Linear(self.linear_size, z_dim)
         self.layer42 = nn.Linear(self.linear_size, z_dim)
         self.softplus = nn.Softplus()
@@ -40,7 +40,7 @@ class Decoder(nn.Module):
         self.layer1 = nn.Linear(z_dim, self.linear_size)
         self.layer2 = nn.ConvTranspose2d(1, 32, 3, 2, 1)
         self.layer3 = nn.ConvTranspose2d(32, 32, 3, 2)
-        self.layer4 = nn.ConvTranspose2d(24, 1, 4, 2)
+        self.layer4 = nn.ConvTranspose2d(32, 1, 4, 2)
         self.softplus = nn.Softplus()
         self.sigmoid = nn.Sigmoid()
         
