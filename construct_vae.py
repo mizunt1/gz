@@ -35,7 +35,7 @@ class VAE(nn.Module):
             # Ask lewis, channel, and h and w are dependent, go to event
             pyro.sample(
                 "obs",
-                dist.Bernoulli(loc_img).to_event(3),
+                dist.Laplace(loc_img, 0.5).to_event(3),
                 obs=x)
 
     # define the guide (i.e. variational distribution) q(z|x)
@@ -46,7 +46,7 @@ class VAE(nn.Module):
             # use the encoder to get the parameters used to define q(z|x)
             z_loc, z_scale = self.encoder.forward(x)
             # sample the latent code z
-            pyro.sample("latent", dist.Laplace(z_loc, z_scale).to_event(1))
+            pyro.sample("latent", dist.Normal(z_loc, z_scale).to_event(1))
 
     # define a helper function for reconstructing images
     def sample_img(self, x, use_cuda=False, encoder=False, decoder=False):
