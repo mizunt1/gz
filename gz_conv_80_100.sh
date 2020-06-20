@@ -4,7 +4,7 @@
 
 #SBATCH --output=slurm-%j.out
 #SBATCH --error=slurm-%j.err
-#SBATCH --job-name="2gz_conv_small"
+#SBATCH --job-name="gz_conv_32"
 #SBATCH --partition="msc"
 
 export CONDA_ENVS_PATH=/scratch-ssd/$USER/conda_envs

@@ -1,5 +1,5 @@
 from construct_vae import VAE, evaluate, train_log_vae
-from small_conv import Encoder, Decoder
+from encoder_decoder_32 import Encoder, Decoder
 from load_gz_data import Gz2_data, return_data_loader
 from torch.utils.data import DataLoader
 from pyro.infer import SVI, Trace_ELBO
@@ -36,6 +36,9 @@ encoder_args = {'insize':args.img_size, 'z_dim':args.z_size}
 decoder_args = {'z_dim':args.z_size, 'outsize':args.img_size}
 optimizer = Adam({"lr": 1.0e-4})
 vae = VAE(Encoder, Decoder, args.z_size, encoder_args, decoder_args, use_cuda=use_cuda)
+
+num_params = sum(p.numel() for p in vae.parameters() if p.requires_grad)
+print("num_params: ", num_params)
 test_proportion = 0.5
 train_loader, test_loader  = return_data_loader(data, test_proportion, batch_size=args.batch_size)
 svi = SVI(vae.model, vae.guide, optimizer, loss=Trace_ELBO())
