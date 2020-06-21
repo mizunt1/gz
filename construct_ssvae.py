@@ -16,6 +16,7 @@ class SSVAE(nn.Module):
         self.decoder = decoder(**decoder_args)
         self.z_dim = z_dim
         self.y_dim = y_dim
+        self.img_dim = img_dim
         if use_cuda:
             self.cuda()
 
@@ -80,12 +81,13 @@ class SSVAE(nn.Module):
             x = x.cuda()
             y = y.cuda()
 
+        img_dim = x.shape[-1]
         z_loc, z_scale = self.encoder_z([x,y])
         # sample in latent space
         z = dist.Normal(z_loc, z_scale).sample()
         # decode the image (note we don't sample in image space)
         loc_img = self.decoder([z,y])
-        return loc_img.reshape([batch_size, 1, 28, 28])
+        return loc_img.reshape([-1, 1, img_dim, img_dim])
 
     def test_acc(self, x, y, use_cuda=True):
 
@@ -108,7 +110,6 @@ def train_ss(svi, train_s_loader, train_us_loader, use_cuda=False):
     for data_sup, data_unsup in zip_list:
         xs, ys = data_sup        
         xus, yus = data_unsup
-        batch_size = xs.size(0)
         # if on GPU put mini-batch into CUDA memory
         if use_cuda:
             xs = xs.cuda()
@@ -135,8 +136,6 @@ def evaluate(svi, test_s_loader, test_us_loader, use_cuda=False):
     for data_sup, data_unsup in zip(cycle(test_s_loader), test_us_loader):
         xs, ys = data_sup
         xus, yus = data_unsup
-        batch_size = xs.size(0)
-
         # if on GPU put mini-batch into CUDA memory
         batch_size = xs.size(0)
 
