@@ -18,4 +18,3 @@ srun python train_small_conv.py\
     --img_file /scratch-ssd/oatml/data/gz2\
     --dir_name gz_conv_80_100_32\
     --num_epochs 100 --img_size 80 --crop_size 80 --z_size 100
-
