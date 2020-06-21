@@ -108,6 +108,8 @@ def train_log_vae(checkpoint_dir, writer_name, vae, svi, train_loader, test_load
                   num_epochs, plot_img_freq=1, num_img_plt=9,
                   checkpoint_freq=1, use_cuda=True, test_freq=1):
     
+    num_params = sum(p.numel() for p in vae.parameters() if p.requires_grad)
+
     writer = SummaryWriter("tb_data_all/" + writer_name)
     if not os.path.exists("checkpoints/" + checkpoint_dir):
         os.makedirs("checkpoints/" + checkpoint_dir)
@@ -131,7 +133,7 @@ def train_log_vae(checkpoint_dir, writer_name, vae, svi, train_loader, test_load
             img_grid_in = tv.utils.make_grid(image_in)
             img_grid = tv.utils.make_grid(images_out)
             writer.add_image('images in, from epoch' + str(epoch), img_grid_in)
-            writer.add_image('images out, from epoch'+ str(epoch), img_grid)
+            writer.add_image(num_params + ' images out, from epoch'+ str(epoch), img_grid)
 
         if epoch % checkpoint_freq == 0:
 

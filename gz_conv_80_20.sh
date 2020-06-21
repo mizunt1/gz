@@ -4,7 +4,7 @@
 
 #SBATCH --output=slurm-%j.out
 #SBATCH --error=slurm-%j.err
-#SBATCH --job-name="2gz_conv_small"
+#SBATCH --job-name="32gz_long"
 #SBATCH --partition="msc"
 
 export CONDA_ENVS_PATH=/scratch-ssd/$USER/conda_envs
@@ -16,6 +16,6 @@ source /scratch-ssd/oatml/miniconda3/bin/activate gz_mizu
 srun python train_small_conv.py\
     --csv_file /scratch-ssd/oatml/data/gz2/gz2_classifications_and_subjects.csv\
     --img_file /scratch-ssd/oatml/data/gz2\
-    --dir_name gz_conv_80_20\
-    --num_epochs 10 --img_size 80 --crop_size 80 --z_size 20
+    --dir_name gz_conv_32_long\
+    --num_epochs 100 --img_size 80 --crop_size 80 --z_size 20
 

@@ -37,12 +37,11 @@ decoder_args = {'z_dim':args.z_size, 'outsize':args.img_size}
 optimizer = Adam({"lr": 1.0e-4})
 vae = VAE(Encoder, Decoder, args.z_size, encoder_args, decoder_args, use_cuda=use_cuda)
 
-num_params = sum(p.numel() for p in vae.parameters() if p.requires_grad)
-print("num_params: ", num_params)
-test_proportion = 0.5
+
+test_proportion = 0.2
 train_loader, test_loader  = return_data_loader(data, test_proportion, batch_size=args.batch_size)
 svi = SVI(vae.model, vae.guide, optimizer, loss=Trace_ELBO())
 
 
 print("train and log")
-train_log_vae(args.dir_name, args.dir_name, vae, svi, train_loader, test_loader, 10, use_cuda=use_cuda)
+train_log_vae(args.dir_name, args.dir_name, vae, svi, train_loader, test_loader, args.num_epochs, use_cuda=use_cuda)
