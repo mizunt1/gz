@@ -40,7 +40,7 @@ class Decoder(nn.Module):
         self.layer1 = nn.Linear(z_dim, self.linear_size)
         self.layer2 = nn.ConvTranspose2d(1, 32, 3, 2, 1)
         self.layer3 = nn.ConvTranspose2d(32, 32, 3, 2)
-        self.layer4 = nn.ConvTranspose2d(32, 1, 2, 2)
+        self.layer4 = nn.ConvTranspose2d(32, 1, 4, 2)
         self.softplus = nn.Softplus()
         self.sigmoid = nn.Sigmoid()
         
