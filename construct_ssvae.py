@@ -1,4 +1,5 @@
 import torch.nn as nn
+import numpy as np 
 import torch
 import pyro
 import pyro.distributions as dist
@@ -16,7 +17,6 @@ class SSVAE(nn.Module):
         self.decoder = decoder(**decoder_args)
         self.z_dim = z_dim
         self.y_dim = y_dim
-        self.img_dim = img_dim
         if use_cuda:
             self.cuda()
 
@@ -75,7 +75,7 @@ class SSVAE(nn.Module):
             loc, scale = self.encoder_z.forward([xs, ys])
             pyro.sample("z", dist.Normal(loc, scale).to_event(1))
 
-    def sample_img(self, x, y, use_cuda=False):
+    def sample_img(self, x, y, img_width, use_cuda=False):
         # encode image x
         if use_cuda == True:
             x = x.cuda()
@@ -87,7 +87,7 @@ class SSVAE(nn.Module):
         z = dist.Normal(z_loc, z_scale).sample()
         # decode the image (note we don't sample in image space)
         loc_img = self.decoder([z,y])
-        return loc_img.reshape([-1, 1, img_dim, img_dim])
+        return loc_img.reshape([-1, 1, img_width, img_width])
 
     def test_acc(self, x, y, use_cuda=True):
 
@@ -96,8 +96,9 @@ class SSVAE(nn.Module):
             y = y.cuda()
         ys = self.encoder_y.forward(x)
         _, max_ind = torch.max(ys, 1)
-        acc_per_batch = torch.sum(y == max_ind)
-        return acc_per_batch.item()/ len(y)
+        _, max_ind_label = torch.max(y, 1)
+        acc_per_batch = torch.sum(max_ind_label == max_ind)
+        return acc_per_batch.item()/ y.shape[0]
 
 def train_ss(svi, train_s_loader, train_us_loader, use_cuda=False):
     # trains for one single epoch and returns normalised loss for one epoch
@@ -153,7 +154,7 @@ def evaluate(svi, test_s_loader, test_us_loader, use_cuda=False):
     return total_epoch_loss_test
 
 def train_log(dir_name, ssvae, svi, train_s_loader, train_us_loader,
-              test_s_loader, test_us_loader, num_epochs, plot_img_freq=1,
+              test_s_loader, test_us_loader, img_len, num_epochs, plot_img_freq=1,
               num_img_plt=9, checkpoint_freq=1, use_cuda=True, test_freq=1):
     writer = SummaryWriter("tb_data_all/" + dir_name)
     if not os.path.exists("checkpoints/" + dir_name):
@@ -169,7 +170,7 @@ def train_log(dir_name, ssvae, svi, train_s_loader, train_us_loader,
         if epoch % plot_img_freq == 0:
             image_in, labels  = next(iter(test_s_loader))[0:num_img_plt]
 
-            images_out = ssvae.sample_img(image_in, labels, use_cuda=use_cuda)
+            images_out = ssvae.sample_img(image_in, labels, img_len, use_cuda=use_cuda)
             img_grid = tv.utils.make_grid(images_out)
             writer.add_image('images from epoch ' + str(epoch), img_grid)
             acc = ssvae.test_acc(image_in, labels, use_cuda=use_cuda)
