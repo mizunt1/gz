@@ -17,5 +17,5 @@ srun python train_small_conv.py\
     --csv_file /scratch-ssd/oatml/data/gz2/gz2_classifications_and_subjects.csv\
     --img_file /scratch-ssd/oatml/data/gz2\
     --dir_name gz_conv_32_long\
-    --num_epochs 100 --img_size 80 --crop_size 80 --z_size 20
+    --num_epochs 100 --img_size 80 --crop_size 80 --z_size 40
 

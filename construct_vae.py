@@ -133,7 +133,7 @@ def train_log_vae(checkpoint_dir, writer_name, vae, svi, train_loader, test_load
             img_grid_in = tv.utils.make_grid(image_in)
             img_grid = tv.utils.make_grid(images_out)
             writer.add_image('images in, from epoch' + str(epoch), img_grid_in)
-            writer.add_image(int(num_params) + ' images out, from epoch'+ str(epoch), img_grid)
+            writer.add_image(str(num_params) + ' images out, from epoch'+ str(epoch), img_grid)
 
         if epoch % checkpoint_freq == 0:
 

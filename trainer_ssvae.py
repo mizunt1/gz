@@ -1,11 +1,11 @@
 from construct_ssvae import SSVAE, train_log
-
+import torchvision as tv
 from ss_encoders_decoders import Encoder_y, Encoder_z, Decoder
 from construct_ssvae import SSVAE, train_log
 from pyro.infer import SVI, TraceEnum_ELBO, config_enumerate, Trace_ELBO
 from load_gz_data import Gz2_data, return_data_loader
 from torch.utils.data import DataLoader
-from load_mnist import return_ss_loader, transform
+from load_mnist import return_ss_loader, flatten
 from pyro.infer import SVI, Trace_ELBO
 import argparse
 from pyro.optim import Adam
@@ -58,7 +58,8 @@ ssvae = SSVAE(Encoder_y, Encoder_z, Decoder, args.output_size_z, args.output_siz
               encoder_y_args, encoder_z_args, decoder_args, use_cuda=use_cuda)
 us_portion = 0.2
 batch_size = 100
-test_s_loader, test_us_loader, train_s_loader, train_us_loader = return_ss_loader(us_portion, args.batch_size)
+test_s_loader, test_us_loader, train_s_loader, train_us_loader = return_ss_loader(
+    us_portion, args.batch_size, transforms_list=[tv.transforms.Lambda(lambda x: flatten(x))])
 guide = config_enumerate(ssvae.guide, "parallel", expand=True)
 svi = SVI(ssvae.model, guide, optimizer, loss=TraceEnum_ELBO())
 print("train and log")
