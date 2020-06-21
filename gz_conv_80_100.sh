@@ -16,6 +16,6 @@ source /scratch-ssd/oatml/miniconda3/bin/activate gz_mizu
 srun python train_small_conv.py\
     --csv_file /scratch-ssd/oatml/data/gz2/gz2_classifications_and_subjects.csv\
     --img_file /scratch-ssd/oatml/data/gz2\
-    --dir_name gz_conv_80_100\
+    --dir_name gz_conv_80_100_32\
     --num_epochs 10 --img_size 80 --crop_size 80 --z_size 100
 
