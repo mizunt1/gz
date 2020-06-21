@@ -14,6 +14,5 @@ export CONDA_PKGS_DIRS=/scratch-ssd/$USER/conda_pkgs
 source /scratch-ssd/oatml/miniconda3/bin/activate gz_mizu
 
 srun python trainer_ssvae.py\
-    --dir_name ssvae_test2\
-    --num_epochs 900 --batch_size 100
-
+    --dir_name ssvae_test5\
+    --num_epochs 250 --batch_size 100

@@ -54,15 +54,18 @@ encoder_z_args = {'input_size':args.input_size_z, 'output_size':args.output_size
 decoder_args =  {'input_size':args.input_size_z, 'output_size':args.output_size_z}
 decoder_args = {'input_size':args.input_size_de, 'output_size':args.input_size_y}
 optimizer = Adam({"lr": 1.0e-4})
-ssvae = SSVAE(Encoder_y, Encoder_z, Decoder, args.output_size_z, args.output_size_y,
-              encoder_y_args, encoder_z_args, decoder_args, use_cuda=use_cuda)
 us_portion = 0.2
-batch_size = 100
 test_s_loader, test_us_loader, train_s_loader, train_us_loader = return_ss_loader(
     us_portion, args.batch_size, transforms_list=[tv.transforms.Lambda(lambda x: flatten(x))])
+
+ssvae = SSVAE(Encoder_y, Encoder_z, Decoder, args.output_size_z, args.output_size_y,
+              encoder_y_args, encoder_z_args, decoder_args, use_cuda=use_cuda)
+
+batch_size = 100
+img_len = 28
 guide = config_enumerate(ssvae.guide, "parallel", expand=True)
 svi = SVI(ssvae.model, guide, optimizer, loss=TraceEnum_ELBO())
 print("train and log")
-train_log(args.dir_name, ssvae, svi, train_s_loader, train_us_loader, test_s_loader, test_us_loader,
-          args.num_epochs, use_cuda=use_cuda, plot_img_freq=100, checkpoint_freq=50, test_freq=10)
+train_log(args.dir_name, ssvae, svi, train_s_loader, train_us_loader, test_s_loader, test_us_loader, img_len,
+          args.num_epochs, use_cuda=use_cuda, plot_img_freq=5, checkpoint_freq=50, test_freq=2)
 

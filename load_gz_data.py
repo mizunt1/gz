@@ -5,7 +5,7 @@ from PIL import Image
 import torchvision as tv
 
 class Gz2_data(torch.utils.data.Dataset):
-    def __init__(self, csv_dir, image_dir, list_of_interest, faulty_data_set=False, crop=180, resize=128):
+    def __init__(self, csv_dir, image_dir, list_of_interest, faulty_data_set=False, crop=180, resize=128, transforms=None):
         self.csv_dir = csv_dir
         self.faulty_data_set = faulty_data_set
         self.image_dir = image_dir
@@ -38,7 +38,8 @@ class Gz2_data(torch.utils.data.Dataset):
         data = torch.tensor(data.values.astype('int32'))
         transforms = tv.transforms.Compose(
             [tv.transforms.CenterCrop(self.crop),
-             tv.transforms.Resize(self.resize), tv.transforms.Grayscale(), tv.transforms.ToTensor()])
+             tv.transforms.Resize(self.resize), tv.transforms.Grayscale(), tv.transforms.RandomRotation(180),
+             tv.transforms.ToTensor()])
         image = transforms(image)
         sample = {'image': image, 'data': data}
         return sample
