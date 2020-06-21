@@ -8,12 +8,14 @@ class Encoder_y(nn.Module):
     # output will be the probabilities a that parameterise y ~ cat(a)
     def __init__(self, input_size=784, output_size=10):
         super().__init__()
-        self.fc1 = nn.Linear(input_size, 400)
+        self.input_size = input_size
+        self.fc1 = nn.Linear(self.input_size, 400)
         self.fc2 = nn.Linear(400, output_size)
         self.softplus = nn.Softplus()
         self.softmax = nn.Softmax(dim=1)
-
+        
     def forward(self, x):
+        x = x.view(-1, self.input_size)
         y = self.fc1(x)
         y = self.fc2(y)
         y = self.softplus(y)

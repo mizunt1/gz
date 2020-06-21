@@ -3,7 +3,7 @@ import torch
 import pyro
 import pyro.distributions as dist
 import os
-from load_mnist import setup_data_loaders, transform, return_data_loader, return_ss_loader
+from load_mnist import setup_data_loaders, return_data_loader, return_ss_loader
 from torch.utils.tensorboard import SummaryWriter
 from itertools import cycle
 import utils
@@ -74,15 +74,12 @@ class SSVAE(nn.Module):
             loc, scale = self.encoder_z.forward([xs, ys])
             pyro.sample("z", dist.Normal(loc, scale).to_event(1))
 
-    def sample_img(self, x, y, use_cuda=False, transform=transform):
+    def sample_img(self, x, y, use_cuda=False):
         # encode image x
-        batch_size = x.size(0)
-        y = y.reshape(batch_size, 1)
-        y = (y == torch.arange(10).reshape(1, 10)).float()
-        x = transform(x)
         if use_cuda == True:
             x = x.cuda()
             y = y.cuda()
+
         z_loc, z_scale = self.encoder_z([x,y])
         # sample in latent space
         z = dist.Normal(z_loc, z_scale).sample()
@@ -91,7 +88,7 @@ class SSVAE(nn.Module):
         return loc_img.reshape([batch_size, 1, 28, 28])
 
     def test_acc(self, x, y, use_cuda=True):
-        x = transform(x)
+
         if use_cuda == True:
             x = x.cuda()
             y = y.cuda()
@@ -100,43 +97,7 @@ class SSVAE(nn.Module):
         acc_per_batch = torch.sum(y == max_ind)
         return acc_per_batch.item()/ len(y)
 
-def train_ss(svi, train_loader, use_cuda=False, transform=False):
-    # trains for one single epoch and returns normalised loss for one epoch
-    labelled = True
-    # initialize loss accumulator
-    epoch_loss = 0.
-    # do a training epoch over each mini-batch x returned
-    # by the data loader
-    for x, y in train_loader:
-        batch_size = x.size(0)
-        # changing labels to one hot encoding
-        # I think this is necessary when using dist.OneHotCategorical but not sure 
-        y = y.reshape(batch_size, 1)
-        y = (y == torch.arange(10).reshape(1, 10)).float()
-        if transform != False:
-            # flattens images to 1d vector
-            x = transform(x)
-        # if on GPU put mini-batch into CUDA memory
-        if use_cuda:
-            x = x.cuda()
-            # not really sure what Im doing here and not sure if necessary 
-            y = y.cuda()
-        # feeding in data. At times, omit labels
-        # TODO seperate data set tolabelled and unlabelled rather than alternating as below
-        if labelled == True:
-            batch_loss = svi.step(x, y)
-            epoch_loss += batch_loss
-            labelled = False
-        else:
-            batch_loss = svi.step(x)
-            epoch_loss += batch_loss
-            labelled = True
-    # return epoch loss
-    normalizer_train = len(train_loader.dataset)
-    total_epoch_loss_train = epoch_loss / normalizer_train
-    return total_epoch_loss_train
-
-def train_ss2(svi, train_s_loader, train_us_loader, use_cuda=False, transform=False):
+def train_ss(svi, train_s_loader, train_us_loader, use_cuda=False):
     # trains for one single epoch and returns normalised loss for one epoch
     # initialize loss accumulator
     epoch_loss_s = 0.
@@ -148,16 +109,6 @@ def train_ss2(svi, train_s_loader, train_us_loader, use_cuda=False, transform=Fa
         xs, ys = data_sup        
         xus, yus = data_unsup
         batch_size = xs.size(0)
-        # changing labels to one hot encoding
-        # I think this is necessary when using dist.OneHotCategorical but not sure 
-        ys = ys.reshape(batch_size, 1)
-        ys = (ys == torch.arange(10).reshape(1, 10)).float()
- 
-        if transform != False:
-            # flattens images to 1d vector
-            xs = transform(xs)
-            xus = transform(xus)
-            
         # if on GPU put mini-batch into CUDA memory
         if use_cuda:
             xs = xs.cuda()
@@ -177,29 +128,7 @@ def train_ss2(svi, train_s_loader, train_us_loader, use_cuda=False, transform=Fa
     total_epoch_loss_us = epoch_loss_us /normalizer_train_us
     return total_epoch_loss_s + total_epoch_loss_us
 
-def evaluate(svi, test_loader, use_cuda=False, transform=transform):
-    # initialize loss accumulator
-    test_loss = 0.
-    # compute the loss over the entire test set
-    for x, y in test_loader:
-        # if on GPU put mini-batch into CUDA memory
-        batch_size = x.size(0)
-        y = y.reshape(batch_size, 1)
-        y = (y == torch.arange(10).reshape(1, 10)).float()
-        
-        if use_cuda:
-            x = x.cuda()
-            y = y.cuda()
-        if transform != False:
-            x = transform(x)
-        # compute ELBO estimate and accumulate loss
-        test_loss += svi.evaluate_loss(x)
-
-    normalizer_test = len(test_loader.dataset)
-    total_epoch_loss_test = test_loss / normalizer_test
-    return total_epoch_loss_test
-
-def evaluate2(svi, test_s_loader, test_us_loader, use_cuda=False, transform=transform):
+def evaluate(svi, test_s_loader, test_us_loader, use_cuda=False):
     # initialize loss accumulator
     test_loss = 0.
     # compute the loss over the entire test set
@@ -210,17 +139,11 @@ def evaluate2(svi, test_s_loader, test_us_loader, use_cuda=False, transform=tran
 
         # if on GPU put mini-batch into CUDA memory
         batch_size = xs.size(0)
-         
-        ys = ys.reshape(batch_size, 1)
-        ys = (ys == torch.arange(10).reshape(1, 10)).float()
 
         if use_cuda:
             xs = xs.cuda()
             ys = ys.cuda()
             xus = xus.cuda()
-        if transform != False:
-            xs = transform(xs)
-            xus = transform(xus)
         # compute ELBO estimate and accumulate loss
         test_loss += svi.evaluate_loss(xus)
         
@@ -237,17 +160,17 @@ def train_log(dir_name, ssvae, svi, train_s_loader, train_us_loader,
     if not os.path.exists("checkpoints/" + dir_name):
         os.makedirs("checkpoints/" + dir_name)
     for epoch in range(num_epochs):
-        total_epoch_loss_train = train_ss2(svi, train_s_loader, train_us_loader, use_cuda=use_cuda, transform=transform)
+        total_epoch_loss_train = train_ss(svi, train_s_loader, train_us_loader, use_cuda=use_cuda)
         if epoch % test_freq == 0:
             print("Train loss", total_epoch_loss_train)
             writer.add_scalar('Train loss', total_epoch_loss_train, epoch)
-            test_loss = evaluate2(svi, test_s_loader, test_us_loader, use_cuda=use_cuda, transform=transform)
+            test_loss = evaluate(svi, test_s_loader, test_us_loader, use_cuda=use_cuda)
             writer.add_scalar('test loss', test_loss, epoch)
             print("test loss", test_loss)
         if epoch % plot_img_freq == 0:
             image_in, labels  = next(iter(test_s_loader))[0:num_img_plt]
 
-            images_out = ssvae.sample_img(image_in, labels, use_cuda=use_cuda, transform=transform)
+            images_out = ssvae.sample_img(image_in, labels, use_cuda=use_cuda)
             img_grid = tv.utils.make_grid(images_out)
             writer.add_image('images from epoch ' + str(epoch), img_grid)
             acc = ssvae.test_acc(image_in, labels, use_cuda=use_cuda)

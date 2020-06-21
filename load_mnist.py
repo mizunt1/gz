@@ -2,14 +2,13 @@ import torch
 import random
 import torchvision.datasets as dset
 from torch.utils.data import IterableDataset
-import torchvision.transforms as transforms
+import torchvision as tv
 from PIL import Image
+import numpy as np
 
-def transform(x):
-    x = x.squeeze()
-    batch = x.shape[0]
-    x = x.reshape(batch,784)
-    return x
+def flatten(x):
+    x = np.array(x)
+    return x.reshape(784)
 
 def setup_data_loaders(data_type="digits", batch_size=128, use_cuda=False, root=None):
     if root == None:
@@ -51,15 +50,25 @@ def return_data_loader(data, test_proportion, batch_size):
     train_loader = torch.utils.data.DataLoader(dataset=train_set, batch_size=batch_size)
     return train_loader, test_loader
 
-def return_ss_loader(us_portion, batch_size, use_cuda=False, root=None, data_type="digits"):
+def to_one_hot(x, batch_size):
+    y = np.zeros(10)
+    y[x] = 1.0
+    return y.astype(np.float32)
+    
+def return_ss_loader(us_portion, batch_size, use_cuda=False, root=None, data_type="digits", transforms_list=None):
     if root == None:
         root = './data'
     download = True
-    trans = transforms.ToTensor()
+    one_hot = tv.transforms.Lambda(lambda x: to_one_hot(x, batch_size))
+
+    if transforms_list != None:
+        trans = tv.transforms.Compose([tv.transforms.ToTensor(), *transforms_list])
+    else:
+        trans = tv.transforms.ToTensor()
     if data_type == "digits":
-        train_set = dset.MNIST(root=root, train=True, transform=trans,
+        train_set = dset.MNIST(root=root, train=True, transform=trans, target_transform=one_hot,
                                download=download)
-        test_set = dset.MNIST(root=root, train=False, transform=trans)
+        test_set = dset.MNIST(root=root, train=False, transform=trans, target_transform=one_hot)
     if data_type == "fashion":
         train_set = dset.FashionMNIST(root=root, train=True, transform=trans,
                                download=download)
