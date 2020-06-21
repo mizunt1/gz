@@ -17,4 +17,4 @@ srun python trainer_vae.py\
     --csv_file /scratch-ssd/oatml/data/gz2/gz2_classifications_and_subjects.csv\
     --img_file /scratch-ssd/oatml/data/gz2\
     --dir_name gz_rotat\
-    --num_epochs 100 --img_size 80 --crop_size 80 --z_size 100
+    --num_epochs 250 --img_size 80 --crop_size 80 --z_size 100
