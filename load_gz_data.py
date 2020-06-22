@@ -49,13 +49,23 @@ def return_data_loader(data, test_proportion, batch_size):
     len_data = len(data)
     num_tests = int(len_data * test_proportion)
     test_indices = list(i for i in range(0,num_tests))
-    train_indices = list(i for i in range(0, num_tests))
+    train_indices = list(i for i in range(num_tests, len_data))
     test_set = torch.utils.data.Subset(data, test_indices)
     train_set = torch.utils.data.Subset(data, train_indices)
     test_loader = torch.utils.data.DataLoader(dataset=test_set, batch_size=batch_size)
     train_loader = torch.utils.data.DataLoader(dataset=train_set, batch_size=batch_size)
     return train_loader, test_loader
     
+def return_subset(data, test_proportion, num_data, batch_size):
+    num_tests = int(num_data * test_proportion)
+    test_idices = list(i for i in range(0, num_tests))
+    train_indices = list(i for i in range(num_tests, num_data))
+        test_set = torch.utils.data.Subset(data, test_indices)
+    train_set = torch.utils.data.Subset(data, train_indices)
+    test_loader = torch.utils.data.DataLoader(dataset=test_set, batch_size=batch_size)
+    train_loader = torch.utils.data.DataLoader(dataset=train_set, batch_size=batch_size)
+    return train_loader, test_loader
+
 if __name__ == "__main__":
     a01 = "t01_smooth_or_features_a01_smooth_count"
     a02 = "t01_smooth_or_features_a02_features_or_disk_count"

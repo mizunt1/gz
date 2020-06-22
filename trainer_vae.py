@@ -39,7 +39,8 @@ vae = VAE(Encoder, Decoder, args.z_size, encoder_args, decoder_args, use_cuda=us
 
 
 test_proportion = 0.2
-train_loader, test_loader  = return_data_loader(data, test_proportion, batch_size=args.batch_size)
+#train_loader, test_loader  = return_data_loader(data, test_proportion, batch_size=args.batch_size)
+train_loader, test_loader = return_subset(data, test_proportion, 130, batch_size=args.batch_size)
 svi = SVI(vae.model, vae.guide, optimizer, loss=Trace_ELBO())
 
 
