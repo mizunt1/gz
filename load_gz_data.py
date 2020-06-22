@@ -45,25 +45,25 @@ class Gz2_data(torch.utils.data.Dataset):
         sample = {'image': image, 'data': data}
         return sample
 
-def return_data_loader(data, test_proportion, batch_size):
+def return_data_loader(data, test_proportion, batch_size, shuffle=False):
     len_data = len(data)
     num_tests = int(len_data * test_proportion)
     test_indices = list(i for i in range(0,num_tests))
     train_indices = list(i for i in range(num_tests, len_data))
     test_set = torch.utils.data.Subset(data, test_indices)
     train_set = torch.utils.data.Subset(data, train_indices)
-    test_loader = torch.utils.data.DataLoader(dataset=test_set, batch_size=batch_size)
-    train_loader = torch.utils.data.DataLoader(dataset=train_set, batch_size=batch_size)
+    test_loader = torch.utils.data.DataLoader(dataset=test_set, batch_size=batch_size, shuffle=shuffle)
+    train_loader = torch.utils.data.DataLoader(dataset=train_set, batch_size=batch_size, shuffle=shuffle)
     return train_loader, test_loader
     
-def return_subset(data, test_proportion, num_data, batch_size):
+def return_subset(data, test_proportion, num_data, batch_size, shuffle=False):
     num_tests = int(num_data * test_proportion)
     test_indices = list(i for i in range(0, num_tests))
     train_indices = list(i for i in range(num_tests, num_data))
     test_set = torch.utils.data.Subset(data, test_indices)
     train_set = torch.utils.data.Subset(data, train_indices)
-    test_loader = torch.utils.data.DataLoader(dataset=test_set, batch_size=batch_size)
-    train_loader = torch.utils.data.DataLoader(dataset=train_set, batch_size=batch_size)
+    test_loader = torch.utils.data.DataLoader(dataset=test_set, batch_size=batch_size, shuffle=shuffle)
+    train_loader = torch.utils.data.DataLoader(dataset=train_set, batch_size=batch_size, shuffle=shuffle)
     return train_loader, test_loader
 
 if __name__ == "__main__":
