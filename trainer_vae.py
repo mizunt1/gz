@@ -1,6 +1,6 @@
 from construct_vae import VAE, evaluate, train_log_vae
 from encoder_decoder_32 import Encoder, Decoder
-from load_gz_data import Gz2_data, return_data_loader
+from load_gz_data import Gz2_data, return_data_loader, return_subset
 from torch.utils.data import DataLoader
 from pyro.infer import SVI, Trace_ELBO
 import argparse
@@ -18,7 +18,7 @@ parser.add_argument('--img_size', default=56, type=int)
 parser.add_argument('--lr', default=1.0e-3, type=float)
 parser.add_argument('--z_size', default=10, type=int)
 parser.add_argument('--crop_size', default=56, type=int)
-parser.add_argument('--batch_size', default=100, type=int)
+parser.add_argument('--batch_size', default=10, type=int)
 args = parser.parse_args()
 use_cuda = not args.no_cuda
 a01 = "t01_smooth_or_features_a01_smooth_count"
@@ -40,7 +40,7 @@ vae = VAE(Encoder, Decoder, args.z_size, encoder_args, decoder_args, use_cuda=us
 
 test_proportion = 0.2
 #train_loader, test_loader  = return_data_loader(data, test_proportion, batch_size=args.batch_size)
-train_loader, test_loader = return_subset(data, test_proportion, 130, batch_size=args.batch_size)
+train_loader, test_loader = return_subset(data, test_proportion, 128, batch_size=args.batch_size)
 svi = SVI(vae.model, vae.guide, optimizer, loss=Trace_ELBO())
 
 
