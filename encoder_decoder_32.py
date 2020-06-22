@@ -55,6 +55,6 @@ class Decoder(nn.Module):
         z = self.layer3(z)
         z = self.elu(z)
         z = self.layer4(z)
-        z = self.sigmoid(z)
         loc_img = self.sigmoid(z)
+
         return loc_img
