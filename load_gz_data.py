@@ -38,7 +38,8 @@ class Gz2_data(torch.utils.data.Dataset):
         data = torch.tensor(data.values.astype('int32'))
         transforms = tv.transforms.Compose(
             [tv.transforms.CenterCrop(self.crop),
-             tv.transforms.Resize(self.resize), tv.transforms.Grayscale(), tv.transforms.RandomRotation(180),
+             tv.transforms.Resize(self.resize), tv.transforms.Grayscale(),
+             tv.transforms.RandomRotation(180), tv.transforms.RandomAffine(180),
              tv.transforms.ToTensor()])
         image = transforms(image)
         sample = {'image': image, 'data': data}

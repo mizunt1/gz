@@ -1,5 +1,5 @@
 from construct_vae import VAE, evaluate, train_log_vae
-from encoder_decoder_avgpool import Encoder, Decoder
+from encoder_decoder_avg_elu import Encoder, Decoder
 from load_gz_data import Gz2_data, return_data_loader
 from torch.utils.data import DataLoader
 from pyro.infer import SVI, Trace_ELBO
