@@ -1,5 +1,6 @@
 import unittest
 import torch
+import utils
 class TestUtils(unittest.TestCase):
     def testCat(self):
         a = torch.ones((3, 1, 1 ,100,10))
