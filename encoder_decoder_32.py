@@ -16,15 +16,19 @@ class Encoder(nn.Module):
         self.layer41 = nn.Linear(self.linear_size, z_dim)
         self.layer42 = nn.Linear(self.linear_size, z_dim)
         self.softplus = nn.Softplus()
-
+        self.elu = nn.ELU()
+        
     def forward(self, x):
         x = x - 0.222
         x = x / 0.156
         x = self.layer1(x)
+        x = self.elu(x)
         x = self.maxpool(x)
         x = self.layer2(x)
+        x = self.elu(x)
         x = self.maxpool(x)
         x = self.layer3(x)
+        x = self.elu(x)
         x = self.maxpool(x)
         x = x.view(x.shape[0],-1)
         z_loc = self.layer41(x)
@@ -43,13 +47,17 @@ class Decoder(nn.Module):
         self.layer4 = nn.ConvTranspose2d(32, 1, 4, 2)
         self.softplus = nn.Softplus()
         self.sigmoid = nn.Sigmoid()
+        self.elu = nn.ELU()
         
     def forward(self, z):
         z = self.softplus(self.layer1(z))
         z = torch.reshape(z, (-1, 1, int(self.outsize/8), int(self.outsize/8)))
         z = self.layer2(z)
+        z = self.elu(z)
         z = self.layer3(z)
+        z = self.elu(z)
         z = self.layer4(z)
+        z = self.elu(z)
         z = self.sigmoid(z)
         hidden = self.softplus(z)
         loc_img = self.sigmoid(z)
