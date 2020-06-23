@@ -8,6 +8,6 @@ class ConvBlock(nn.Module):
             nn.Conv2d(in_channels, in_channels, kernel_size=3, padding=1),
             nn.ELU()
         )
-
-        def forward(self, x):
-            return x + self.body(x)
+        
+    def forward(self, x):
+        return x + self.body(x)
