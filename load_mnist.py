@@ -14,7 +14,7 @@ def setup_data_loaders(data_type="digits", batch_size=128, use_cuda=False, root=
     if root == None:
         root = './data'
     download = True
-    trans = transforms.ToTensor()
+    trans = tv.transforms.ToTensor()
     if data_type == "digits":
         train_set = dset.MNIST(root=root, train=True, transform=trans,
                                download=download)

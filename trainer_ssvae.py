@@ -33,7 +33,7 @@ parser.add_argument('--input_size_de', default=110, type=int)
 parser.add_argument('--img_size', default=56, type=int)
 parser.add_argument('--crop_size', default=56, type=int)
 parser.add_argument('--batch_size', default=100, type=int)
-
+parser.add_argument('--us_portion', default=0.94)
 args = parser.parse_args()
 use_cuda = not args.no_cuda
 
@@ -54,9 +54,9 @@ encoder_z_args = {'input_size':args.input_size_z, 'output_size':args.output_size
 decoder_args =  {'input_size':args.input_size_z, 'output_size':args.output_size_z}
 decoder_args = {'input_size':args.input_size_de, 'output_size':args.input_size_y}
 optimizer = Adam({"lr": 1.0e-4})
-us_portion = 0.2
+
 test_s_loader, test_us_loader, train_s_loader, train_us_loader = return_ss_loader(
-    us_portion, args.batch_size, transforms_list=[tv.transforms.Lambda(lambda x: flatten(x))])
+    args.us_portion, args.batch_size, transforms_list=[tv.transforms.Lambda(lambda x: flatten(x))])
 
 ssvae = SSVAE(Encoder_y, Encoder_z, Decoder, args.output_size_z, args.output_size_y,
               encoder_y_args, encoder_z_args, decoder_args, use_cuda=use_cuda)
