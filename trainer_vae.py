@@ -7,7 +7,7 @@ from pyro.infer import SVI, Trace_ELBO
 import argparse
 from pyro.optim import Adam
 parser = argparse.ArgumentParser()
-csv = "gz2_data/gz2_20.csv"
+csv = "gz2_data/gz_amended.csv"
 img = "gz2_data/"
 
 parser.add_argument('--dir_name', required=True)
