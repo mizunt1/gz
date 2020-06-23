@@ -9,5 +9,5 @@ class ConvBlock(nn.Module):
             nn.ELU()
         )
 
-        def forward(self, x):
-            return x + self.body(x)
+    def forward(self, x):
+        return x + self.body(x)
