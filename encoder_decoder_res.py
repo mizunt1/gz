@@ -44,16 +44,18 @@ class Decoder(nn.Module):
         self.linear = nn.Linear(z_dim, self.linear_size)
         self.net = nn.Sequential(
             nn.ELU(),
-            nn.ConvTranspose2d(1, 32, kernel_size=3, padding=2, stride=1),
+            nn.ConvTranspose2d(1, 32, kernel_size=3, stride=2, padding=1),
             nn.ELU(),
             ConvBlock(32),
-            nn.ConvTranspose2d(32, 32, kernel_size=3, padding=2, stride=2),
+            nn.ConvTranspose2d(32, 32, kernel_size=3, stride=2),
             nn.ELU(),
-            nn.ConvTranspose2d(32, 1, kernel_size=3, padding=2, stride=1),
+            nn.ConvTranspose2d(32, 1, kernel_size=4, stride=2),
             nn.Sigmoid()
         )
         
     def forward(self, z):
+#        import pdb
+#        pdb.set_trace()
         z = self.linear(z)
         z = torch.reshape(z, (-1, 1, int(self.outsize/8), int(self.outsize/8)))
         loc_img = self.net(z)
