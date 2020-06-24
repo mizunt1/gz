@@ -11,20 +11,17 @@ class Encoder(nn.Module):
         self.insize = insize
         self.linear_size = int((insize/8)**2)
         self.net = nn.Sequential(
-            nn.Conv2d(1, 32, kernel_size=3, padding=1, bias=False),
-            nn.ELU(),
-            nn.BatchNorm2d(32),
+            nn.Conv2d(1, 32, kernel_size=3, padding=1),
+            nn.functional.tanh(),
             nn.AvgPool2d(2),
             ConvBlock(32),
-            nn.Conv2d(32,16,kernel_size=3, padding=1, bias=False),
-            nn.ELU(),
+            nn.Conv2d(32,16,kernel_size=3, padding=1),
+            nn.functional.tanh(),
             ConvBlock(16),
-            nn.BatchNorm2d(16),
             nn.AvgPool2d(2),
-            nn.Conv2d(16, 1, kernel_size=3, padding=1, bias=False),
-            nn.BatchNorm2d(1),
+            nn.Conv2d(16, 1, kernel_size=3, padding=1),
             nn.AvgPool2d(2),
-            nn.ELU()
+            nn.functional.tanh()
         )
         self.loc = nn.Linear(self.linear_size, z_dim)
         self.scale = nn.Linear(self.linear_size, z_dim)
@@ -46,14 +43,14 @@ class Decoder(nn.Module):
         self.linear_size = int((outsize/8)**2)
         self.linear = nn.Linear(z_dim, self.linear_size)
         self.net = nn.Sequential(
-            nn.ELU(),
+            nn.functional.tanh(),
             nn.BatchNorm2d(1),
             nn.ConvTranspose2d(1, 32, kernel_size=3, stride=2, padding=1, bias=False),
-            nn.ELU(),
+            nn.functional.tanh(),
             nn.BatchNorm2d(32),
             ConvBlock(32),
             nn.ConvTranspose2d(32, 32, kernel_size=3, stride=2, bias=False),
-            nn.ELU(),
+            nn.functional.tanh(),
             nn.BatchNorm2d(32),
             nn.ConvTranspose2d(32, 1, kernel_size=4, stride=2, bias=False),
             nn.Sigmoid()

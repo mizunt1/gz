@@ -55,9 +55,9 @@ vae = VAE(Encoder, Decoder, args.z_size, encoder_args, decoder_args, use_cuda=us
 
 test_proportion = 0.2
 if args.subset is True:
-    train_loader, test_loader = return_subset(data, test_proportion, 128, batch_size=args.batch_size)
+    train_loader, test_loader = return_subset(data, test_proportion, 128, batch_size=args.batch_size, shuffle=True)
 else:
-    train_loader, test_loader  = return_data_loader(data, test_proportion, batch_size=args.batch_size)
+    train_loader, test_loader  = return_data_loader(data, test_proportion, batch_size=args.batch_size, shuffle=True)
 
 svi = SVI(vae.model, vae.guide, optimizer, loss=Trace_ELBO())
 

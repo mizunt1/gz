@@ -4,7 +4,7 @@
 
 #SBATCH --output=slurm-%j.out
 #SBATCH --error=slurm-%j.err
-#SBATCH --job-name="bias_off"
+#SBATCH --job-name="tanh"
 #SBATCH --partition="msc"
 
 export CONDA_ENVS_PATH=/scratch-ssd/$USER/conda_envs
@@ -17,6 +17,6 @@ srun python trainer_vae.py\
     --csv_file /scratch-ssd/oatml/data/gz2/gz2_classifications_and_subjects.csv\
     --img_file /scratch-ssd/oatml/data/gz2\
     --arch encoder_decoder_res_batchn.py\
-    --dir_name bias_off\
+    --dir_name tanh\
     --num_epochs 500 --img_size 80 --crop_size 80 --z_size 40 --subset
 
