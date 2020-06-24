@@ -1,6 +1,6 @@
 import torch.nn as nn
 import torch
-from layers import ConvBlock
+from layers import ConvBlock, Flatten, LinearBlock
 class Encoder(nn.Module):
     """
     Will take any insize as long as it is divisible by 8
@@ -12,16 +12,16 @@ class Encoder(nn.Module):
         self.linear_size = int((insize/8)**2)
         self.net = nn.Sequential(
             nn.Conv2d(1, 32, kernel_size=3, padding=1),
-            nn.Tanh(),
+            nn.ELU(),
             nn.AvgPool2d(2),
             ConvBlock(32),
             nn.Conv2d(32,16,kernel_size=3, padding=1),
-            nn.Tanh(),
+            nn.ELU(),
             ConvBlock(16),
             nn.AvgPool2d(2),
             nn.Conv2d(16, 1, kernel_size=3, padding=1),
             nn.AvgPool2d(2),
-            nn.Tanh()
+            nn.ELU()
         )
         self.loc = nn.Linear(self.linear_size, z_dim)
         self.scale = nn.Linear(self.linear_size, z_dim)
@@ -40,26 +40,22 @@ class Decoder(nn.Module):
     def __init__(self, z_dim=10, outsize=56):
         super().__init__()
         self.outsize = outsize
-        self.linear_size = int((outsize/8)**2)
-        self.linear = nn.Linear(z_dim, self.linear_size)
+        self.flatten_size = int((self.outsize)**2)
         self.net = nn.Sequential(
-            nn.Tanh(),
-            nn.BatchNorm2d(1),
-            nn.ConvTranspose2d(1, 32, kernel_size=3, stride=2, padding=1, bias=False),
-            nn.Tanh(),
-            nn.BatchNorm2d(32),
-            ConvBlock(32),
-            nn.ConvTranspose2d(32, 32, kernel_size=3, stride=2, bias=False),
-            nn.Tanh(),
-            nn.BatchNorm2d(32),
-            nn.ConvTranspose2d(32, 1, kernel_size=4, stride=2, bias=False),
-            nn.Sigmoid()
+            nn.Linear(z_dim, int(self.flatten_size/8)),
+            nn.ELU(),
+            nn.Linear(int(self.flatten_size/8), int(self.flatten_size/4)),
+            LinearBlock(int(self.flatten_size/4)),
+            nn.ELU(),
+            nn.Linear(int(self.flatten_size/4), int(self.flatten_size/2)),
+            LinearBlock(int(self.flatten_size/2)),
+            nn.ELU(),
+            nn.Linear(int(self.flatten_size/2), self.flatten_size),
+            nn.Sigmoid(),
         )
         
     def forward(self, z):
-#        import pdb
-#        pdb.set_trace()
-        z = self.linear(z)
-        z = torch.reshape(z, (-1, 1, int(self.outsize/8), int(self.outsize/8)))
-        loc_img = self.net(z)
-        return loc_img
+        z = self.net(z)
+        z = z.reshape(z.shape[0], self.outsize, self.outsize)
+        return z
+
