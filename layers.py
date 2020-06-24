@@ -10,3 +10,21 @@ class ConvBlock(nn.Module):
         )
     def forward(self, x):
         return x + self.body(x)
+
+class LinearBlock(nn.Module):
+    def __init__(self, in_size):
+        super().__init__()
+        self.body = nn.Sequential(
+            nn.Linear(in_size, in_size),
+            nn.ELU(),
+            nn.Linear(in_size, in_size),
+            nn.ELU(),
+            nn.Linear(in_size, in_size),
+            nn.ELU()
+        )
+    def forward(self, x):
+        return x + self.body(x)
+
+class Flatten(nn.Module):
+    def forward(self, input):
+        return input.view(input.size(0), -1)
