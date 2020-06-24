@@ -54,8 +54,6 @@ class Decoder(nn.Module):
         )
         
     def forward(self, z):
-#        import pdb
-#        pdb.set_trace()
         z = self.linear(z)
         z = torch.reshape(z, (-1, 1, int(self.outsize/8), int(self.outsize/8)))
         loc_img = self.net(z)
