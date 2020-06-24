@@ -44,16 +44,16 @@ class Decoder(nn.Module):
         self.linear_size = int((outsize/8)**2)
         self.linear = nn.Linear(z_dim, self.linear_size)
         self.net = nn.Sequential(
-            F.relu(),
+            nn.ReLU(),
             nn.ConvTranspose2d(1, 32, kernel_size=2, stride=2, padding=0, bias=False),
-            F.relu(),
+            nn.ReLU(),
             nn.BatchNorm2d(32),
             ConvBlock(32),
             nn.ConvTranspose2d(32, 32, kernel_size=2, stride=2, padding=0, bias=False),
-            F.relu(),
+            nn.ReLU(),
             nn.BatchNorm2d(32),
             nn.ConvTranspose2d(32, 1, kernel_size=2, stride=2, padding=0, bias=False),
-            F.relu()
+            nn.ReLU()
         )
         
     def forward(self, z):
