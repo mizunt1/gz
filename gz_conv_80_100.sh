@@ -4,7 +4,7 @@
 
 #SBATCH --output=slurm-%j.out
 #SBATCH --error=slurm-%j.err
-#SBATCH --job-name="resnet"
+#SBATCH --job-name="larger kern"
 #SBATCH --partition="msc"
 
 export CONDA_ENVS_PATH=/scratch-ssd/$USER/conda_envs
@@ -16,6 +16,6 @@ source /scratch-ssd/oatml/miniconda3/bin/activate gz_mizu
 srun python trainer_vae.py\
     --csv_file /scratch-ssd/oatml/data/gz2/gz2_classifications_and_subjects.csv\
     --img_file /scratch-ssd/oatml/data/gz2\
-    --dir_name resnet\
-    --arch encoder_decoder_res.py\
-    --num_epochs 1000 --img_size 80 --crop_size 80 --z_size 100 --subset
+    --dir_name larger_kern\
+    --arch encoder_decoder_larger_kern.py\
+    --num_epochs 700 --img_size 80 --crop_size 80 --z_size 100 --subset

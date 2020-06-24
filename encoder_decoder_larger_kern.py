@@ -44,12 +44,14 @@ class Decoder(nn.Module):
         self.linear = nn.Linear(z_dim, self.linear_size)
         self.net = nn.Sequential(
             nn.ELU(),
-            nn.ConvTranspose2d(1, 32, kernel_size=6, stride=2, padding=2),
+            nn.ConvTranspose2d(1, 32, kernel_size=6, stride=2, padding=2, bias=False),
             nn.ELU(),
+            nn.BatchNorm2d(32),
             ConvBlock(32),
-            nn.ConvTranspose2d(32, 32, kernel_size=4, stride=2, padding=1),
+            nn.ConvTranspose2d(32, 32, kernel_size=4, stride=2, padding=1, bias=False),
             nn.ELU(),
-            nn.ConvTranspose2d(32, 1, kernel_size=4, stride=2, padding=1),
+            nn.BatchNorm2d(32),
+            nn.ConvTranspose2d(32, 1, kernel_size=4, stride=2, padding=1, bias=False),
             nn.Sigmoid()
         )
         
