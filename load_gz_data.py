@@ -45,7 +45,7 @@ class Gz2_data(torch.utils.data.Dataset):
         sample = {'image': image, 'data': data}
         return sample
 
-def return_data_loader(data, test_proportion, batch_size, shuffle=False):
+def return_data_loader(data, test_proportion, batch_size, shuffle=True):
     len_data = len(data)
     num_tests = int(len_data * test_proportion)
     test_indices = list(i for i in range(0,num_tests))
