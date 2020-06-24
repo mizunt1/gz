@@ -16,6 +16,6 @@ source /scratch-ssd/oatml/miniconda3/bin/activate gz_mizu
 srun python trainer_vae.py\
     --csv_file /scratch-ssd/oatml/data/gz2/gz2_classifications_and_subjects.csv\
     --img_file /scratch-ssd/oatml/data/gz2\
-    --dir_name decoder_small_kern\
+    --dir_name decoder_small_kern_relu\
     --arch encoder_decoder_larger_kern.py\
     --num_epochs 700 --img_size 80 --crop_size 80 --z_size 100 --subset
