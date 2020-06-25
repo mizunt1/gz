@@ -1,11 +1,11 @@
 from torch import nn
 class ConvBlock(nn.Module):
-    def __init__(self, in_channels):
+    def __init__(self, in_channels, kernel_size=5, padding=2, bias=True):
         super().__init__()
         self.body = nn.Sequential(
-            nn.Conv2d(in_channels, in_channels, kernel_size=3, padding=1),
+            nn.Conv2d(in_channels, in_channels, kernel_size=5, padding=2, bias=bias),
             nn.ELU(),
-            nn.Conv2d(in_channels, in_channels, kernel_size=3, padding=1),
+            nn.Conv2d(in_channels, in_channels, kernel_size=5, padding=2, bias=bias),
             nn.ELU()
         )
     def forward(self, x):
