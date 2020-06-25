@@ -35,7 +35,7 @@ parser.add_argument('--input_size_de', default=110, type=int)
 parser.add_argument('--img_size', default=56, type=int)
 parser.add_argument('--crop_size', default=56, type=int)
 parser.add_argument('--batch_size', default=100, type=int)
-parser.add_argument('--us_portion', default=0.98)
+parser.add_argument('--us_portion', default=0.98, type=float)
 
 args = parser.parse_args()
 

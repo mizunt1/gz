@@ -79,10 +79,10 @@ def return_ss_loader(us_portion, batch_size, use_cuda=False, root=None, data_typ
     len_test = len(test_set)
 
     
-    unsupervised_tests = int(len_test * us_portion)
+    unsupervised_tests = round(len_test * us_portion)
     supervised_tests = len_test - unsupervised_tests
     
-    unsupervised_train = int(len_train * us_portion)
+    unsupervised_train = round(len_train * us_portion)
     supervised_train = len_train - unsupervised_train
     
     # lists for test
