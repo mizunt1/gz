@@ -4,7 +4,7 @@
 
 #SBATCH --output=slurm-%j.out
 #SBATCH --error=slurm-%j.err
-#SBATCH --job-name="larger kern"
+#SBATCH --job-name="delta_z_128"
 #SBATCH --partition="msc"
 
 export CONDA_ENVS_PATH=/scratch-ssd/$USER/conda_envs
@@ -16,6 +16,6 @@ source /scratch-ssd/oatml/miniconda3/bin/activate gz_mizu
 srun python trainer_vae.py\
     --csv_file /scratch-ssd/oatml/data/gz2/gz2_classifications_and_subjects.csv\
     --img_file /scratch-ssd/oatml/data/gz2\
-    --dir_name decoder_small_kern_relu\
+    --dir_name delta_z_128\
     --arch encoder_decoder_larger_kern.py\
-    --num_epochs 700 --img_size 80 --crop_size 80 --z_size 100 --subset
+    --num_epochs 700 --img_size 80 --crop_size 80 --z_size 128 --subset
