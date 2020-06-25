@@ -59,7 +59,7 @@ class Decoder(nn.Module):
             ConvBlock(32, kernel_size=2, padding=1, bias=False),
             ConvBlock(32, kernel_size=2, padding=0, bias=False),
             nn.ConvTranspose2d(32, 1, kernel_size=2, stride=2, padding=0, bias=False),
-            nn.ELU()
+            nn.Sigmoid()
         )
         
     def forward(self, z):
