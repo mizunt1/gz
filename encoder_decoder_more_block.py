@@ -12,19 +12,19 @@ class Encoder(nn.Module):
         self.linear_size = int((insize/8)**2)
         self.net = nn.Sequential(
             nn.Conv2d(1, 32, kernel_size=9, padding=4),
-            nn.Sigmoid(),
+            nn.ELU(),
             nn.AvgPool2d(2),
             ConvBlock(32, kernel_size=5, padding=2, bias=False),
-            nn.Sigmoid(),
+            nn.ELU(),
             nn.BatchNorm2d(32),
             ConvBlock(32, kernel_size=5, padding=2, bias=False),
             nn.Conv2d(32, 16,kernel_size=7, padding=3),
-            nn.Sigmoid(),
+            nn.ELU(),
             ConvBlock(16, kernel_size=5, padding=2, bias=False),
             nn.AvgPool2d(2),
             nn.Conv2d(16, 1, kernel_size=5, padding=2),
             nn.AvgPool2d(2),
-            nn.Sigmoid()
+            nn.ELU()
         )
         self.loc = nn.Linear(self.linear_size, z_dim)
         self.scale = nn.Linear(self.linear_size, z_dim)
@@ -46,9 +46,9 @@ class Decoder(nn.Module):
         self.linear_size = int((outsize/8)**2)
         self.linear = nn.Linear(z_dim, self.linear_size)
         self.net = nn.Sequential(
-            nn.Sigmoid(),
+            nn.ELU(),
             nn.ConvTranspose2d(1, 32, kernel_size=2, stride=2, padding=0, bias=False),
-            nn.Sigmoid(),
+            nn.ELU(),
             nn.BatchNorm2d(32),
             ConvBlock(32, kernel_size=2, padding=1, bias=False),
             nn.BatchNorm2d(32),
@@ -59,7 +59,7 @@ class Decoder(nn.Module):
             ConvBlock(32, kernel_size=2, padding=1, bias=False),
             ConvBlock(32, kernel_size=2, padding=0, bias=False),
             nn.ConvTranspose2d(32, 1, kernel_size=2, stride=2, padding=0, bias=False),
-            nn.Sigmoid()
+            nn.ELU()
         )
         
     def forward(self, z):
