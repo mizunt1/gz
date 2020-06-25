@@ -4,7 +4,7 @@
 
 #SBATCH --output=slurm-%j.out
 #SBATCH --error=slurm-%j.err
-#SBATCH --job-name="ssvae_us94"
+#SBATCH --job-name="ssvae_us98"
 #SBATCH --partition="msc"
 
 export CONDA_ENVS_PATH=/scratch-ssd/$USER/conda_envs
@@ -14,5 +14,6 @@ export CONDA_PKGS_DIRS=/scratch-ssd/$USER/conda_pkgs
 source /scratch-ssd/oatml/miniconda3/bin/activate gz_mizu
 
 srun python trainer_ssvae.py\
-    --dir_name us_94\
+    --dir_name us_98\
+    --arch ss_encoders_decoders.py
     --num_epochs 1000 --batch_size 100
