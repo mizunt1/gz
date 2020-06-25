@@ -46,7 +46,8 @@ class VAE(nn.Module):
             # use the encoder to get the parameters used to define q(z|x)
             z_loc, z_scale = self.encoder.forward(x)
             # sample the latent code z
-            pyro.sample("latent", dist.Delta(z_loc).to_event(1))
+            pyro.sample("latent", dist.Normal(z_loc, z_scale).to_event(1))
+#            pyro.sample("latent", dist.Delta(z_loc).to_event(1))
 
     # define a helper function for reconstructing images
     def sample_img(self, x, use_cuda=False, encoder=False, decoder=False):
@@ -105,8 +106,8 @@ def evaluate(svi, test_loader, use_cuda=False):
 
 
 def train_log_vae(checkpoint_dir, writer_name, vae, svi, train_loader, test_loader,
-                  num_epochs, plot_img_freq=10, num_img_plt=40,
-                  checkpoint_freq=10, use_cuda=True, test_freq=10):
+                  num_epochs, plot_img_freq=20, num_img_plt=40,
+                  checkpoint_freq=20, use_cuda=True, test_freq=10):
     
     num_params = sum(p.numel() for p in vae.parameters() if p.requires_grad)
 
