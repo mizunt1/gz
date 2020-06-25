@@ -4,7 +4,7 @@
 
 #SBATCH --output=slurm-%j.out
 #SBATCH --error=slurm-%j.err
-#SBATCH --job-name="lr-2"
+#SBATCH --job-name="lr-4"
 #SBATCH --partition="msc"
 
 export CONDA_ENVS_PATH=/scratch-ssd/$USER/conda_envs
@@ -16,6 +16,6 @@ source /scratch-ssd/oatml/miniconda3/bin/activate gz_mizu
 srun python trainer_vae.py\
     --csv_file /scratch-ssd/oatml/data/gz2/gz2_classifications_and_subjects.csv\
     --img_file /scratch-ssd/oatml/data/gz2\
-    --dir_name img_size_128_lr2\
-    --arch encoder_decoder_larger_kern.py --lr 1.0e-2\
+    --dir_name img_size_128_lr4\
+    --arch encoder_decoder_larger_kern.py --lr 1.0e-4\
     --num_epochs 700 --img_size 128 --crop_size 128 --z_size 130 --subset
