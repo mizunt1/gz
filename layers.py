@@ -5,10 +5,13 @@ class ConvBlock(nn.Module):
         self.body = nn.Sequential(
             nn.Conv2d(in_channels, in_channels, kernel_size=5, padding=2, bias=bias),
             nn.ELU(),
+            nn.BatchNorm2d(in_channels),
             nn.Conv2d(in_channels, in_channels, kernel_size=5, padding=2, bias=bias),
             nn.ELU(),
+            nn.BatchNorm2d(in_channels),
             nn.Conv2d(in_channels, in_channels, kernel_size=5, padding=2, bias=bias),
             nn.ELU(),
+            nn.BatchNorm2d(in_channels),
             nn.Conv2d(in_channels, in_channels, kernel_size=5, padding=2, bias=bias),
             nn.ELU()
 
