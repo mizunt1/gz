@@ -3,16 +3,16 @@ class ConvBlock(nn.Module):
     def __init__(self, in_channels, kernel_size=5, padding=2, bias=True):
         super().__init__()
         self.body = nn.Sequential(
-            nn.Conv2d(in_channels, in_channels, kernel_size=5, padding=2, bias=bias),
+            nn.Conv2d(in_channels, in_channels, kernel_size=kernel_size, padding=padding, bias=bias),
             nn.ELU(),
             nn.BatchNorm2d(in_channels),
-            nn.Conv2d(in_channels, in_channels, kernel_size=5, padding=2, bias=bias),
+            nn.Conv2d(in_channels, in_channels, kernel_size=kernel_size, padding=padding, bias=bias),
             nn.ELU(),
             nn.BatchNorm2d(in_channels),
-            nn.Conv2d(in_channels, in_channels, kernel_size=5, padding=2, bias=bias),
+            nn.Conv2d(in_channels, in_channels, kernel_size=kernel_size, padding=padding, bias=bias),
             nn.ELU(),
             nn.BatchNorm2d(in_channels),
-            nn.Conv2d(in_channels, in_channels, kernel_size=5, padding=2, bias=bias),
+            nn.Conv2d(in_channels, in_channels, kernel_size=kernel_size, padding=padding, bias=bias),
             nn.ELU()
 
         )
