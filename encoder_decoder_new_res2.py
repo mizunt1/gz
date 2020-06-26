@@ -48,10 +48,13 @@ class Decoder(nn.Module):
             nn.ELU(),
             nn.BatchNorm2d(32),
             ConvBlock(32, bias=False),
-            UpResBloc(32, 32),
+            nn.ConvTranspose2d(32, 32, kernel_size=2, stride=2, padding=0, bias=False),
+            nn.ELU(),
+            ConvBlock(32, bias=False),
             nn.ELU(),
             ConvBlock(32, bias=False),
             UpResBloc(32, 1),
+            nn.ELU(),
             nn.Sigmoid()
         )
         
