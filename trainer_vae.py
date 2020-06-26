@@ -49,7 +49,7 @@ data = Gz2_data(csv_dir=args.csv_file,
 
 encoder_args = {'insize':args.img_size, 'z_dim':args.z_size}
 decoder_args = {'z_dim':args.z_size, 'outsize':args.img_size}
-optimizer = Adam({"lr": 1.0e-4})
+optimizer = Adam({"lr": args.lr})
 vae = VAE(Encoder, Decoder, args.z_size, encoder_args, decoder_args, use_cuda=use_cuda)
 
 

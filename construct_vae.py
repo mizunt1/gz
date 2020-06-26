@@ -106,8 +106,8 @@ def evaluate(svi, test_loader, use_cuda=False):
 
 
 def train_log_vae(checkpoint_dir, writer_name, vae, svi, train_loader, test_loader,
-                  num_epochs, plot_img_freq=20, num_img_plt=40,
-                  checkpoint_freq=20, use_cuda=True, test_freq=10):
+                  num_epochs, plot_img_freq=1, num_img_plt=40,
+                  checkpoint_freq=1, use_cuda=True, test_freq=1):
     
     num_params = sum(p.numel() for p in vae.parameters() if p.requires_grad)
 
