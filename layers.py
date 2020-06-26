@@ -1,4 +1,5 @@
 from torch import nn
+import torch
 class ConvBlock(nn.Module):
     def __init__(self, in_channels, kernel_size=5, padding=2, bias=True):
         super().__init__()
@@ -39,13 +40,15 @@ class Flatten(nn.Module):
 
 
 class UpResBloc(nn.Module):
-    def __init__(self, in_channels, out_channels):
+    def __init__(self, in_channels, out_channels, bias=True):
         super().__init__()
         self.body = nn.Sequential(
-            nn.Conv2d(in_channels, in_channels, kernel_size=3, padding=1),
+            nn.Conv2d(in_channels, in_channels, kernel_size=3, padding=1, bias=bias),
             nn.ELU(),
-            nn.Conv2d(in_channels, in_channels, kernel_size=3, padding=1),
+            nn.BatchNorm2d(in_channels),
+            nn.Conv2d(in_channels, in_channels, kernel_size=3, padding=1, bias=bias),
             nn.ELU(),
+            nn.BatchNorm2d(in_channels),
             nn.Upsample(scale_factor=2, mode="nearest"),
         )
         self.skip = nn.Upsample(scale_factor=2, mode="nearest")
@@ -67,7 +70,7 @@ class DownResBloc(nn.Module):
             nn.BatchNorm2d(in_channels),
             nn.MaxPool2d(2),
         )
-        self.skip = nn.MaxPool2d(scale_factor=2, mode="nearest")
+        self.skip = nn.MaxPool2d(2, mode="nearest")
         self.merge = nn.Conv2d(in_channels, out_channels, kernel_size=3, padding=1)
 
     def forward(self, x):
