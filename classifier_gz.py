@@ -6,9 +6,11 @@ class Classifier(nn.Module):
         self.fc1 = nn.Linear(in_dim, hidden)
         self.fc2 = nn.Linear(hidden, hidden)
         self.fc3 = nn.Linear(hidden, out_dim)
-    
+        self.sigmoid = nn.Sigmoid()
     def forward(self, x):
-        hidden1 = self.fc1(x)
-        hidden2 = self.fc2(hidden1)
-        hidden3 = self.fc3(hidden2)
-        return nn.functional.log_softmax(hidden3, dim=1)
+        x = self.fc1(x)
+        x = self.sigmoid(x)
+        x = self.fc2(x)
+        x = self.sigmoid(x)
+        x = self.fc3(x)
+        return x
