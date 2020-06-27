@@ -106,7 +106,7 @@ def evaluate_vae_classifier(vae, vae_loss_fn, classifier, classifier_loss_fn, te
 
 
 def train_vae_classifier(vae, vae_optim, vae_loss_fn, classifier, classifier_optim, classifier_loss_fn,
-                         train_loader, use_cuda=False, transform=False):
+                         train_loader, use_cuda=True, transform=False):
     """
     train vae and classifier for one epoch
     returns loss for one epoch
@@ -153,12 +153,10 @@ vae_optim = Adam(vae.parameters(), lr= 0.001, betas= (0.90, 0.999))
 
 #vae_optim = Adam({"lr": 0.001})
 classifier = Classifier(in_dim=args.z_size*2)
+
 classifier_optim = Adam(classifier.parameters(),lr=0.001, betas=(0.90, 0.999))
 # or optimizer = optim.SGD(classifier.parameters(), lr=0.001, momentum=0.9)?
 classifier_loss = cross_entropy_one_hot
-
-one, two = train_vae_classifier(vae, vae_optim, Trace_ELBO().differentiable_loss,
-                                classifier, classifier_optim, classifier_loss, train_loader)
 
 
 def train_log_vae_classifier(dir_name, vae, vae_optim, vae_loss_fn, classifier, classifier_optim,
@@ -168,6 +166,8 @@ def train_log_vae_classifier(dir_name, vae, vae_optim, vae_loss_fn, classifier, 
     writer = SummaryWriter("tb_data_all/" + dir_name)
     if not os.path.exists("checkpoints/" + dir_name):
         os.makedirs("checkpoints/" + dir_name)
+    if use_cuda:
+        classifier.cuda()
     for epoch in range(num_epochs):
         print("training")
         total_epoch_loss_vae, total_epoch_loss_classifier = train_vae_classifier(vae, vae_optim, vae_loss_fn, classifier,
