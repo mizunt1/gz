@@ -72,10 +72,14 @@ print("train and log")
 
 
 def evaluate_vae_classifier(vae, vae_loss_fn, classifier, classifier_loss_fn, test_loader, use_cuda=False, transform=False):
+    """
+    evaluates for all test data
+    test data is in batches, all batches in test loader tested
+    """
     epoch_loss_vae = 0.
     epoch_loss_classifier = 0.
     total_acc = 0.
-    for data in train_loader:
+    for data in test_loader:
         x = data['image']
         y = data['data']
         if transform != False:
@@ -90,10 +94,7 @@ def evaluate_vae_classifier(vae, vae_loss_fn, classifier, classifier_loss_fn, te
         combined_z = combined_z.detach()
         y_out = classifier.forward(combined_z)
         classifier_loss = classifier_loss_fn(y_out, y)
-#        import pdb
-#        pdb.set_trace()
-        total_acc += torch.sum(torch.eq(y_out,y)).numpy()/y.shape[0]
-        total_loss = vae_loss + classifier_loss
+        total_acc += torch.sum(torch.eq(y_out,y)).numpy()
         epoch_loss_vae += vae_loss.item()
         epoch_loss_classifier += classifier_loss.item()
 
