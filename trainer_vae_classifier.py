@@ -93,7 +93,8 @@ def evaluate_vae_classifier(vae, vae_loss_fn, classifier, classifier_loss_fn, te
         combined_z = torch.cat((z_loc, z_scale), 1)
         combined_z = combined_z.detach()
         y_out = classifier.forward(combined_z)
-        classifier_loss = classifier_loss_fn(y_out, y)
+        _, y_one_hot = y.max(1)
+        classifier_loss = classifier_loss_fn(y_out, y_one_hot)
         total_acc += torch.sum(torch.eq(y_out.argmax(dim=1),y.argmax(dim=1)))
         epoch_loss_vae += vae_loss.item()
         epoch_loss_classifier += classifier_loss.item()
@@ -130,8 +131,8 @@ def train_vae_classifier(vae, vae_optim, vae_loss_fn, classifier, classifier_opt
         combined_z = torch.cat((z_loc, z_scale), 1)
         combined_z = combined_z.detach()
         y_out = classifier.forward(combined_z)
-
-        classifier_loss = classifier_loss_fn(y_out, y)
+        _, y_one_hot = y.max(1)
+        classifier_loss = classifier_loss_fn(y_out, y_one_hot)
         # step through classifier
         total_loss = vae_loss + classifier_loss
         epoch_loss_vae += vae_loss.item()
@@ -156,7 +157,7 @@ classifier = Classifier(in_dim=args.z_size*2)
 
 classifier_optim = Adam(classifier.parameters(),lr=args.lr, betas=(0.90, 0.999))
 # or optimizer = optim.SGD(classifier.parameters(), lr=0.001, momentum=0.9)?
-classifier_loss = cross_entropy_one_hot
+classifier_loss = nn.CrossEntropyLoss()
 
 
 def train_log_vae_classifier(dir_name, vae, vae_optim, vae_loss_fn, classifier, classifier_optim,
