@@ -99,7 +99,7 @@ def evaluate_vae_classifier(vae, vae_loss_fn, classifier, classifier_loss_fn, te
         epoch_loss_vae += vae_loss.item()
         epoch_loss_classifier += classifier_loss.item()
 
-    normalizer = len(train_loader.dataset)
+    normalizer = len(test_loader.dataset)
     total_epoch_loss_vae = epoch_loss_vae / normalizer
     total_epoch_loss_classifier = epoch_loss_classifier / normalizer
     total_epoch_acc = total_acc / normalizer
