@@ -6,7 +6,7 @@ class Classifier(nn.Module):
         self.fc1 = nn.Linear(in_dim, hidden)
         self.fc2 = nn.Linear(hidden, hidden)
         self.fc3 = nn.Linear(hidden, int(hidden /2))
-        self.fc4 = nn.linear(hidden, out_dim)
+        self.fc4 = nn.Linear(int(hidden/2), out_dim)
         self.sigmoid = nn.Sigmoid()
     def forward(self, x):
         x = self.fc1(x)
