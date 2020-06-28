@@ -155,7 +155,7 @@ vae_optim = Adam(vae.parameters(), lr= args.lr, betas= (0.90, 0.999))
 #vae_optim = Adam({"lr": 0.001})
 classifier = Classifier(in_dim=args.z_size*2)
 
-classifier_optim = Adam(classifier.parameters(),lr=args.lr, betas=(0.90, 0.999))
+classifier_optim = Adam(classifier.parameters(),lr=1e-4, betas=(0.90, 0.999))
 # or optimizer = optim.SGD(classifier.parameters(), lr=0.001, momentum=0.9)?
 classifier_loss = nn.CrossEntropyLoss()
 
