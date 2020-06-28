@@ -43,7 +43,7 @@ class SSVAE(nn.Module):
             # the class label y (which digit to write) against the
             # parametrized distribution p(x|y,z) = bernoulli(decoder(y,z))
             # where `decoder` is a neural network
-            loc = self.decoder.forward([zs, ys])
+            loc = self.decoder.forward(zs, ys)
             # decoder networks takes a category, and a latent variable and outputs an observation x.
             pyro.sample("x", dist.Bernoulli(loc).to_event(1), obs=xs)
 
@@ -72,7 +72,7 @@ class SSVAE(nn.Module):
                 # distribution q(z|x,y) = normal(loc(x,y),scale(x,y))
             # change ys to one hot should do this somewhere else TODO
 
-            loc, scale = self.encoder_z.forward([xs, ys])
+            loc, scale = self.encoder_z.forward(xs, ys)
             pyro.sample("z", dist.Normal(loc, scale).to_event(1))
 
     def sample_img(self, x, y, img_width, use_cuda=False):
@@ -82,7 +82,7 @@ class SSVAE(nn.Module):
             y = y.cuda()
 
         img_dim = x.shape[-1]
-        z_loc, z_scale = self.encoder_z([x,y])
+        z_loc, z_scale = self.encoder_z(x,y)
         # sample in latent space
         z = dist.Normal(z_loc, z_scale).sample()
         # decode the image (note we don't sample in image space)
@@ -109,8 +109,13 @@ def train_ss(svi, train_s_loader, train_us_loader, use_cuda=False):
     # by the data loader
     zip_list = zip(train_s_loader, cycle(train_us_loader)) if len(train_s_loader) > len(train_us_loader) else zip(cycle(train_s_loader), train_us_loader)
     for data_sup, data_unsup in zip_list:
-        xs, ys = data_sup        
-        xus, yus = data_unsup
+#        import pdb
+#        pdb.set_trace()
+        xs = data_sup['image']
+        ys = data_sup['data']
+        xus = data_unsup['image']
+        yus = data_unsup['data']
+        
         # if on GPU put mini-batch into CUDA memory
         if use_cuda:
             xs = xs.cuda()

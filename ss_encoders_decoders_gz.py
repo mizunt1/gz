@@ -31,16 +31,17 @@ class Encoder_z(nn.Module):
         self.scale = nn.Linear(self.linear_size, self.z_size)
         
     def forward(self, x, y):
-        x = x - 0.222
-        x = x / 0.156
-        x = self.net(x)
-        x = x.view(x.shape[0], -1)
+        z = x - 0.222
+        z = x / 0.156
 
-        # TODO CHECK
-        z = utils.cat(x, y, -1)
+        z = self.net(z)
+        z = z.view(z.shape[0], -1)
+        
+        z = utils.cat(z, y, -1)
+
         z = self.linear(z)
-        z_loc = self.loc(x)
-        z_scale = torch.exp(self.scale(x))
+        z_loc = self.loc(z)
+        z_scale = torch.exp(self.scale(z))
         return z_loc, z_scale
 
 class Encoder_y(nn.Module):
@@ -95,6 +96,7 @@ class Decoder(nn.Module):
         
     def forward(self, z, y):
         # TODO CHECK
+
         out = utils.cat(z, y, -1)
         z = self.linear(out)
         z = torch.reshape(z, (-1, 1, int(self.x_size/8), int(self.x_size/8)))

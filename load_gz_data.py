@@ -35,14 +35,14 @@ class Gz2_data(torch.utils.data.Dataset):
             image = Image.open(img_name).convert('L')
 
         data = self.file.iloc[idx][self.list_of_interest]
-        data = torch.tensor(data.values.astype('int32'))
+        data = torch.tensor(data.values.astype('float'))
         transforms = tv.transforms.Compose(
             [tv.transforms.CenterCrop(self.crop),
              tv.transforms.Resize(self.resize), tv.transforms.Grayscale(),
 #             tv.transforms.RandomRotation(180), tv.transforms.RandomAffine(180),
              tv.transforms.ToTensor()])
         image = transforms(image)
-        sample = {'image': image, 'data': data}
+        sample = {'image': image, 'data': data.float()}
         return sample
 
 def return_data_loader(data, test_proportion, batch_size, shuffle=True):

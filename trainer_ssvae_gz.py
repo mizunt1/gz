@@ -21,9 +21,9 @@ parser.add_argument('--img_file', metavar='i', type=str, default=img)
 parser.add_argument('--no_cuda', default=False, action='store_true')
 parser.add_argument('--num_epochs', type=int, default=10)
 parser.add_argument('--lr', default=1.0e-3, type=float)
-parser.add_argument('--x_size', default=784, type=int)
+parser.add_argument('--x_size', default=80, type=int)
 # input to encoder_y. i.e. for fully connected, flattened img size
-parser.add_argument('--y_size', default=10, type=int)
+parser.add_argument('--y_size', default=3, type=int)
 # output from encoder y. i.e. number of categories
 # inputsize to encoder_z. Y and X are inputted after cat usually
 parser.add_argument('--z_size', default=100, type=int)
@@ -70,8 +70,9 @@ ssvae = SSVAE(Encoder_y, Encoder_z, Decoder, args.z_size, args.y_size,
 
 batch_size = 100
 img_len = 28
-guide = config_enumerate(ssvae.guide, "parallel", expand=True)
-svi = SVI(ssvae.model, guide, optimizer, loss=TraceEnum_ELBO())
+svi = SVI(ssvae.model, ssvae.guide, optimizer, loss=Trace_ELBO())
+#guide = config_enumerate(ssvae.guide, "parallel", expand=True)
+#svi = SVI(ssvae.model, guide, optimizer, loss=TraceEnum_ELBO())
 print("train and log")
 train_log(args.dir_name, ssvae, svi, train_s_loader, train_us_loader, test_s_loader, test_us_loader, img_len,
           args.num_epochs, use_cuda=use_cuda, plot_img_freq=5, checkpoint_freq=50, test_freq=2)
