@@ -28,7 +28,7 @@ parser.add_argument('--z_size', default=100, type=int)
 parser.add_argument('--crop_size', default=56, type=int)
 parser.add_argument('--batch_size', default=10, type=int)
 parser.add_argument('--subset', default=False, action='store_true')
-
+parser.add_argument('--load_checkpoint', default=None)
 args = parser.parse_args()
 #import importlib.util
 #spec = importlib.util.spec_from_file_location("model","encoder_decoder_32.py")
@@ -145,11 +145,11 @@ def train_vae_classifier(vae, vae_optim, vae_loss_fn, classifier, classifier_opt
     total_epoch_loss_classifier = epoch_loss_classifier / normalizer
     return total_epoch_loss_vae, total_epoch_loss_classifier
 
-def cross_entropy_one_hot(input, target):
-    _, labels = target.max(dim=1)
-    return nn.CrossEntropyLoss()(input, labels)
 
 vae = VAE(Encoder, Decoder, args.z_size, encoder_args, decoder_args, use_cuda=use_cuda)
+if args.load_checkpoint != None:
+    vae.encoder.load_state_dict(torch.load("checkpoints/" + args.load_checkpoint + "/encoder.checkpoint"))
+    vae.decoder.load_state_dict(torch.load("checkpoints/" + args.load_checkpoint + "/decoder.checkpoint"))
 vae_optim = Adam(vae.parameters(), lr= args.lr, betas= (0.90, 0.999))
 
 #vae_optim = Adam({"lr": 0.001})
