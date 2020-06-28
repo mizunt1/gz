@@ -19,4 +19,4 @@ srun python trainer_vae_classifier.py\
     --dir_name classifier_test_fin_lower_lr\
     --arch encoder_decoder_new_res3.py  --lr 1.0e-3\
     --num_epochs 2400 --img_size 80 --crop_size 80 --z_size 100 --batch_size 100\
-    --checkpoint_load classifier_test_fin
+    --load_checkpoint classifier_test_fin
