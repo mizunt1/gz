@@ -16,7 +16,7 @@ source /scratch-ssd/oatml/miniconda3/bin/activate gz_mizu
 srun python trainer_vae_classifier.py\
     --csv_file /scratch-ssd/oatml/data/gz2/gz2_classifications_and_subjects.csv\
     --img_file /scratch-ssd/oatml/data/gz2\
-    --dir_name sm_ft\
+    --dir_name sm_ft2\
     --arch encoder_decoder_new_res3.py  --lr 1.0e-3\
     --num_epochs 2400 --img_size 80 --crop_size 80 --z_size 100 --batch_size 100\
     --load_checkpoint classifier_test_fin
