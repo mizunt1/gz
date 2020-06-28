@@ -1,0 +1,115 @@
+import torch.nn as nn
+import torch
+import utils 
+from layers import ConvBlock, UpResBloc
+class Encoder_z(nn.Module):
+    """
+    Will take any insize as long as it is divisible by 8
+    """
+    def __init__(self,
+                 x_size=80, z_size=100, y_size=3):
+        super().__init__()
+        self.y_size = y_size
+        self.x_size = x_size
+        self.z_size = z_size
+        self.linear_size = int((self.x_size/8)**2)
+        self.net = nn.Sequential(
+            nn.Conv2d(1, 32, kernel_size=7, padding=3, bias=False),
+            nn.ELU(),
+            nn.AvgPool2d(2),
+            ConvBlock(32, bias=False),
+            nn.Conv2d(32,16,kernel_size=5, padding=2, bias=False),
+            nn.ELU(),
+            ConvBlock(16, bias=False),
+            nn.AvgPool2d(2),
+            nn.Conv2d(16, 1, kernel_size=5, padding=2, bias=False),
+            nn.AvgPool2d(2),
+            nn.ELU()
+        )
+        self.linear = nn.Linear(self.linear_size + self.y_size, self.linear_size)
+        self.loc = nn.Linear(self.linear_size, self.z_size)
+        self.scale = nn.Linear(self.linear_size, self.z_size)
+        
+    def forward(self, x, y):
+        x = x - 0.222
+        x = x / 0.156
+        x = self.net(x)
+        x = x.view(x.shape[0], -1)
+
+        # TODO CHECK
+        z = utils.cat(x, y, -1)
+        z = self.linear(z)
+        z_loc = self.loc(x)
+        z_scale = torch.exp(self.scale(x))
+        return z_loc, z_scale
+
+class Encoder_y(nn.Module):
+    def __init__(self, x_size=80, y_size=3):
+        super().__init__()
+        self.y_size = y_size
+        self.x_size = x_size
+        self.linear_size = int((x_size/8))
+        self.net = nn.Sequential(
+            nn.Conv2d(1, 32, kernel_size=7, padding=3, bias=False),
+            nn.ELU(),
+            nn.AvgPool2d(2),
+            ConvBlock(32,5, bias=False),
+            nn.Conv2d(32,16,kernel_size=5, padding=2, bias=False),
+            nn.ELU(),
+            ConvBlock(16, bias=False),
+            nn.AvgPool2d(2),
+            nn.Conv2d(16, 1, kernel_size=5, padding=2, bias=False),
+            nn.AvgPool2d(2),
+            nn.ELU()
+        )
+        self.linear = nn.Linear(self.linear_size, self.y_size)
+
+    def forward(self, x):
+        x = x - 0.222
+        x = x / 0.156
+        x = self.net(x)
+        x = self.linear(x)
+        return x
+    
+class Decoder(nn.Module):
+    def __init__(self, z_size=100, x_size=80, y_size=3):
+        super().__init__()
+        self.y_size = y_size
+        self.z_size = z_size
+        self.x_size = x_size
+        self.linear_size = int((x_size/8)**2)
+        self.linear = nn.Linear(self.z_size + self.y_size, self.linear_size)
+        self.net = nn.Sequential(
+            nn.ELU(),
+            UpResBloc(1, 32),
+            nn.ELU(),
+            nn.BatchNorm2d(32),
+            ConvBlock(32, bias=False),
+            UpResBloc(32, 32),
+            nn.ELU(),
+            ConvBlock(32, bias=False),
+            ConvBlock(32, bias=False),
+            UpResBloc(32, 1),
+            nn.Sigmoid()
+        )
+        
+    def forward(self, z, y):
+        # TODO CHECK
+        out = utils.cat(z, y, -1)
+        z = self.linear(out)
+        z = torch.reshape(z, (-1, 1, int(self.x_size/8), int(self.x_size/8)))
+        loc_img = self.net(z)
+        return loc_img
+
+if __name__ == "__main__":
+    x = torch.zeros([10, 1, 80, 80])
+    y = torch.zeros([10, 3])
+    encoder_z = Encoder_z(x_size=80)
+    encoder_y = Encoder_y()
+    decoder = Decoder(x_size=80)
+    x = encoder_z(x, y)
+
+    x = x[0]
+    x = decoder(x, y)
+    x = torch.zeros([10, 1, 80, 80])
+    y = encoder_y(x)

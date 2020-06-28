@@ -56,6 +56,32 @@ def return_data_loader(data, test_proportion, batch_size, shuffle=True):
     train_loader = torch.utils.data.DataLoader(dataset=train_set, batch_size=batch_size, shuffle=shuffle)
     return train_loader, test_loader
     
+def return_ss_loader(data, test_proportion, ss_portion, batch_size):
+    len_data = len(data)
+    num_tests = int(len_data * test_proportion)
+    num_train = len_data - num_tests
+    semisupervised_tests = int(num_tests * ss_portion)
+    supervised_tests = num_tests - semisupervised_test
+    
+    semisupervised_train = num_train - semisupervised_tests
+    supervised_train = num_train - supervised_tests
+    test_supervised = list(i for i in range(0,num_tests - semisupervised_tests))
+    test_unsup = list(i for i in range(semisupervised_tests, num_tests))
+    
+    train_supervised = list(i for i in range(num_tests,len_data - semisupervised_train))
+    train_unsup = list(i for i in range(num_tests + supervised_train,len_data))
+
+    test_s_set = torch.utils.data.Subset(data, test_supervised)
+    test_us_set = torch.utils.data.Subset(data, test_unsup)
+    train_s_set = torch.utils.data.Subset(data, train_supervised)
+    train_us_set = torch.utils.data.Subset(data, train_upsup)
+    test_s_loader = torch.utils.data.DataLoader(dataset=test_s_set, batch_size=batch_size)
+    test_us_loader = torch.utils.data.DataLoader(dataset=test_us_set, batch_size=batch_size)
+    train_s_loader = torch.utils.data.DataLoader(dataset=train_s_set, batch_size=batch_size)
+    train_us_loader = torch.utils.data.DataLoader(dataset=train_us_set, batch_size=batch_size)
+
+    return test_s_loader, test_us_loader, train_s_loader, train_us_loader
+
 def return_subset(data, test_proportion, num_data, batch_size, shuffle=False):
     num_tests = int(num_data * test_proportion)
     test_indices = list(i for i in range(0, num_tests))
