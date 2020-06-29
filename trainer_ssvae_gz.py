@@ -83,5 +83,5 @@ svi = SVI(ssvae.model, ssvae.guide, optimizer, loss=Trace_ELBO())
 #svi = SVI(ssvae.model, guide, optimizer, loss=TraceEnum_ELBO())
 print("train and log")
 train_log(args.dir_name, ssvae, svi, train_s_loader, train_us_loader, test_s_loader, test_us_loader, img_len,
-          args.num_epochs, use_cuda=use_cuda, plot_img_freq=5, checkpoint_freq=50, test_freq=2)
+          args.num_epochs, use_cuda=use_cuda, plot_img_freq=5, checkpoint_freq=50, test_freq=2, testing=subset)
 

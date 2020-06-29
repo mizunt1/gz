@@ -90,16 +90,19 @@ class SSVAE(nn.Module):
         loc_img = self.decoder(z,y)
         return loc_img.reshape([-1, 1, img_width, img_width])
 
-    def test_acc(self, x, y, use_cuda=True):
-
+    def test_acc(self, test_loader, use_cuda=True):
+        # tests one batch
+        data = next(iter(test_loader))
+        image_in = data['image']
+        labels = data['data']
         if use_cuda == True:
-            x = x.cuda()
-            y = y.cuda()
-        ys = self.encoder_y.forward(x)
-        _, max_ind = torch.max(ys, 1)
-        _, max_ind_label = torch.max(y, 1)
+            image_in = image_in.cuda()
+            labels = labels.cuda()
+        out = self.encoder_y.forward(image_in)
+        _, max_ind = torch.max(out, 1)
+        _, max_ind_label = torch.max(labels, 1)
         acc_per_batch = torch.sum(max_ind_label == max_ind)
-        return acc_per_batch.item()/ y.shape[0]
+        return acc_per_batch.item()/ out.shape[0]
 
 def train_ss(svi, train_s_loader, train_us_loader, use_cuda=False):
     # trains for one single epoch and returns normalised loss for one epoch
@@ -162,7 +165,7 @@ def evaluate(svi, test_s_loader, test_us_loader, use_cuda=False):
 
 def train_log(dir_name, ssvae, svi, train_s_loader, train_us_loader,
               test_s_loader, test_us_loader, img_len, num_epochs, plot_img_freq=1,
-              num_img_plt=3, checkpoint_freq=1, use_cuda=True, test_freq=1):
+              num_img_plt=3, checkpoint_freq=1, use_cuda=True, test_freq=1, testing=False):
     writer = SummaryWriter("tb_data_all/" + dir_name)
     if not os.path.exists("checkpoints/" + dir_name):
         os.makedirs("checkpoints/" + dir_name)
@@ -175,17 +178,20 @@ def train_log(dir_name, ssvae, svi, train_s_loader, train_us_loader,
             test_loss = evaluate(svi, test_s_loader, test_us_loader, use_cuda=use_cuda)
             writer.add_scalar('test loss', test_loss, epoch)
             print("test loss", test_loss)
+            if testing == True:
+                acc = ssvae.test_acc(train_us_loader, use_cuda=use_cuda)
+            else:
+                acc = ssvae.test_acc(test_us_loader, use_cuda=use_cuda)
+            print("accuracy:", acc)
+            writer.add_scalar('test accuracy', acc, epoch)
         if epoch % plot_img_freq == 0:
-            ##### MUST CHANGE THIS WHEN TRAINING FOR REAL FROM TRAIN S LOADER TO TEST S LOADER!!!!
-            data  = next(iter(test_s_loader))[0:num_img_plt]
-            image_in = data['image']
-            labels = data['data']
+            data  = next(iter(test_us_loader))
+            image_in = data['image'][0:num_img_plt]
+            labels = data['data'][0:num_img_plt]
             images_out = ssvae.sample_img(image_in, labels, img_len, use_cuda=use_cuda)
             img_grid = tv.utils.make_grid(images_out)
             writer.add_image('images from epoch ' + str(epoch), img_grid)
-            acc = ssvae.test_acc(image_in, labels, use_cuda=use_cuda)
-            print("accuracy:", acc)
-            writer.add_scalar('test accuracy', acc, epoch)
+
         if epoch % checkpoint_freq == 0:
             torch.save(ssvae.encoder_y.state_dict(), "checkpoints/" + dir_name + "/encoder_y.checkpoint")
             torch.save(ssvae.encoder_z.state_dict(), "checkpoints/" + dir_name +  "/encoder_z.checkpoint")
