@@ -66,7 +66,7 @@ encoder_z_args = {'x_size':args.x_size, 'z_size':args.z_size, 'y_size':args.y_si
 decoder_args = {'x_size':args.x_size, 'z_size':args.z_size, 'y_size':args.y_size}
 optimizer = Adam({"lr": args.lr})
 
-test_s_loader, test_us_loader, train_s_loader, train_us_loader = return_ss_loader(data, 0.5,
+test_s_loader, test_us_loader, train_s_loader, train_us_loader = return_ss_loader(data, 0.2,
                                                                                   args.us_portion, args.batch_size, subset=subset)
 
 ssvae = SSVAE(Encoder_y, Encoder_z, Decoder, args.z_size, args.y_size,

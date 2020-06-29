@@ -176,6 +176,7 @@ def train_log(dir_name, ssvae, svi, train_s_loader, train_us_loader,
             writer.add_scalar('test loss', test_loss, epoch)
             print("test loss", test_loss)
         if epoch % plot_img_freq == 0:
+            ##### MUST CHANGE THIS WHEN TRAINING FOR REAL FROM TRAIN S LOADER TO TEST S LOADER!!!!
             data  = next(iter(test_s_loader))[0:num_img_plt]
             image_in = data['image']
             labels = data['data']
