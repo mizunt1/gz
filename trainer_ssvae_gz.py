@@ -44,10 +44,6 @@ Encoder_y = arch.Encoder_y
 Encoder_z = arch.Encoder_z
 Decoder = arch.Decoder
 use_cuda = not args.no_cuda
-if args.subset == True:
-    subset = 128
-else:
-    subset=None
 
 a01 = "t01_smooth_or_features_a01_smooth_count"
 a02 = "t01_smooth_or_features_a02_features_or_disk_count"
@@ -67,7 +63,7 @@ decoder_args = {'x_size':args.x_size, 'z_size':args.z_size, 'y_size':args.y_size
 optimizer = Adam({"lr": args.lr})
 
 test_s_loader, test_us_loader, train_s_loader, train_us_loader = return_ss_loader(data, 0.2,
-                                                                                  args.us_portion, args.batch_size, subset=subset)
+                                                                                  args.us_portion, args.batch_size, subset=args.subset)
 
 ssvae = SSVAE(Encoder_y, Encoder_z, Decoder, args.z_size, args.y_size,
               encoder_y_args, encoder_z_args, decoder_args, use_cuda=use_cuda)
@@ -83,5 +79,5 @@ svi = SVI(ssvae.model, ssvae.guide, optimizer, loss=Trace_ELBO())
 #svi = SVI(ssvae.model, guide, optimizer, loss=TraceEnum_ELBO())
 print("train and log")
 train_log(args.dir_name, ssvae, svi, train_s_loader, train_us_loader, test_s_loader, test_us_loader, img_len,
-          args.num_epochs, use_cuda=use_cuda, plot_img_freq=5, checkpoint_freq=50, test_freq=2, testing=subset)
+          args.num_epochs, use_cuda=use_cuda, plot_img_freq=5, checkpoint_freq=50, test_freq=2, testing=args.subset)
 
