@@ -5,7 +5,8 @@ from PIL import Image
 import torchvision as tv
 
 class Gz2_data(torch.utils.data.Dataset):
-    def __init__(self, csv_dir, image_dir, list_of_interest, faulty_data_set=False, crop=180, resize=128, transforms=None):
+    def __init__(self, csv_dir, image_dir, list_of_interest, faulty_data_set=False, crop=180,
+                 resize=128, transforms=None, one_hot_categorical=False):
         self.csv_dir = csv_dir
         self.faulty_data_set = faulty_data_set
         self.image_dir = image_dir
@@ -13,6 +14,7 @@ class Gz2_data(torch.utils.data.Dataset):
         self.list_of_interest = list_of_interest
         self.resize = resize
         self.crop = crop
+        self.one_hot_categorical = one_hot_categorical
         
     def __len__(self):
         return len(self.file)
@@ -41,7 +43,13 @@ class Gz2_data(torch.utils.data.Dataset):
              tv.transforms.Resize(self.resize), tv.transforms.Grayscale(),
 #             tv.transforms.RandomRotation(180), tv.transforms.RandomAffine(180),
              tv.transforms.ToTensor()])
+        if self.one_hot_categorical == True:
+            _, indice = data.max(0)
+            out = torch.zeros(len(data))
+            out[indice] = 1.0
+            data = out
         image = transforms(image)
+        
         sample = {'image': image, 'data': data.float()}
         return sample
 

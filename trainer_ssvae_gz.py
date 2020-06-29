@@ -54,7 +54,7 @@ data = Gz2_data(csv_dir=args.csv_file,
                                   a02,
                                   a03],
                 crop=args.img_size,
-                resize=args.crop_size)
+                resize=args.crop_size, one_hot_categorical=True)
 
 
 encoder_y_args = {'x_size':args.x_size, 'y_size':args.y_size}
@@ -68,8 +68,12 @@ test_s_loader, test_us_loader, train_s_loader, train_us_loader = return_ss_loade
 ssvae = SSVAE(Encoder_y, Encoder_z, Decoder, args.z_size, args.y_size,
               encoder_y_args, encoder_z_args, decoder_args, use_cuda=use_cuda)
 
+
+#import pyro
+#pyro.enable_validation(True)
+
 batch_size = 100
-img_len = 28
+img_len = args.x_size
 svi = SVI(ssvae.model, ssvae.guide, optimizer, loss=Trace_ELBO())
 #guide = config_enumerate(ssvae.guide, "parallel", expand=True)
 #svi = SVI(ssvae.model, guide, optimizer, loss=TraceEnum_ELBO())

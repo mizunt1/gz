@@ -20,7 +20,7 @@ class SSVAE(nn.Module):
         if use_cuda:
             self.cuda()
 
-    def model(self, xs, ys=None):
+    def model(self, xs, y=None):
         # register this pytorch module and all of its sub-modules with pyro
         pyro.module("ss_vae", self)
         batch_size = xs.size(0)
@@ -37,7 +37,10 @@ class SSVAE(nn.Module):
             # vector of probabilities for each class, i.e. output_size
             # its a uniform prior
             # making labels one hot for onehotcat
-            ys = pyro.sample("y", dist.OneHotCategorical(alpha_prior), obs=ys)
+            import pdb
+            pdb.set_trace()
+            ys = pyro.sample("y", dist.OneHotCategorical(alpha_prior), obs=y)
+            
             # one of the categories will be sampled, according to the distribution specified by alpha prior    
             # finally, score the image (x) using the handwriting style (z) and
             # the class label y (which digit to write) against the
@@ -45,7 +48,7 @@ class SSVAE(nn.Module):
             # where `decoder` is a neural network
             loc = self.decoder.forward(zs, ys)
             # decoder networks takes a category, and a latent variable and outputs an observation x.
-            pyro.sample("x", dist.Bernoulli(loc).to_event(1), obs=xs)
+            pyro.sample("x", dist.Bernoulli(loc).to_event(3), obs=xs)
 
     def guide(self, xs, ys=None):
         with pyro.plate("data"):
@@ -86,7 +89,7 @@ class SSVAE(nn.Module):
         # sample in latent space
         z = dist.Normal(z_loc, z_scale).sample()
         # decode the image (note we don't sample in image space)
-        loc_img = self.decoder([z,y])
+        loc_img = self.decoder(z,y)
         return loc_img.reshape([-1, 1, img_width, img_width])
 
     def test_acc(self, x, y, use_cuda=True):
@@ -124,10 +127,11 @@ def train_ss(svi, train_s_loader, train_us_loader, use_cuda=False):
             ys = ys.cuda()
         # feeding in data. At times, omit labels
         # TODO seperate data set tolabelled and unlabelled rather than alternating as below
-        batch_loss_s = svi.step(xs, ys)
-        epoch_loss_s += batch_loss_s
         batch_loss_us = svi.step(xus)
         epoch_loss_us += batch_loss_us
+        batch_loss_s = svi.step(xs, ys)
+        epoch_loss_s += batch_loss_s
+
     # return epoch loss
     normalizer_train_s = len(train_s_loader.dataset)
     total_epoch_loss_s = epoch_loss_s / normalizer_train_s
@@ -140,8 +144,10 @@ def evaluate(svi, test_s_loader, test_us_loader, use_cuda=False):
     test_loss = 0.
     # compute the loss over the entire test set
     for data_sup, data_unsup in zip(cycle(test_s_loader), test_us_loader):
-        xs, ys = data_sup
-        xus, yus = data_unsup
+        xs = data_sup['image']
+        ys = data_sup['data']
+        xus = data_unsup['image']
+        yus = data_unsup['data']
         # if on GPU put mini-batch into CUDA memory
         batch_size = xs.size(0)
 
@@ -164,6 +170,7 @@ def train_log(dir_name, ssvae, svi, train_s_loader, train_us_loader,
     writer = SummaryWriter("tb_data_all/" + dir_name)
     if not os.path.exists("checkpoints/" + dir_name):
         os.makedirs("checkpoints/" + dir_name)
+        
     for epoch in range(num_epochs):
         total_epoch_loss_train = train_ss(svi, train_s_loader, train_us_loader, use_cuda=use_cuda)
         if epoch % test_freq == 0:
@@ -173,8 +180,9 @@ def train_log(dir_name, ssvae, svi, train_s_loader, train_us_loader,
             writer.add_scalar('test loss', test_loss, epoch)
             print("test loss", test_loss)
         if epoch % plot_img_freq == 0:
-            image_in, labels  = next(iter(test_s_loader))[0:num_img_plt]
-
+            data  = next(iter(test_s_loader))#[0:num_img_plt]
+            image_in = data['image']
+            labels = data['data']
             images_out = ssvae.sample_img(image_in, labels, img_len, use_cuda=use_cuda)
             img_grid = tv.utils.make_grid(images_out)
             writer.add_image('images from epoch ' + str(epoch), img_grid)

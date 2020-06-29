@@ -33,7 +33,8 @@ class Encoder_z(nn.Module):
     def forward(self, x, y):
         z = x - 0.222
         z = x / 0.156
-
+#        import pdb
+#        pdb.set_trace()
         z = self.net(z)
         z = z.view(z.shape[0], -1)
         
@@ -49,7 +50,7 @@ class Encoder_y(nn.Module):
         super().__init__()
         self.y_size = y_size
         self.x_size = x_size
-        self.linear_size = int((x_size/8))
+        self.linear_size = int((x_size/8)**2)
         self.net = nn.Sequential(
             nn.Conv2d(1, 32, kernel_size=7, padding=3, bias=False),
             nn.ELU(),
@@ -64,12 +65,14 @@ class Encoder_y(nn.Module):
             nn.ELU()
         )
         self.linear = nn.Linear(self.linear_size, self.y_size)
-
+        self.sigmoid = nn.Sigmoid()
     def forward(self, x):
         x = x - 0.222
         x = x / 0.156
         x = self.net(x)
+        x = x.view(-1, self.linear_size)
         x = self.linear(x)
+        x = self.sigmoid(x)
         return x
     
 class Decoder(nn.Module):
@@ -96,9 +99,8 @@ class Decoder(nn.Module):
         
     def forward(self, z, y):
         # TODO CHECK
-
-        out = utils.cat(z, y, -1)
-        z = self.linear(out)
+        z = utils.cat(z, y, -1)
+        z = self.linear(z)
         z = torch.reshape(z, (-1, 1, int(self.x_size/8), int(self.x_size/8)))
         loc_img = self.net(z)
         return loc_img
