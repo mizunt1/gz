@@ -37,8 +37,6 @@ class SSVAE(nn.Module):
             # vector of probabilities for each class, i.e. output_size
             # its a uniform prior
             # making labels one hot for onehotcat
-            import pdb
-            pdb.set_trace()
             ys = pyro.sample("y", dist.OneHotCategorical(alpha_prior), obs=y)
             
             # one of the categories will be sampled, according to the distribution specified by alpha prior    
@@ -112,8 +110,6 @@ def train_ss(svi, train_s_loader, train_us_loader, use_cuda=False):
     # by the data loader
     zip_list = zip(train_s_loader, cycle(train_us_loader)) if len(train_s_loader) > len(train_us_loader) else zip(cycle(train_s_loader), train_us_loader)
     for data_sup, data_unsup in zip_list:
-#        import pdb
-#        pdb.set_trace()
         xs = data_sup['image']
         ys = data_sup['data']
         xus = data_unsup['image']
@@ -166,7 +162,7 @@ def evaluate(svi, test_s_loader, test_us_loader, use_cuda=False):
 
 def train_log(dir_name, ssvae, svi, train_s_loader, train_us_loader,
               test_s_loader, test_us_loader, img_len, num_epochs, plot_img_freq=1,
-              num_img_plt=9, checkpoint_freq=1, use_cuda=True, test_freq=1):
+              num_img_plt=3, checkpoint_freq=1, use_cuda=True, test_freq=1):
     writer = SummaryWriter("tb_data_all/" + dir_name)
     if not os.path.exists("checkpoints/" + dir_name):
         os.makedirs("checkpoints/" + dir_name)
@@ -180,7 +176,7 @@ def train_log(dir_name, ssvae, svi, train_s_loader, train_us_loader,
             writer.add_scalar('test loss', test_loss, epoch)
             print("test loss", test_loss)
         if epoch % plot_img_freq == 0:
-            data  = next(iter(test_s_loader))#[0:num_img_plt]
+            data  = next(iter(test_s_loader))[0:num_img_plt]
             image_in = data['image']
             labels = data['data']
             images_out = ssvae.sample_img(image_in, labels, img_len, use_cuda=use_cuda)

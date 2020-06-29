@@ -33,8 +33,6 @@ class Encoder_z(nn.Module):
     def forward(self, x, y):
         z = x - 0.222
         z = x / 0.156
-#        import pdb
-#        pdb.set_trace()
         z = self.net(z)
         z = z.view(z.shape[0], -1)
         
