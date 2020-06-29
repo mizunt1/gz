@@ -92,6 +92,8 @@ class SSVAE(nn.Module):
 
     def test_acc(self, test_loader, use_cuda=True):
         # tests one batch
+        import pdb
+        pdb.set_trace()
         data = next(iter(test_loader))
         image_in = data['image']
         labels = data['data']
@@ -188,10 +190,12 @@ def train_log(dir_name, ssvae, svi, train_s_loader, train_us_loader,
             data  = next(iter(test_us_loader))
             image_in = data['image'][0:num_img_plt]
             labels = data['data'][0:num_img_plt]
+            img_grid_in = tv.utils.make_grid(images_in)
             images_out = ssvae.sample_img(image_in, labels, img_len, use_cuda=use_cuda)
             img_grid = tv.utils.make_grid(images_out)
-            writer.add_image('images from epoch ' + str(epoch), img_grid)
-
+            writer.add_image('images out from epoch ' + str(epoch), img_grid)
+            writer.add_image('images in from epoch ' + str(epoch), img_grid_in)
+            
         if epoch % checkpoint_freq == 0:
             torch.save(ssvae.encoder_y.state_dict(), "checkpoints/" + dir_name + "/encoder_y.checkpoint")
             torch.save(ssvae.encoder_z.state_dict(), "checkpoints/" + dir_name +  "/encoder_z.checkpoint")
