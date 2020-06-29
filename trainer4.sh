@@ -9,7 +9,7 @@
 
 export CONDA_ENVS_PATH=/scratch-ssd/$USER/conda_envs
 export CONDA_PKGS_DIRS=/scratch-ssd/$USER/conda_pkgs
-rsync -az clpc144:/scratch-ssd/oatml/data/gz2/ /scratch-ssd/oatml/data/gz2
+
 /scratch-ssd/oatml/scripts/run_locked.sh /scratch-ssd/oatml/miniconda3/bin/conda-env update -f gz_mizu.yml
 source /scratch-ssd/oatml/miniconda3/bin/activate gz_mizu
 
@@ -18,5 +18,5 @@ srun python trainer_ssvae_gz.py\
     --img_file /scratch-ssd/oatml/data/gz2\
     --dir_name ss_sanity_final\
     --arch ss_encoders_decoders_gz.py\
-    --num_epochs 2300 --img_size 80 --crop_size 80 --z_size 100  --batch_size 10 --subset\
+    --num_epochs 100 --img_size 80 --crop_size 80 --z_size 100  --batch_size 10 --subset\
 
