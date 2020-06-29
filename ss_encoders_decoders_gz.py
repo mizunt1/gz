@@ -51,16 +51,16 @@ class Encoder_y(nn.Module):
         self.linear_size = int((x_size/8)**2)
         self.net = nn.Sequential(
             nn.Conv2d(1, 32, kernel_size=7, padding=3, bias=False),
-            nn.ELU(),
+            nn.Tanh(),
             nn.AvgPool2d(2),
             ConvBlock(32,5, bias=False),
             nn.Conv2d(32,16,kernel_size=5, padding=2, bias=False),
-            nn.ELU(),
+            nn.Tanh(),
             ConvBlock(16, bias=False),
             nn.AvgPool2d(2),
             nn.Conv2d(16, 1, kernel_size=5, padding=2, bias=False),
             nn.AvgPool2d(2),
-            nn.ELU()
+            nn.Tanh()
         )
         self.linear = nn.Linear(self.linear_size, self.y_size)
         self.sigmoid = nn.Sigmoid()

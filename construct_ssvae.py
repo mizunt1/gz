@@ -94,7 +94,11 @@ class SSVAE(nn.Module):
         # tests one batch
         data = next(iter(test_loader))
         image_in = data['image']
+        
         labels = data['data']
+#        ys = torch.zeros(labels.shape)
+#        ys[:,0] = 1
+#        labels = ys
         if use_cuda == True:
             image_in = image_in.cuda()
             labels = labels.cuda()
@@ -118,6 +122,8 @@ def train_ss(svi, train_s_loader, train_us_loader, use_cuda=False):
         xus = data_unsup['image']
         yus = data_unsup['data']
         
+#        ys = torch.zeros(ys.shape)
+#        ys[:,0] = 1
         # if on GPU put mini-batch into CUDA memory
         if use_cuda:
             xs = xs.cuda()

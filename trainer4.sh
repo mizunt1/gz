@@ -16,7 +16,8 @@ source /scratch-ssd/oatml/miniconda3/bin/activate gz_mizu
 srun python trainer_ssvae_gz.py\
     --csv_file /scratch-ssd/oatml/data/gz2/gz2_classifications_and_subjects.csv\
     --img_file /scratch-ssd/oatml/data/gz2\
-    --dir_name ss_sanity_final\
+    --dir_name ss_all_low_lr\
     --arch ss_encoders_decoders_gz.py\
-    --num_epochs 100 --img_size 80 --crop_size 80 --z_size 100  --batch_size 10 --subset\
+    --num_epochs 2000 --img_size 80 --crop_size 80 --z_size 100  --batch_size 10 --subset \
+    --lr 1e-5
 
