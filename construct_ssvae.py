@@ -92,8 +92,6 @@ class SSVAE(nn.Module):
 
     def test_acc(self, test_loader, use_cuda=True):
         # tests one batch
-        import pdb
-        pdb.set_trace()
         data = next(iter(test_loader))
         image_in = data['image']
         labels = data['data']
@@ -167,7 +165,7 @@ def evaluate(svi, test_s_loader, test_us_loader, use_cuda=False):
 
 def train_log(dir_name, ssvae, svi, train_s_loader, train_us_loader,
               test_s_loader, test_us_loader, img_len, num_epochs, plot_img_freq=1,
-              num_img_plt=3, checkpoint_freq=1, use_cuda=True, test_freq=1, testing=False):
+              num_img_plt=10, checkpoint_freq=1, use_cuda=True, test_freq=1, testing=False):
     writer = SummaryWriter("tb_data_all/" + dir_name)
     if not os.path.exists("checkpoints/" + dir_name):
         os.makedirs("checkpoints/" + dir_name)
@@ -188,10 +186,10 @@ def train_log(dir_name, ssvae, svi, train_s_loader, train_us_loader,
             writer.add_scalar('test accuracy', acc, epoch)
         if epoch % plot_img_freq == 0:
             data  = next(iter(test_us_loader))
-            image_in = data['image'][0:num_img_plt]
+            images_in = data['image'][0:num_img_plt]
             labels = data['data'][0:num_img_plt]
             img_grid_in = tv.utils.make_grid(images_in)
-            images_out = ssvae.sample_img(image_in, labels, img_len, use_cuda=use_cuda)
+            images_out = ssvae.sample_img(images_in, labels, img_len, use_cuda=use_cuda)
             img_grid = tv.utils.make_grid(images_out)
             writer.add_image('images out from epoch ' + str(epoch), img_grid)
             writer.add_image('images in from epoch ' + str(epoch), img_grid_in)
