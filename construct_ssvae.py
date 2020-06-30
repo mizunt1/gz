@@ -9,6 +9,7 @@ from torch.utils.tensorboard import SummaryWriter
 from itertools import cycle
 import utils
 import torchvision as tv
+from pyro.infer import config_enumerate
 class SSVAE(nn.Module):
     def __init__(self, encoder_y, encoder_z, decoder, z_dim, y_dim, encoder_y_args, encoder_z_args, decoder_args, use_cuda=False):
         super().__init__()
@@ -19,7 +20,7 @@ class SSVAE(nn.Module):
         self.y_dim = y_dim
         if use_cuda:
             self.cuda()
-
+    @config_enumerate
     def model(self, xs, y=None):
         # register this pytorch module and all of its sub-modules with pyro
         pyro.module("ss_vae", self)
@@ -46,6 +47,7 @@ class SSVAE(nn.Module):
             # where `decoder` is a neural network
             loc = self.decoder.forward(zs, ys)
             # decoder networks takes a category, and a latent variable and outputs an observation x.
+
             pyro.sample("x", dist.Bernoulli(loc).to_event(3), obs=xs)
 
     def guide(self, xs, ys=None):
@@ -132,10 +134,11 @@ def train_ss(svi, train_s_loader, train_us_loader, use_cuda=False):
             ys = ys.cuda()
         # feeding in data. At times, omit labels
         # TODO seperate data set tolabelled and unlabelled rather than alternating as below
-        batch_loss_us = svi.step(xus)
-        epoch_loss_us += batch_loss_us
         batch_loss_s = svi.step(xs, ys)
         epoch_loss_s += batch_loss_s
+        batch_loss_us = svi.step(xus)
+        epoch_loss_us += batch_loss_us
+
 
     # return epoch loss
     normalizer_train_s = len(train_s_loader.dataset)
