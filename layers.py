@@ -1,19 +1,33 @@
 from torch import nn
 import torch
+class Conv2dEnum(nn.Module):
+    def __init__(self, in_channels, out_channels, kernel_size, padding, bias, stride=1):
+        super(Conv2dEnum, self).__init__()
+        self.conv = torch.nn.Conv2d(in_channels, out_channels, kernel_size=kernel_size, stride=stride, padding=padding, bias=True)
+
+    def forward(self, x):
+        length = len(x.shape)
+        enum_shape = x.shape[:-3]
+        normal_shape = x.shape[3:]
+        x = torch.flatten(x, start_dim=0, end_dim=length -4)
+        x = self.conv(x)
+        x = x.reshape(*enum_shape, *normal_shape)
+        return x
+
 class ConvBlock(nn.Module):
     def __init__(self, in_channels, kernel_size=5, padding=2, bias=True):
         super().__init__()
         self.body = nn.Sequential(
-            nn.Conv2d(in_channels, in_channels, kernel_size=kernel_size, padding=padding, bias=bias),
+            Conv2dEnum(in_channels, in_channels, kernel_size=kernel_size, padding=padding, bias=bias),
             nn.ELU(),
             nn.BatchNorm2d(in_channels),
-            nn.Conv2d(in_channels, in_channels, kernel_size=kernel_size, padding=padding, bias=bias),
+            Conv2dEnum(in_channels, in_channels, kernel_size=kernel_size, padding=padding, bias=bias),
             nn.ELU(),
             nn.BatchNorm2d(in_channels),
-            nn.Conv2d(in_channels, in_channels, kernel_size=kernel_size, padding=padding, bias=bias),
+            Conv2dEnum(in_channels, in_channels, kernel_size=kernel_size, padding=padding, bias=bias),
             nn.ELU(),
             nn.BatchNorm2d(in_channels),
-            nn.Conv2d(in_channels, in_channels, kernel_size=kernel_size, padding=padding, bias=bias),
+            Conv2dEnum(in_channels, in_channels, kernel_size=kernel_size, padding=padding, bias=bias),
             nn.ELU()
 
         )
@@ -76,6 +90,15 @@ class DownResBloc(nn.Module):
     def forward(self, x):
         return self.merge(self.skip(x) + self.body(x))
 
+
 if __name__ == "__main__":
-    x = torch.zeros([10, 1, 80, 80])
-    
+    o = torch.zeros([2,3,10, 1, 80, 80])
+    length = len(o.shape)
+    enum_shape = o.shape[:-3]
+    normal_shape = o.shape[3:]
+    print("norm", normal_shape)
+    print("enu", enum_shape)
+    x = torch.flatten(o, start_dim=0, end_dim=length-4)
+    print(x.shape)
+    x = x.reshape(*enum_shape, *normal_shape)
+    print(torch.all(torch.eq(o, x)))
