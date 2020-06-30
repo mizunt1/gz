@@ -8,9 +8,9 @@ class Conv2dEnum(nn.Module):
     def forward(self, x):
         length = len(x.shape)
         enum_shape = x.shape[:-3]
-        normal_shape = x.shape[3:]
         x = torch.flatten(x, start_dim=0, end_dim=length -4)
         x = self.conv(x)
+        normal_shape = x.shape[1:]
         x = x.reshape(*enum_shape, *normal_shape)
         return x
 
@@ -57,16 +57,16 @@ class UpResBloc(nn.Module):
     def __init__(self, in_channels, out_channels, bias=True):
         super().__init__()
         self.body = nn.Sequential(
-            nn.Conv2d(in_channels, in_channels, kernel_size=3, padding=1, bias=bias),
+            Conv2dEnum(in_channels, in_channels, kernel_size=3, padding=1, bias=bias),
             nn.ELU(),
             nn.BatchNorm2d(in_channels),
-            nn.Conv2d(in_channels, in_channels, kernel_size=3, padding=1, bias=bias),
+            Conv2dEnum(in_channels, in_channels, kernel_size=3, padding=1, bias=bias),
             nn.ELU(),
             nn.BatchNorm2d(in_channels),
             nn.Upsample(scale_factor=2, mode="nearest"),
         )
         self.skip = nn.Upsample(scale_factor=2, mode="nearest")
-        self.merge = nn.Conv2d(in_channels, out_channels, kernel_size=3, padding=1)
+        self.merge = Conv2dEnum(in_channels, out_channels, kernel_size=3, padding=1, bias=bias)
 
     def forward(self, x):
         return self.merge(self.skip(x) + self.body(x))
@@ -102,3 +102,7 @@ if __name__ == "__main__":
     print(x.shape)
     x = x.reshape(*enum_shape, *normal_shape)
     print(torch.all(torch.eq(o, x)))
+
+    o = torch.zeros([2,3,10, 1, 80, 80])
+    x = Conv2dEnum(1, 32, 3, 1, bias=False)(o)
+    print(x.shape)
