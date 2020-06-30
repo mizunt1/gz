@@ -69,14 +69,19 @@ ssvae = SSVAE(Encoder_y, Encoder_z, Decoder, args.z_size, args.y_size,
               encoder_y_args, encoder_z_args, decoder_args, use_cuda=use_cuda)
 
 
-#import pyro
-#pyro.enable_validation(True)
+import pyro
 
-batch_size = 100
+#pyro.enable_validation(True)
+#data = next(iter(train_s_loader))
+#model = ssvae.model
+#trace = pyro.poutine.trace(pyro.poutine.enum(model, first_available_dim=-2)).get_trace(data['image'])
+#trace.compute_log_prob()
+#print(trace.format_shapes())
+
 img_len = args.x_size
-svi = SVI(ssvae.model, ssvae.guide, optimizer, loss=Trace_ELBO())
-#guide = config_enumerate(ssvae.guide, "parallel", expand=True)
-#svi = SVI(ssvae.model, guide, optimizer, loss=TraceEnum_ELBO())
+#svi = SVI(ssvae.model, ssvae.guide, optimizer, loss=Trace_ELBO())
+guide = config_enumerate(ssvae.guide, "parallel", expand=True)
+svi = SVI(ssvae.model, guide, optimizer, loss=TraceEnum_ELBO())
 print("train and log")
 train_log(args.dir_name, ssvae, svi, train_s_loader, train_us_loader, test_s_loader, test_us_loader, img_len,
           args.num_epochs, use_cuda=use_cuda, plot_img_freq=5, checkpoint_freq=50, test_freq=2, testing=args.subset)

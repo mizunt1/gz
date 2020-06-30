@@ -1,7 +1,7 @@
 import torch.nn as nn
 import torch
 import utils 
-from layers import ConvBlock, UpResBloc, Conv2dEnum
+from layers import ConvBlock, UpResBloc, Conv2dEnum, BatchNorm2dEnum
 class Encoder_z(nn.Module):
     """
     Will take any insize as long as it is divisible by 8
@@ -33,8 +33,6 @@ class Encoder_z(nn.Module):
     def forward(self, x, y):
         z = x - 0.222
         z = x / 0.156
-#        import pdb
-#        pdb.set_trace()
         z = self.net(z)
         z = z.view(z.shape[0], -1)
         
@@ -67,6 +65,7 @@ class Encoder_y(nn.Module):
         self.linear = nn.Linear(self.linear_size, self.y_size)
         self.sigmoid = nn.Sigmoid()
     def forward(self, x):
+
         x = x - 0.222
         x = x / 0.156
         x = self.net(x)
@@ -87,7 +86,7 @@ class Decoder(nn.Module):
             nn.ELU(),
             UpResBloc(1, 32),
             nn.ELU(),
-            nn.BatchNorm2d(32),
+            BatchNorm2dEnum(32),
             ConvBlock(32, bias=False),
             UpResBloc(32, 32),
             nn.ELU(),
@@ -101,7 +100,8 @@ class Decoder(nn.Module):
         # TODO CHECK
         z = utils.cat((z, y), -1)
         z = self.linear(z)
-        z = torch.reshape(z, (-1, 1, int(self.x_size/8), int(self.x_size/8)))
+        z = torch.reshape(z, (*z.shape[:-1],1, int(self.x_size/8), int(self.x_size/8)))
+        
         loc_img = self.net(z)
         return loc_img
 
