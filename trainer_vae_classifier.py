@@ -23,7 +23,7 @@ parser.add_argument('--img_file', metavar='i', type=str, default=img)
 parser.add_argument('--no_cuda', default=False, action='store_true')
 parser.add_argument('--num_epochs', type=int, default=10)
 parser.add_argument('--img_size', default=80, type=int)
-parser.add_argument('--lr', default=1.0e-3, type=float)
+parser.add_argument('--lr', default=1.0e-4, type=float)
 parser.add_argument('--z_size', default=100, type=int)
 parser.add_argument('--crop_size', default=80, type=int)
 parser.add_argument('--batch_size', default=10, type=int)
@@ -155,7 +155,7 @@ vae_optim = Adam(vae.parameters(), lr= args.lr, betas= (0.90, 0.999))
 #vae_optim = Adam({"lr": 0.001})
 classifier = Classifier(in_dim=args.z_size*2)
 
-classifier_optim = Adam(classifier.parameters(),lr=1e-3, betas=(0.90, 0.999))
+classifier_optim = Adam(classifier.parameters(),args.lr /10 , betas=(0.90, 0.999))
 # or optimizer = optim.SGD(classifier.parameters(), lr=0.001, momentum=0.9)?
 classifier_loss = nn.CrossEntropyLoss()
 
