@@ -4,7 +4,7 @@
 
 #SBATCH --output=slurm-%j.out
 #SBATCH --error=slurm-%j.err
-#SBATCH --job-name="ss sanity"
+#SBATCH --job-name="ss enum"
 #SBATCH --partition="msc"
 
 export CONDA_ENVS_PATH=/scratch-ssd/$USER/conda_envs
@@ -16,8 +16,8 @@ source /scratch-ssd/oatml/miniconda3/bin/activate gz_mizu
 srun python trainer_ssvae_gz.py\
     --csv_file /scratch-ssd/oatml/data/gz2/gz2_classifications_and_subjects.csv\
     --img_file /scratch-ssd/oatml/data/gz2\
-    --dir_name ss_all_low_lr\
-    --arch ss_encoders_decoders_gz.py\
-    --num_epochs 2000 --img_size 80 --crop_size 80 --z_size 100  --batch_size 10 --subset \
+    --dir_name ss_all_data_enum\
+    --arch ss_encoders_decoders_gz_enum.py\
+    --num_epochs 2000 --img_size 80 --crop_size 80 --z_size 100  --batch_size 100 \
     --lr 1e-5
 
