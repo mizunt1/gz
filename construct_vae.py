@@ -46,8 +46,8 @@ class VAE(nn.Module):
             # use the encoder to get the parameters used to define q(z|x)
             z_loc, z_scale = self.encoder.forward(x)
             # sample the latent code z
-#            pyro.sample("latent", dist.Normal(z_loc, z_scale).to_event(1))
-            pyro.sample("latent", dist.Delta(z_loc).to_event(1))
+            pyro.sample("latent", dist.Normal(z_loc, z_scale).to_event(1))
+#            pyro.sample("latent", dist.Delta(z_loc).to_event(1))
 
     # define a helper function for reconstructing images
     def sample_img(self, x, use_cuda=False, encoder=False, decoder=False):
@@ -61,8 +61,8 @@ class VAE(nn.Module):
         else:
             z_loc, z_scale = encoder(x)
         # sample in latent space
-        z = dist.Delta(z_loc).sample()
-#        z = dist.Normal(z_loc, z_scale).sample()
+#        z = dist.Delta(z_loc).sample()
+        z = dist.Normal(z_loc, z_scale).sample()
         # decode the image (note we don't sample in image space)
         if decoder == False:
             loc_img = self.decoder(z)
