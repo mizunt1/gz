@@ -101,7 +101,7 @@ class SSVAE(nn.Module):
         if use_cuda == True:
             image_in = image_in.cuda()
             labels = labels.cuda()
-        out = self.encoder.forward(image_in)
+        out = self.encoder_y.forward(image_in)
         _, max_ind = torch.max(out, 1)
         _, max_ind_label = torch.max(labels, 1)
         acc_per_batch = torch.sum(max_ind_label == max_ind)
@@ -113,8 +113,7 @@ class SSVAE(nn.Module):
         labels = data['data']
         if use_cuda == True:
             image_in = image_in.cuda()
-        encoder_y = self.encoder_y.detach()
-        logits = encoder_y.forward(image_in)
+        logits = self.encoder_y.forward(image_in)
         target = labels.cpu().numpy()
         probs = torch.sigmoid(logits).detach().cpu().numpy()
         total_count = np.sum(target, axis=1)
@@ -204,6 +203,7 @@ def train_log(dir_name, ssvae, svi, train_s_loader, train_us_loader,
             test_acc = ssvae.test_acc(test_us_loader, use_cuda=use_cuda)
             train_acc = ssvae.test_acc(train_us_loader, use_cuda=use_cuda)
             rms = ssvae.rms_calc(test_us_loader, use_cuda=use_cuda)
+            print("rms:", rms, epoch)
             print("test accuracy:", test_acc, epoch)
             print("train accuracy:", train_acc, epoch)
             writer.add_scalar('test accuracy', test_acc, epoch)
