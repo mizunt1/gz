@@ -45,11 +45,21 @@ use_cuda = not args.no_cuda
 a01 = "t01_smooth_or_features_a01_smooth_count"
 a02 = "t01_smooth_or_features_a02_features_or_disk_count"
 a03 = "t01_smooth_or_features_a03_star_or_artifact_count"
+
+if args.bar_no_bar == False:
+    a01 = "t01_smooth_or_features_a01_smooth_count"
+    a02 = "t01_smooth_or_features_a02_features_or_disk_count"
+    a03 = "t01_smooth_or_features_a03_star_or_artifact_count"
+    list_of_ans = [a0, a02, a03]
+else:
+    a01 = "t03_bar_a06_bar_count"
+    a02 = "t03_bar_a07_no_bar_count"
+    list_of_ans = [a01, a02]
+
+
 data = Gz2_data(csv_dir=args.csv_file,
                 image_dir=args.img_file,
-                list_of_interest=[a01,
-                                  a02,
-                                  a03],
+                list_of_interest=list_of_ans,
                 crop=args.img_size,
                 resize=args.crop_size)
 
@@ -146,19 +156,6 @@ def train_vae_classifier(vae, vae_optim, vae_loss_fn, classifier, classifier_opt
     return total_epoch_loss_vae, total_epoch_loss_classifier
 
 
-vae = VAE(Encoder, Decoder, args.z_size, encoder_args, decoder_args, use_cuda=use_cuda)
-if args.load_checkpoint != None:
-    vae.encoder.load_state_dict(torch.load("checkpoints/" + args.load_checkpoint + "/encoder.checkpoint"))
-    vae.decoder.load_state_dict(torch.load("checkpoints/" + args.load_checkpoint + "/decoder.checkpoint"))
-vae_optim = Adam(vae.parameters(), lr= args.lr, betas= (0.90, 0.999))
-
-#vae_optim = Adam({"lr": 0.001})
-classifier = Classifier(in_dim=args.z_size*2)
-
-classifier_optim = Adam(classifier.parameters(),args.lr /10 , betas=(0.90, 0.999))
-# or optimizer = optim.SGD(classifier.parameters(), lr=0.001, momentum=0.9)?
-classifier_loss = nn.CrossEntropyLoss()
-
 
 def train_log_vae_classifier(dir_name, vae, vae_optim, vae_loss_fn, classifier, classifier_optim,
                              classifier_loss_fn, train_loader, test_loader, num_epochs, plot_img_freq=1, num_img_plt=40,
@@ -194,6 +191,7 @@ def train_log_vae_classifier(dir_name, vae, vae_optim, vae_loss_fn, classifier, 
             writer.add_scalar('Test accuracy', accuracy, epoch)
             print(epoch)
         if epoch % plot_img_freq == 0:
+            
             image_in = next(iter(train_loader))['image'][0:num_img_plt]
             images_out = vae.sample_img(image_in, use_cuda=use_cuda)
             img_grid_in = tv.utils.make_grid(image_in)
@@ -208,6 +206,20 @@ def train_log_vae_classifier(dir_name, vae, vae_optim, vae_loss_fn, classifier, 
             torch.save(classifier.state_dict(),  "checkpoints/" + dir_name +  "/classfier.checkpoint")
             
         writer.close()
+
+
+vae = VAE(Encoder, Decoder, args.z_size, encoder_args, decoder_args, use_cuda=use_cuda)
+if args.load_checkpoint != None:
+    vae.encoder.load_state_dict(torch.load("checkpoints/" + args.load_checkpoint + "/encoder.checkpoint"))
+    vae.decoder.load_state_dict(torch.load("checkpoints/" + args.load_checkpoint + "/decoder.checkpoint"))
+vae_optim = Adam(vae.parameters(), lr= args.lr, betas= (0.90, 0.999))
+
+classifier = Classifier(in_dim=args.z_size*2)
+
+classifier_optim = Adam(classifier.parameters(),args.lr /10 , betas=(0.90, 0.999))
+# or optimizer = optim.SGD(classifier.parameters(), lr=0.001, momentum=0.9)?
+classifier_loss = nn.CrossEntropyLoss()
+
 
 
 train_log_vae_classifier(args.dir_name, vae, vae_optim, Trace_ELBO().differentiable_loss,

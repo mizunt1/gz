@@ -35,6 +35,7 @@ parser.add_argument('--crop_size', default=80, type=int)
 parser.add_argument('--batch_size', default=100, type=int)
 parser.add_argument('--us_portion', default=0.5, type=float)
 parser.add_argument('--subset', default=False, action='store_true')
+parser.add_argument('--bar_no_bar', default=False, action='store_true')
 args = parser.parse_args()
 
 spec = importlib.util.spec_from_file_location("module.name", args.arch)
@@ -45,14 +46,19 @@ Encoder_z = arch.Encoder_z
 Decoder = arch.Decoder
 use_cuda = not args.no_cuda
 
-a01 = "t01_smooth_or_features_a01_smooth_count"
-a02 = "t01_smooth_or_features_a02_features_or_disk_count"
-a03 = "t01_smooth_or_features_a03_star_or_artifact_count"
+if args.bar_no_bar == False:
+    a01 = "t01_smooth_or_features_a01_smooth_count"
+    a02 = "t01_smooth_or_features_a02_features_or_disk_count"
+    a03 = "t01_smooth_or_features_a03_star_or_artifact_count"
+    list_of_ans = [a0, a02, a03]
+else:
+    a01 = "t03_bar_a06_bar_count"
+    a02 = "t03_bar_a07_no_bar_count"
+    list_of_ans = [a01, a02]
+
 data = Gz2_data(csv_dir=args.csv_file,
                 image_dir=args.img_file,
-                list_of_interest=[a01,
-                                  a02,
-                                  a03],
+                list_of_interest=list_of_ans,
                 crop=args.img_size,
                 resize=args.crop_size, one_hot_categorical=True)
 
