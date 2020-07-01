@@ -36,7 +36,7 @@ class Encoder_z(nn.Module):
         z = self.net(z)
         z = z.view(z.shape[0], -1)
         
-        z = utils.cat(z, y, -1)
+        z = utils.cat((z, y_, -1)
 
         z = self.linear(z)
         z_loc = self.loc(z)
@@ -97,7 +97,7 @@ class Decoder(nn.Module):
         
     def forward(self, z, y):
         # TODO CHECK
-        z = utils.cat(z, y, -1)
+        z = utils.cat((z, y), -1)
         z = self.linear(z)
         z = torch.reshape(z, (-1, 1, int(self.x_size/8), int(self.x_size/8)))
         loc_img = self.net(z)
