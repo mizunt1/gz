@@ -174,7 +174,7 @@ def evaluate(svi, test_s_loader, test_us_loader, use_cuda=False):
 
 def train_log(dir_name, ssvae, svi, train_s_loader, train_us_loader,
               test_s_loader, test_us_loader, img_len, num_epochs, plot_img_freq=1,
-              num_img_plt=10, checkpoint_freq=1, use_cuda=True, test_freq=1, testing=False):
+              num_img_plt=40, checkpoint_freq=10, use_cuda=True, test_freq=1, testing=False):
     writer = SummaryWriter("tb_data_all/" + dir_name)
     if not os.path.exists("checkpoints/" + dir_name):
         os.makedirs("checkpoints/" + dir_name)

@@ -5,6 +5,7 @@ import torchvision as tv
 import os
 import torch.nn as nn
 from pyro.infer import SVI, Trace_ELBO
+import pyro.distributions as D
 import importlib
 from classifier_gz import Classifier
 from load_gz_data import Gz2_data, return_data_loader, return_subset
@@ -29,12 +30,9 @@ parser.add_argument('--crop_size', default=80, type=int)
 parser.add_argument('--batch_size', default=10, type=int)
 parser.add_argument('--subset', default=False, action='store_true')
 parser.add_argument('--load_checkpoint', default=None)
+parser.add_argument('--bar_no_bar', default=False, action='store_true')
+
 args = parser.parse_args()
-#import importlib.util
-#spec = importlib.util.spec_from_file_location("model","encoder_decoder_32.py")
-#model = importlib.util.module_from_spec(spec)
-#spec.loader.exec_module(model)
-#model.encoder
 spec = importlib.util.spec_from_file_location("module.name", args.arch)
 arch = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(arch)
@@ -50,7 +48,7 @@ if args.bar_no_bar == False:
     a01 = "t01_smooth_or_features_a01_smooth_count"
     a02 = "t01_smooth_or_features_a02_features_or_disk_count"
     a03 = "t01_smooth_or_features_a03_star_or_artifact_count"
-    list_of_ans = [a0, a02, a03]
+    list_of_ans = [a01, a02, a03]
 else:
     a01 = "t03_bar_a06_bar_count"
     a02 = "t03_bar_a07_no_bar_count"
@@ -75,9 +73,6 @@ if args.subset is True:
 else:
     train_loader, test_loader  = return_data_loader(data, test_proportion, batch_size=args.batch_size, shuffle=True)
 
-
-
-
 print("train and log")
 
 
@@ -89,6 +84,7 @@ def evaluate_vae_classifier(vae, vae_loss_fn, classifier, classifier_loss_fn, te
     epoch_loss_vae = 0.
     epoch_loss_classifier = 0.
     total_acc = 0.
+    rms = 0.
     for data in test_loader:
         x = data['image']
         y = data['data']
@@ -103,17 +99,17 @@ def evaluate_vae_classifier(vae, vae_loss_fn, classifier, classifier_loss_fn, te
         combined_z = torch.cat((z_loc, z_scale), 1)
         combined_z = combined_z.detach()
         y_out = classifier.forward(combined_z)
-        _, y_one_hot = y.max(1)
-        classifier_loss = classifier_loss_fn(y_out, y_one_hot)
+        classifier_loss = classifier_loss_fn(y_out, y)
         total_acc += torch.sum(torch.eq(y_out.argmax(dim=1),y.argmax(dim=1)))
         epoch_loss_vae += vae_loss.item()
         epoch_loss_classifier += classifier_loss.item()
-
+        rms += rms_calc(y_out, y)
     normalizer = len(test_loader.dataset)
     total_epoch_loss_vae = epoch_loss_vae / normalizer
     total_epoch_loss_classifier = epoch_loss_classifier / normalizer
     total_epoch_acc = total_acc / normalizer
-    return total_epoch_loss_vae, total_epoch_loss_classifier, total_epoch_acc 
+    rms_epoch = rms / normalizer
+    return total_epoch_loss_vae, total_epoch_loss_classifier, total_epoch_acc, rms_epoch
 
 
 def train_vae_classifier(vae, vae_optim, vae_loss_fn, classifier, classifier_optim, classifier_loss_fn,
@@ -125,6 +121,7 @@ def train_vae_classifier(vae, vae_optim, vae_loss_fn, classifier, classifier_opt
     """
     epoch_loss_vae = 0.
     epoch_loss_classifier = 0.
+    total_acc = 0.
     for data in train_loader:
         x = data['image']
         y = data['data']
@@ -141,8 +138,7 @@ def train_vae_classifier(vae, vae_optim, vae_loss_fn, classifier, classifier_opt
         combined_z = torch.cat((z_loc, z_scale), 1)
         combined_z = combined_z.detach()
         y_out = classifier.forward(combined_z)
-        _, y_one_hot = y.max(1)
-        classifier_loss = classifier_loss_fn(y_out, y_one_hot)
+        classifier_loss = classifier_loss_fn(y_out, y)
         # step through classifier
         total_loss = vae_loss + classifier_loss
         epoch_loss_vae += vae_loss.item()
@@ -150,13 +146,24 @@ def train_vae_classifier(vae, vae_optim, vae_loss_fn, classifier, classifier_opt
         total_loss.backward()
         vae_optim.step()
         classifier_optim.step()
+        total_acc += torch.sum(torch.eq(y_out.argmax(dim=1),y.argmax(dim=1)))
     normalizer = len(train_loader.dataset)
     total_epoch_loss_vae = epoch_loss_vae / normalizer
     total_epoch_loss_classifier = epoch_loss_classifier / normalizer
-    return total_epoch_loss_vae, total_epoch_loss_classifier
+    total_acc_norm = total_acc /normalizer
+    return total_epoch_loss_vae, total_epoch_loss_classifier, total_acc_norm
 
-
-
+def rms_calc(logits, target):
+    """
+    total rms for a single batch
+    """
+    target = target.numpy()
+    probs = torch.sigmoid(logits).numpy()
+    total_count = np.sum(target, axis=1)
+    probs_target = target / total_count[:, None]
+    rms =  np.sqrt((probs - probs_target)**2)
+    return np.sum(rms)
+    
 def train_log_vae_classifier(dir_name, vae, vae_optim, vae_loss_fn, classifier, classifier_optim,
                              classifier_loss_fn, train_loader, test_loader, num_epochs, plot_img_freq=1, num_img_plt=40,
                              checkpoint_freq=20, use_cuda=True, test_freq=1, transform=False):
@@ -168,16 +175,19 @@ def train_log_vae_classifier(dir_name, vae, vae_optim, vae_loss_fn, classifier, 
         classifier.cuda()
     for epoch in range(num_epochs):
         print("training")
-        total_epoch_loss_vae, total_epoch_loss_classifier = train_vae_classifier(vae, vae_optim, vae_loss_fn, classifier,
-                                                                                 classifier_optim, classifier_loss_fn, train_loader,
-                                                                                 use_cuda=use_cuda, transform=transform)
+        total_epoch_loss_vae, total_epoch_loss_classifier, total_epoch_acc  = train_vae_classifier(
+            vae, vae_optim, vae_loss_fn, classifier,
+            classifier_optim, classifier_loss_fn, train_loader,
+            use_cuda=use_cuda, transform=transform)
         print("end train")
         print("[epoch %03d]  average training loss vae: %.4f" % (epoch, total_epoch_loss_vae))
         print("[epoch %03d]  average training loss classifier: %.4f" % (epoch, total_epoch_loss_classifier))
+        print("[epoch %03d]  average training accuracy: %.4f" % (epoch, total_epoch_acc))
+        
         if epoch % test_freq == 0:
             # report test diagnostics
             print("evaluating")
-            total_epoch_loss_test_vae, total_epoch_loss_test_classifier, accuracy = evaluate_vae_classifier(
+            total_epoch_loss_test_vae, total_epoch_loss_test_classifier, accuracy, rms = evaluate_vae_classifier(
                 vae, vae_loss_fn, classifier, classifier_loss_fn, test_loader,
                 use_cuda=use_cuda, transform=transform)
             print("[epoch %03d] average test loss vae: %.4f" % (epoch, total_epoch_loss_test_vae))
@@ -186,10 +196,12 @@ def train_log_vae_classifier(dir_name, vae, vae_optim, vae_loss_fn, classifier, 
             print("evaluate end")
             writer.add_scalar('Train loss vae', total_epoch_loss_vae, epoch)
             writer.add_scalar('Train loss classifier', total_epoch_loss_classifier, epoch)
+            writer.add_scalar('Train accuracy', total_epoch_acc, epoch)
             writer.add_scalar('Test loss vae', total_epoch_loss_test_vae, epoch)
             writer.add_scalar('Test loss classifier', total_epoch_loss_test_classifier, epoch)
             writer.add_scalar('Test accuracy', accuracy, epoch)
-            print(epoch)
+            writer.add_scalar('rms normalised', rms, epoch)
+            
         if epoch % plot_img_freq == 0:
             
             image_in = next(iter(train_loader))['image'][0:num_img_plt]
@@ -218,9 +230,11 @@ classifier = Classifier(in_dim=args.z_size*2)
 
 classifier_optim = Adam(classifier.parameters(),args.lr /10 , betas=(0.90, 0.999))
 # or optimizer = optim.SGD(classifier.parameters(), lr=0.001, momentum=0.9)?
-classifier_loss = nn.CrossEntropyLoss()
 
+def multinomial_loss(logits, values):
+    return torch.sum(-1 *D.Multinomial(1, logits=logits).log_prob(values.float()))
 
+classifier_loss = multinomial_loss
 
 train_log_vae_classifier(args.dir_name, vae, vae_optim, Trace_ELBO().differentiable_loss,
                          classifier, classifier_optim,
