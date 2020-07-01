@@ -17,5 +17,5 @@ srun python trainer_ssvae_multinom.py\
     --csv_file /scratch-ssd/oatml/data/gz2/gz2_classifications_and_subjects.csv\
     --img_file /scratch-ssd/oatml/data/gz2\
     --dir_name ssvae_multinom4\
-    --arch ss_encoders_decoders_gz_enum.py  --lr 1.0e-5\
-    --num_epochs 3400 --img_size 80 --crop_size 80 --z_size 100 --batch_size 250
+    --arch ss_encoders_decoders_gz_enum.py  --lr 1.0e-4\
+    --num_epochs 3400 --img_size 80 --crop_size 80 --z_size 100 --batch_size 100
