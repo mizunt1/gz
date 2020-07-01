@@ -187,12 +187,13 @@ def train_log(dir_name, ssvae, svi, train_s_loader, train_us_loader,
             test_loss = evaluate(svi, test_s_loader, test_us_loader, use_cuda=use_cuda)
             writer.add_scalar('test loss', test_loss, epoch)
             print("test loss", test_loss)
-            if testing == True:
-                acc = ssvae.test_acc(train_us_loader, use_cuda=use_cuda)
-            else:
-                acc = ssvae.test_acc(test_us_loader, use_cuda=use_cuda)
-            print("accuracy:", acc)
-            writer.add_scalar('test accuracy', acc, epoch)
+            test_acc = ssvae.test_acc(test_us_loader, use_cuda=use_cuda)
+            train_acc = ssvae.test_acc(train_us_loader, use_cuda=use_cuda)
+            print("test accuracy:", test_acc, epoch)
+            print("train accuracy:", train_acc, epoch)
+            writer.add_scalar('test accuracy', test_acc, epoch)
+            writer.add_scalar('train accuracy', train_acc, epoch)
+            
         if epoch % plot_img_freq == 0:
             data  = next(iter(test_us_loader))
             images_in = data['image'][0:num_img_plt]
