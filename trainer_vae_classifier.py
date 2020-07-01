@@ -1,4 +1,5 @@
 from torch.utils.tensorboard import SummaryWriter
+import numpy as np
 from construct_vae import VAE, evaluate, train_log_vae
 import torch
 import torchvision as tv
@@ -157,8 +158,8 @@ def rms_calc(logits, target):
     """
     total rms for a single batch
     """
-    target = target.numpy()
-    probs = torch.sigmoid(logits).detach().numpy()
+    target = target.cpu().numpy()
+    probs = torch.sigmoid(logits).detach().cpu().numpy()
     total_count = np.sum(target, axis=1)
     probs_target = target / total_count[:, None]
     rms =  np.sqrt((probs - probs_target)**2)
