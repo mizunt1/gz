@@ -158,7 +158,7 @@ def rms_calc(logits, target):
     total rms for a single batch
     """
     target = target.numpy()
-    probs = torch.sigmoid(logits).numpy()
+    probs = torch.sigmoid(logits).detach().numpy()
     total_count = np.sum(target, axis=1)
     probs_target = target / total_count[:, None]
     rms =  np.sqrt((probs - probs_target)**2)
