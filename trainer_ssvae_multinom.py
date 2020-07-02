@@ -60,7 +60,7 @@ data = Gz2_data(csv_dir=args.csv_file,
                 image_dir=args.img_file,
                 list_of_interest=list_of_ans,
                 crop=args.img_size,
-                resize=args.crop_size, one_hot_categorical=True)
+                resize=args.crop_size)
 
 
 encoder_y_args = {'x_size':args.x_size, 'y_size':args.y_size}
