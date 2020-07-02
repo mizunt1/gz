@@ -75,7 +75,7 @@ ssvae = SSVAE(Encoder_y, Encoder_z, Decoder, args.z_size, args.y_size,
               encoder_y_args, encoder_z_args, decoder_args, use_cuda=use_cuda)
 
 
-import pyro
+#import pyro
 
 #pyro.enable_validation(True)
 #data = next(iter(train_s_loader))
