@@ -244,7 +244,7 @@ vae_optim = Adam(vae.parameters(), lr= args.lr, betas= (0.90, 0.999))
 
 classifier = Classifier(in_dim=args.z_size*2)
 
-classifier_optim = Adam(classifier.parameters(),args.lr /10 , betas=(0.90, 0.999))
+classifier_optim = Adam(classifier.parameters(),args.lr , betas=(0.90, 0.999))
 # or optimizer = optim.SGD(classifier.parameters(), lr=0.001, momentum=0.9)?
 
 def multinomial_loss(logits, values):
