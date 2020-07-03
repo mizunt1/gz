@@ -152,12 +152,13 @@ def train_ss_vae_classifier(vae, vae_optim, vae_loss_fn, classifier, classifier_
 
 
         num_steps +=1
-    total_num_data_stepped_supervised = num_steps * batch_size
-    total_num_data_stepped_unsupervised = total_num_data_stepped_supervised * 2
+    normalise_vae = len(train_s_loader.dataset) + len(train_us_loader.dataset)
+    normalise_classifier = len(train_us_loader)
 
-    total_epoch_loss_vae = epoch_loss_vae / total_num_data_stepped_unsupervised
-    total_epoch_loss_classifier = epoch_loss_classifier / total_num_data_stepped_supervised
-    total_acc_norm = total_acc / total_num_data_stepped_supervised
+
+    total_epoch_loss_vae = epoch_loss_vae / normalise_vae
+    total_epoch_loss_classifier = epoch_loss_classifier / normalise_classifier
+    total_acc_norm = total_acc / normalise_classifier
     return total_epoch_loss_vae, total_epoch_loss_classifier, total_acc_norm
 
 def rms_calc(logits, target):

@@ -69,9 +69,9 @@ decoder_args = {'z_dim':args.z_size, 'outsize':args.img_size}
 
 
 
-test_proportion = 0.2
+test_proportion = 0.1
 if args.subset is True:
-    train_loader, test_loader = return_subset(data, test_proportion, 128, batch_size=args.batch_size, shuffle=True)
+    train_loader, test_loader = return_subset(data, test_proportion, 0.5, batch_size=args.batch_size, shuffle=True)
 else:
     train_loader, test_loader  = return_data_loader(data, test_proportion, batch_size=args.batch_size, shuffle=True)
 
@@ -223,10 +223,35 @@ def train_log_vae_classifier(dir_name, vae, vae_optim, vae_loss_fn, classifier, 
         writer.close()
 
 
+
+data = Gz2_data(csv_dir=args.csv_file,
+                image_dir=args.img_file,
+                list_of_interest=list_of_ans,
+                crop=args.img_size,
+                resize=args.crop_size)
+
+encoder_args = {'insize':args.img_size, 'z_dim':args.z_size}
+decoder_args = {'z_dim':args.z_size, 'outsize':args.img_size}
+
+test_proportion = 0.1
+if args.subset is True:
+    train_loader, test_loader = return_subset(data, test_proportion, 0.5, batch_size=args.batch_size, shuffle=True)
+else:
+    train_loader, test_loader  = return_data_loader(data, test_proportion, batch_size=args.batch_size, shuffle=True)
+
+print("train and log")
+
+
+
 vae = VAE(Encoder, Decoder, args.z_size, encoder_args, decoder_args, use_cuda=use_cuda)
 if args.load_checkpoint != None:
     vae.encoder.load_state_dict(torch.load("checkpoints/" + args.load_checkpoint + "/encoder.checkpoint"))
     vae.decoder.load_state_dict(torch.load("checkpoints/" + args.load_checkpoint + "/decoder.checkpoint"))
+print("total data:",  len(data))
+print("num data points in train_loader:", len(train_loader.dataset))
+print("num data points in test_loader:", len(test_loader.dataset))
+print("train and log")
+
 vae_optim = Adam(vae.parameters(), lr= args.lr, betas= (0.90, 0.999))
 
 classifier = Classifier(in_dim=args.z_size*2)
