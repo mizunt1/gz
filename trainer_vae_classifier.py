@@ -33,7 +33,7 @@ parser.add_argument('--batch_size', default=10, type=int)
 parser.add_argument('--subset', default=False, action='store_true')
 parser.add_argument('--load_checkpoint', default=None)
 parser.add_argument('--bar_no_bar', default=False, action='store_true')
-parser.add_argument('--dont_detach', default=False, action='store_true')
+
 args = parser.parse_args()
 spec = importlib.util.spec_from_file_location("module.name", args.arch)
 arch = importlib.util.module_from_spec(spec)
@@ -138,8 +138,6 @@ def train_vae_classifier(vae, vae_optim, vae_loss_fn, classifier, classifier_opt
         vae_loss = vae_loss_fn(vae.model, vae.guide, x)
         z_loc, z_scale = vae.encoder(x)
         combined_z = torch.cat((z_loc, z_scale), 1)
-        if args.dont_detach is False:
-            combined_z = combined_z.detach()
         y_out = classifier.forward(combined_z)
         classifier_loss = classifier_loss_fn(y_out, y)
         # step through classifier
