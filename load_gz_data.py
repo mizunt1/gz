@@ -64,11 +64,14 @@ def return_data_loader(data, test_proportion, batch_size, shuffle=True):
     train_loader = torch.utils.data.DataLoader(dataset=train_set, batch_size=batch_size, shuffle=shuffle)
     return train_loader, test_loader
     
-def return_ss_loader(data, test_proportion, us_portion, batch_size, subset=False):
-    if subset is False:
-        len_data = len(data)
+def return_ss_loader(data, test_proportion, us_portion, batch_size, subset=False, shuffle=True, subset_portion=None):
+    if subset_portion != None:
+        len_data = len(data)*subset_portion
     else:
-        len_data = 124
+        if subset is False:
+            len_data = len(data)
+        else:
+            len_data = 124
     num_tests = round(len_data * test_proportion)
     num_train = len_data - num_tests
     us_tests = round(num_tests * us_portion)
@@ -87,14 +90,15 @@ def return_ss_loader(data, test_proportion, us_portion, batch_size, subset=False
     test_us_set = torch.utils.data.Subset(data, test_unsup)
     train_s_set = torch.utils.data.Subset(data, train_supervised)
     train_us_set = torch.utils.data.Subset(data, train_unsup)
-    test_s_loader = torch.utils.data.DataLoader(dataset=test_s_set, batch_size=batch_size)
-    test_us_loader = torch.utils.data.DataLoader(dataset=test_us_set, batch_size=batch_size)
-    train_s_loader = torch.utils.data.DataLoader(dataset=train_s_set, batch_size=batch_size)
-    train_us_loader = torch.utils.data.DataLoader(dataset=train_us_set, batch_size=batch_size)
+    test_s_loader = torch.utils.data.DataLoader(dataset=test_s_set, batch_size=batch_size, shuffle=shuffle)
+    test_us_loader = torch.utils.data.DataLoader(dataset=test_us_set, batch_size=batch_size, shuffle=shuffle)
+    train_s_loader = torch.utils.data.DataLoader(dataset=train_s_set, batch_size=batch_size, shuffle=shuffle)
+    train_us_loader = torch.utils.data.DataLoader(dataset=train_us_set, batch_size=batch_size, shuffle=shuffle)
 
     return test_s_loader, test_us_loader, train_s_loader, train_us_loader
 
-def return_subset(data, test_proportion, num_data, batch_size, shuffle=False):
+def return_subset(data, test_proportion, subset_portion, batch_size, shuffle=False):
+    num_data = int(len(data)*subset_portion)
     num_tests = int(num_data * test_proportion)
     test_indices = list(i for i in range(0, num_tests))
     train_indices = list(i for i in range(num_tests, num_data))
