@@ -7,13 +7,13 @@ class Classifier(nn.Module):
         self.fc2 = nn.Linear(hidden, hidden)
         self.fc3 = nn.Linear(hidden, int(hidden /2))
         self.fc4 = nn.Linear(int(hidden/2), out_dim)
-        self.sigmoid = nn.Sigmoid()
+        self.elu = nn.ELU()
     def forward(self, x):
         x = self.fc1(x)
-        x = self.sigmoid(x)
+        x = self.elu(x)
         x = self.fc2(x)
-        x = self.sigmoid(x)
+        x = self.elu(x)
         x = self.fc3(x)
-        x = self.sigmoid(x)
+        x = self.elu(x)
         x = self.fc4(x)
         return x
