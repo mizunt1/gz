@@ -122,7 +122,6 @@ def train_ss_vae_classifier(vae, vae_optim, vae_loss_fn, classifier, classifier_
             xus = xus.cuda()
         classifier_optim.zero_grad()
         vae_optim.zero_grad()
-        batch_size = ys.shape[0]
         # supervised step
         
         z_loc, z_scale = vae.encoder(xs)
@@ -153,9 +152,7 @@ def train_ss_vae_classifier(vae, vae_optim, vae_loss_fn, classifier, classifier_
 
         num_steps +=1
     normalise_vae = len(train_s_loader.dataset) + len(train_us_loader.dataset)
-    normalise_classifier = len(train_us_loader)
-
-
+    normalise_classifier = len(train_s_loader.dataset)
     total_epoch_loss_vae = epoch_loss_vae / normalise_vae
     total_epoch_loss_classifier = epoch_loss_classifier / normalise_classifier
     total_acc_norm = total_acc / normalise_classifier

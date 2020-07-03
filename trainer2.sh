@@ -16,6 +16,6 @@ source /scratch-ssd/oatml/miniconda3/bin/activate gz_mizu
 srun python trainer_benchmark_exp.py\
     --csv_file /scratch-ssd/oatml/data/gz2/gz2_classifications_and_subjects.csv\
     --img_file /scratch-ssd/oatml/data/gz2\
-    --dir_name test_bench3\
+    --dir_name ss_bench_run1\
     --arch encoder_decoder_new_res3.py\
-    --num_epochs 2700 --img_size 80 --crop_size 80 --z_size 100  --batch_size 100\
+    --num_epochs 100 --img_size 80 --crop_size 80 --z_size 100  --batch_size 100\
