@@ -124,7 +124,7 @@ def train_ss_vae_classifier(vae, vae_optim, vae_loss_fn, classifier, classifier_
         classifier_optim.zero_grad()
         vae_optim.zero_grad()
         # supervised step
-        if num_steps <= supervised_len:
+        if num_steps < supervised_len:
             z_loc, z_scale = vae.encoder(xs)
             combined_z = torch.cat((z_loc, z_scale), 1)
             y_out = classifier.forward(combined_z)
@@ -140,23 +140,16 @@ def train_ss_vae_classifier(vae, vae_optim, vae_loss_fn, classifier, classifier_
 
             vae_optim.step()
             classifier_optim.step()
-        else:
-            print("supervised len:", supervised_len)
-            print("not stepping as we are on step:", num_steps)
 
         # unsupervised step
-        if num_steps <= unsupervised_len:
+        if num_steps < unsupervised_len:
             vae_optim.zero_grad()
             vae_loss = vae_loss_fn(vae.model, vae.guide, xus)
             vae_loss.backward()
             vae_optim.step()
             epoch_loss_vae += vae_loss.item()
-        else:
-            print("unsupervised len:", unsupervised_len)
-            print("not stepping as we are on step:", num_steps)
-        num_steps += 1
 
-    print("total_num_steps", num_steps)    
+        num_steps += 1
     normalise_vae = len(train_s_loader.dataset) + len(train_us_loader.dataset)
     normalise_classifier = len(train_s_loader.dataset)
     total_epoch_loss_vae = epoch_loss_vae / normalise_vae
