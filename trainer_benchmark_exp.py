@@ -109,7 +109,8 @@ def train_ss_vae_classifier(vae, vae_optim, vae_loss_fn, classifier, classifier_
     epoch_loss_classifier = 0.
     total_acc = 0.
     num_steps = 0
-
+    supervised_len = len(train_s_loader)
+    unsupervised_len = len(train_us_loader)
     zip_list = zip(train_s_loader, cycle(train_us_loader)) if len(train_s_loader) > len(train_us_loader) else zip(cycle(train_s_loader), train_us_loader)
     for data_sup, data_unsup in zip_list:
         xs = data_sup['image']
@@ -123,34 +124,39 @@ def train_ss_vae_classifier(vae, vae_optim, vae_loss_fn, classifier, classifier_
         classifier_optim.zero_grad()
         vae_optim.zero_grad()
         # supervised step
+        if num_steps <= supervised_len:
+            z_loc, z_scale = vae.encoder(xs)
+            combined_z = torch.cat((z_loc, z_scale), 1)
+            y_out = classifier.forward(combined_z)
         
-        z_loc, z_scale = vae.encoder(xs)
-        combined_z = torch.cat((z_loc, z_scale), 1)
-        y_out = classifier.forward(combined_z)
-        
-        classifier_loss = classifier_loss_fn(y_out, ys)
-        vae_loss = vae_loss_fn(vae.model, vae.guide, xs)
+            classifier_loss = classifier_loss_fn(y_out, ys)
+            vae_loss = vae_loss_fn(vae.model, vae.guide, xs)
 
-        total_loss = vae_loss + classifier_loss
-        epoch_loss_vae += vae_loss.item()
-        epoch_loss_classifier += classifier_loss.item()
-        total_acc += torch.sum(torch.eq(y_out.argmax(dim=1),ys.argmax(dim=1)))
-        total_loss.backward()
+            total_loss = vae_loss + classifier_loss
+            epoch_loss_vae += vae_loss.item()
+            epoch_loss_classifier += classifier_loss.item()
+            total_acc += torch.sum(torch.eq(y_out.argmax(dim=1),ys.argmax(dim=1)))
+            total_loss.backward()
 
-        vae_optim.step()
-        classifier_optim.step()
+            vae_optim.step()
+            classifier_optim.step()
+        else:
+            print("supervised len:", supervised_len)
+            print("not stepping as we are on step:", num_steps)
 
         # unsupervised step
-        
-        vae_optim.zero_grad()
-        vae_loss = vae_loss_fn(vae.model, vae.guide, xus)
-        vae_loss.backward()
-        vae_optim.step()
-        epoch_loss_vae += vae_loss.item()
-        
+        if num_steps <= unsupervised_len:
+            vae_optim.zero_grad()
+            vae_loss = vae_loss_fn(vae.model, vae.guide, xus)
+            vae_loss.backward()
+            vae_optim.step()
+            epoch_loss_vae += vae_loss.item()
+        else:
+            print("unsupervised len:", unsupervised_len)
+            print("not stepping as we are on step:", num_steps)
+        num_steps += 1
 
-
-        num_steps +=1
+    print("total_num_steps", num_steps)    
     normalise_vae = len(train_s_loader.dataset) + len(train_us_loader.dataset)
     normalise_classifier = len(train_s_loader.dataset)
     total_epoch_loss_vae = epoch_loss_vae / normalise_vae
@@ -256,7 +262,7 @@ vae_optim = Adam(vae.parameters(), lr= args.lr, betas= (0.90, 0.999))
 
 classifier = Classifier(in_dim=args.z_size*2)
 
-classifier_optim = Adam(classifier.parameters(),args.lr /10 , betas=(0.90, 0.999))
+classifier_optim = Adam(classifier.parameters(),args.lr, betas=(0.90, 0.999))
 # or optimizer = optim.SGD(classifier.parameters(), lr=0.001, momentum=0.9)?
 
 def multinomial_loss(logits, values):
