@@ -33,6 +33,7 @@ parser.add_argument('--batch_size', default=10, type=int)
 parser.add_argument('--subset', default=False, action='store_true')
 parser.add_argument('--load_checkpoint', default=None)
 parser.add_argument('--bar_no_bar', default=False, action='store_true')
+parser.add_argument('--subset_proportion', default=0.5)
 
 args = parser.parse_args()
 spec = importlib.util.spec_from_file_location("module.name", args.arch)
@@ -71,7 +72,7 @@ decoder_args = {'z_dim':args.z_size, 'outsize':args.img_size}
 
 test_proportion = 0.1
 if args.subset is True:
-    train_loader, test_loader = return_subset(data, test_proportion, 0.5, batch_size=args.batch_size, shuffle=True)
+    train_loader, test_loader = return_subset(data, test_proportion, args.subset_proportion, batch_size=args.batch_size, shuffle=True)
 else:
     train_loader, test_loader  = return_data_loader(data, test_proportion, batch_size=args.batch_size, shuffle=True)
 
@@ -223,7 +224,7 @@ decoder_args = {'z_dim':args.z_size, 'outsize':args.img_size}
 
 test_proportion = 0.1
 if args.subset is True:
-    train_loader, test_loader = return_subset(data, test_proportion, 0.5, batch_size=args.batch_size, shuffle=True)
+    train_loader, test_loader = return_subset(data, test_proportion, arg.subset_proportion, batch_size=args.batch_size, shuffle=True)
 else:
     train_loader, test_loader  = return_data_loader(data, test_proportion, batch_size=args.batch_size, shuffle=True)
 
