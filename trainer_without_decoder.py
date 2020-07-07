@@ -224,7 +224,7 @@ decoder_args = {'z_dim':args.z_size, 'outsize':args.img_size}
 
 test_proportion = 0.1
 if args.subset is True:
-    train_loader, test_loader = return_subset(data, test_proportion, arg.subset_proportion, batch_size=args.batch_size, shuffle=True)
+    train_loader, test_loader = return_subset(data, test_proportion, args.subset_proportion, batch_size=args.batch_size, shuffle=True)
 else:
     train_loader, test_loader  = return_data_loader(data, test_proportion, batch_size=args.batch_size, shuffle=True)
 
