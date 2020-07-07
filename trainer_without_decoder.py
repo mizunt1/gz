@@ -33,7 +33,7 @@ parser.add_argument('--batch_size', default=10, type=int)
 parser.add_argument('--subset', default=False, action='store_true')
 parser.add_argument('--load_checkpoint', default=None)
 parser.add_argument('--bar_no_bar', default=False, action='store_true')
-parser.add_argument('--subset_proportion', default=0.5)
+parser.add_argument('--subset_proportion', default=0.5, type=float)
 
 args = parser.parse_args()
 spec = importlib.util.spec_from_file_location("module.name", args.arch)
