@@ -6,10 +6,10 @@ class Classifier(nn.Module):
         super().__init__()
         self.net = nn.Sequential(
             nn.Linear(in_dim, hidden),
-            LinearBlock(hidden, hidden),
+            LinearBlock(hidden),
             nn.Linear(hidden, int(hidden/2)),
-            LinearBlock(int(hidden/2),int(hidden/2)),
-            nn.Linear((hidden/2), out_dim),
+            LinearBlock(int(hidden/2)),
+            nn.Linear(int(hidden/2), out_dim),
             nn.ELU()
         )
 
