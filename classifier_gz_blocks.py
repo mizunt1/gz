@@ -7,8 +7,9 @@ class Classifier(nn.Module):
         self.net = nn.Sequential(
             nn.Linear(in_dim, hidden),
             LinearBlock(hidden, hidden),
-            LinearBlock(hidden, int(hidden /2)),
-            LinearBlock((hidden/2), out_dim),
+            nn.Linear(hidden, int(hidden/2)),
+            LinearBlock(int(hidden/2),int(hidden/2)),
+            nn.Linear((hidden/2), out_dim),
             nn.ELU()
         )
 
