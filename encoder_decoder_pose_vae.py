@@ -7,14 +7,16 @@ from torch import nn
 from torch.distributions import constraints
 from torchvision.datasets import MNIST
 from torchvision import transforms as tvt
+from layers import ConvBlock, UpResBloc
 import pyro
 from pyro import infer, optim, poutine
 from pyro import distributions as D
-from galaxy-gen.forward_models import random_pose_transform
-from galaxy-gen.backward_models import delta_sample_transformer_params
-from galaxy-gen.etn import transformers, networks
-from galaxy-gen.etn import transforms as T
-from galaxy-gen.etn import coordinates
+from galaxy_gen.forward_models import random_pose_transform
+from galaxy_gen.backward_models import delta_sample_transformer_params
+from galaxy_gen.etn import transformers, networks
+from galaxy_gen.etn import transforms as T
+from galaxy_gen.etn import coordinates
+
 from kornia import augmentation
 from torch.utils.tensorboard import SummaryWriter
 import torchvision
@@ -59,14 +61,6 @@ class Encoder(nn.Module):
         self.loc = nn.Linear(self.linear_size, z_dim)
         self.scale = nn.Linear(self.linear_size, z_dim)
         
-    def forward2(self, x):
-        
-        x = self.net(x)
-        x = x.view(x.shape[0], -1)
-        z_loc = self.loc(x)
-        z_scale = torch.exp(self.scale(x))
-        return z_loc, z_scale
-
     def forward(self, x):
         output = {}
         transform_output = self.transformer(x)
@@ -74,7 +68,7 @@ class Encoder(nn.Module):
         output["transform_params"] = transform_output["params"]
         
         grid = coordinates.identity_grid(
-            [self.input_size, self.input_size], device=x.device
+            [self.insize, self.insize], device=x.device
         )
         grid = grid.expand(x.shape[0], *grid.shape)
 
@@ -85,7 +79,7 @@ class Encoder(nn.Module):
 
         view = T.broadcasting_grid_sample(x, transformed_grid)
         
-        out = self.encoder(view)
+        out = self.net(view)
         out = out.view(out.shape[0], -1)
         z_loc = self.loc(out)
         z_scale = torch.exp(self.scale(out))
@@ -97,6 +91,7 @@ class Encoder(nn.Module):
 class Decoder(nn.Module):
     def __init__(self, z_dim=10, outsize=56):
         super().__init__()
+        self.z_dim = z_dim
         self.outsize = outsize
         self.linear_size = int((outsize/8)**2)
         self.linear = nn.Linear(z_dim, self.linear_size)
@@ -124,10 +119,14 @@ class Decoder(nn.Module):
 
 if __name__ == "__main__":
     x = torch.zeros([10, 1, 80, 80])
-    encoder = Encoder(insize=80)
-    decoder = Decoder(outsize=80)
+    transformers = transformers.TransformerSequence(
+        transformers.Translation(networks.EquivariantPosePredictor, 1, 32),
+        transformers.Rotation(networks.EquivariantPosePredictor, 1, 32))
+
+    encoder = Encoder(transformers, insize=80, z_dim=10)
+    decoder = Decoder(z_dim=10, outsize=80)
     x = encoder(x)
-    x = x[0]
+    x = x["z_mu"]
     x = decoder(x)
 
     
