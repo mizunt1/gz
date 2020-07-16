@@ -119,7 +119,7 @@ def train_vae_classifier(vae, vae_optim, vae_loss_fn, classifier, classifier_opt
                          train_loader, use_cuda=True, transform=False):
     """
     train vae and classifier for one epoch
-    returns loss for one epoch
+     returns loss for one epoch
     in each batch, when the svi takes a step, the optimiser of classifier takes a step
     """
     epoch_loss_vae = 0.

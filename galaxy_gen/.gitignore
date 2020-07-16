@@ -1,0 +1,13 @@
+runs/*
+.envrc
+data/*
+tags
+*.pyc
+.ropeproject
+.vscode
+slurm-*
+batch_script
+tags.*
+TODO.md
+*.ipynb
+.ipynb_checkpoints/*

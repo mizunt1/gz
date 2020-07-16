@@ -109,6 +109,26 @@ class PoseVAE(nn.Module):
             ).to_event(1),
         )
             
+    def sample_img(self, x, use_cuda=False, encoder=False, decoder=False):
+        # encode image x
+        if use_cuda == True:
+            x = x.cuda()
+        batch_shape = x.shape[0]
+        img_shape = x.shape[-1]
+        transforms = T.TransformSequence(T.Translation(), T.Rotation())
+        if encoder == False:
+            z_loc, z_scale = self.encoder(x, transforms)
+        else:
+            z_loc, z_scale = encoder(x)
+        # sample in latent space
+        z = dist.Normal(z_loc, z_scale).sample()
+        # decode the image (note we don't sample in image space)
+        if decoder == False:
+            loc_img = self.decoder(z)
+        else:
+            loc_img = decoder(z)
+        return loc_img.reshape([batch_shape, 1, img_shape, img_shape])
+
 def train(svi, train_loader, use_cuda=False):
     # initialize loss accumulator
     epoch_loss = 0.
