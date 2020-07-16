@@ -8,6 +8,7 @@ from galaxy_gen.etn import coordinates
 from galaxy_gen.forward_models import random_pose_transform 
 from pyro.infer import SVI, Trace_ELBO
 from pyro.optim import Adam
+import torchvision as tv
 import torch
 import pyro.distributions as D
 from load_gz_data import Gz2_data, return_data_loader
@@ -115,13 +116,12 @@ class PoseVAE(nn.Module):
             x = x.cuda()
         batch_shape = x.shape[0]
         img_shape = x.shape[-1]
-        transforms = T.TransformSequence(T.Translation(), T.Rotation())
         if encoder == False:
-            z_loc, z_scale = self.encoder(x, transforms)
+            out = self.encoder(x)
         else:
-            z_loc, z_scale = encoder(x)
+            out = encoder(x)
         # sample in latent space
-        z = dist.Normal(z_loc, z_scale).sample()
+        z = out["z_mu"]
         # decode the image (note we don't sample in image space)
         if decoder == False:
             loc_img = self.decoder(z)
@@ -196,8 +196,8 @@ def train_log(dir_name, vae, svi, train_loader, test_loader,
 
         if epoch % checkpoint_freq == 0:
 
-            torch.save(vae.encoder.state_dict(), "checkpoints/" + checkpoint_dir + "/encoder.checkpoint")
-            torch.save(vae.decoder.state_dict(),  "checkpoints/" + checkpoint_dir +  "/decoder.checkpoint")
+            torch.save(vae.encoder.state_dict(), "checkpoints/" + dir_name + "/encoder.checkpoint")
+            torch.save(vae.decoder.state_dict(),  "checkpoints/" + dir_name +  "/decoder.checkpoint")
             
         writer.close()
 

@@ -57,7 +57,7 @@ pvae = PoseVAE(Encoder, Decoder, args.z_size, encoder_args, decoder_args, use_cu
 
 test_proportion = 0.2
 if args.subset is True:
-    train_loader, test_loader = return_subset(data, test_proportion, 128, batch_size=args.batch_size, shuffle=True)
+    train_loader, test_loader = return_subset(data, test_proportion, 0.001, batch_size=args.batch_size, shuffle=True)
 else:
     train_loader, test_loader  = return_data_loader(data, test_proportion, batch_size=args.batch_size, shuffle=True)
 
