@@ -44,6 +44,7 @@ dependencies:
   - zstd=1.4.4=h0b5b093_3
   - pip:
     - future==0.18.2
+    - kornia==0.3.1
     - numpy==1.18.5
     - opt-einsum==3.2.1
     - pandas==1.0.4
@@ -56,4 +57,5 @@ dependencies:
     - tqdm==4.46.1
     - tensorboard-plugin-wit==1.6.0.post3
     - tensorboard==2.2.2
+
 prefix: /users/ms19mnt/.conda/envs/gz_mizu
