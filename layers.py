@@ -117,6 +117,15 @@ class DownResBloc(nn.Module):
         return self.merge(self.skip(x) + self.body(x))
 
 
+class Reshape(nn.Module):
+    def __init__(self, *args):
+        super(Reshape, self).__init__()
+        self.shape = args
+
+    def forward(self, x):
+        return x.view(self.shape)
+
+    
 if __name__ == "__main__":
     o = torch.zeros([2,3,10, 1, 80, 80])
     length = len(o.shape)

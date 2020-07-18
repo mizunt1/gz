@@ -1,0 +1,121 @@
+import torch.nn as nn
+from torch.utils.tensorboard import SummaryWriter
+import torch.optim as optim
+import torch
+import torch.distributions as D
+from layers import Reshape
+
+class Mike(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.net = nn.Sequential(
+            # first conv pair
+            nn.Conv2d(1, 32, kernel_size=3, padding=1),
+            nn.ReLU(),
+            nn.Conv2d(32, 32, kernel_size=3, padding=1),
+            nn.ReLU(),
+            nn.MaxPool2d(2),
+            # second conv pair
+            nn.Conv2d(32, 32, kernel_size=3, padding=1),
+            nn.ReLU(),
+            nn.Conv2d(32, 32, kernel_size=3, padding=1),
+            nn.ReLU(),
+            nn.MaxPool2d(2),
+            # third conv
+            nn.Conv2d(32, 16, kernel_size=3, padding=1),
+            nn.ReLU(),
+            nn.MaxPool2d(2),
+            # fourth conv
+            nn.Conv2d(16, 16, kernel_size=3, padding=1),
+            nn.ReLU(),
+            nn.MaxPool2d(2),
+            # linear
+            Reshape(-1, 1024),
+            nn.Linear(1024, 128),
+            nn.ReLU(),
+            # linear
+            nn.Linear(128, 2),
+            nn.Softmax(dim=1)
+        )
+
+    def forward(self, x):
+        return self.net(x)
+
+def binomial_loss(probs, values):
+    return torch.sum(-1 * D.Binomial(1, probs=probs).log_prob(values.float()))
+            
+def train(train_loader, classifier, use_cuda=False):
+    """
+    trains for one epoch
+    """
+    loss = binomial_loss
+    running_loss = 0
+    optimizer = optim.SGD(classifier.parameters(), lr=0.01, momentum=0.9)
+    for data in train_loader:
+        x = data['image']
+        y = data['data']
+        if use_cuda:
+            x = x.cuda()
+            y = y.cuda()
+        optimizer.zero_grad()
+        x_out = classifier(x)
+        classifier_loss = loss(x_out, y)
+        classifier_loss.backward()
+        optimizer.step()
+        running_loss += classifier_loss.item()
+    return running_loss / len(train_loader.dataset)
+
+
+def rms_calc(probs, target):
+    """                                                                                                 total rms for a single batch                                                                        """
+    target = target.cpu().numpy()
+    total_count = np.sum(target, axis=1)
+    probs_target = target / total_count[:, None]
+    rms =  np.sqrt((probs - probs_target)**2)
+    return np.sum(rms)
+
+def evaluate(test_loader, classifier, use_cuda=False):
+    loss = binomial_loss        
+    running_loss = 0
+    running_rms = 0
+    for data in test_loader:
+        x = data['image']
+        y = data['data']
+        if use_cuda:
+            x = x.cuda()
+            y = y.cuda()
+            x = classifier(x)
+        running_loss += loss(x,y).item()
+        running_rms += rms(x, y)
+        av_loss = running_loss / len(train_loader.dataset)
+        rms = running_rms / len(train_loader.dataset)
+    return av_loss, rms
+
+def train_log(dir_name, classifier, train_loader, test_loader, test_freq=1,
+              num_epochs=10, use_cuda=False):
+    num_params = sum(p.numel() for p in classifier.parameters() if p.requires_grad)
+    print("num params: ", num_params)
+    writer = SummaryWriter("tb_data_all/" + dir_name)
+    if use_cuda:
+        classifier.cuda()
+    for epoch in range(num_epochs):
+        print("training")
+        train_loss = train(train_loader, classifier)
+        print("end train")
+        print("[epoch %03d]  average training loss: %.4f" % (epoch, train_loss))
+        if epoch % test_freq == 0:
+            print("evaluating")
+            eval_loss, rms = evaluate(test_loader, classifier)
+            print("[epoch %03d] average test_loss: %.4f" % (epoch, eval_loss))
+            print("[epoch %03d] average rms: %.4f" % (epoch, rms))
+            writer.add_scalar("Train loss", train_loss, epoch)
+            writer.add_scalar("Test loss", eval_loss, epoch)
+            writer.add_scalar("Rms loss", rms, epoch)
+            
+    writer.close()
+    
+if __name__ == "__main__":
+    data = torch.zeros([12, 1, 128, 128])
+    model = Mike()
+    out = model(data)
+    print(out.shape)
