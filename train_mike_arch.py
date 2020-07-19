@@ -31,7 +31,7 @@ if args.bar_no_bar == False:
     a01 = "t01_smooth_or_features_a01_smooth_count"
     a02 = "t01_smooth_or_features_a02_features_or_disk_count"
     a03 = "t01_smooth_or_features_a03_star_or_artifact_count"
-    list_of_ans = [a01, a02]
+    list_of_ans = [a01, a02, a03]
 else:
     a01 = "t03_bar_a06_bar_count"
     a02 = "t03_bar_a07_no_bar_count"

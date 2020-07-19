@@ -4,7 +4,7 @@
 
 #SBATCH --output=slurm-%j.out
 #SBATCH --error=slurm-%j.err
-#SBATCH --job-name="mike"
+#SBATCH --job-name="mike2"
 #SBATCH --partition="msc"
 
 export CONDA_ENVS_PATH=/scratch-ssd/$USER/conda_envs
@@ -16,5 +16,5 @@ source /scratch-ssd/oatml/miniconda3/bin/activate gz_mizu
 srun python train_mike_arch.py\
     --csv_file /scratch-ssd/oatml/data/gz2/gz2_classifications_and_subjects.csv\
     --img_file /scratch-ssd/oatml/data/gz2\
-    --dir_name mike_test_all_data\
+    --dir_name mike_test_all_data_3_out\
     --num_epochs 200 --batch_size 100 

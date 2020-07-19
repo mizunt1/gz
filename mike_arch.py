@@ -35,7 +35,7 @@ class Mike(nn.Module):
             nn.Linear(1024, 128),
             nn.ReLU(),
             # linear
-            nn.Linear(128, 2),
+            nn.Linear(128, 3),
             nn.Softmax(dim=1)
         )
 
