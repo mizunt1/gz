@@ -9,7 +9,7 @@ import torch.nn as nn
 from pyro.infer import SVI, Trace_ELBO
 import pyro.distributions as D
 import importlib
-from classifier_gz import Classifier
+from classifier_simple_gz import Classifier
 from load_gz_data import Gz2_data, return_data_loader, return_subset
 from torch.utils.data import DataLoader
 from pyro.infer import SVI, Trace_ELBO
