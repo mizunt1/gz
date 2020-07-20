@@ -9,7 +9,7 @@ class Encoder(nn.Module):
                  insize=56, z_dim=10):
         super().__init__()
         self.insize = insize
-        self.linear_size = int((insize/16)**2)
+        self.linear_size = int(((insize/16)**2)*16)
         # first conv pair
         self.net = nn.Sequential(
             nn.Conv2d(1, 32, kernel_size=3, padding=1),
