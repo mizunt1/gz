@@ -4,7 +4,7 @@
 
 #SBATCH --output=slurm-%j.out
 #SBATCH --error=slurm-%j.err
-#SBATCH --job-name="deeper"
+#SBATCH --job-name="softmax"
 #SBATCH --partition="msc"
 
 export CONDA_ENVS_PATH=/scratch-ssd/$USER/conda_envs
@@ -16,7 +16,7 @@ source /scratch-ssd/oatml/miniconda3/bin/activate gz_mizu
 srun python trainer_vae_classifier.py\
     --csv_file /scratch-ssd/oatml/data/gz2/gz2_classifications_and_subjects.csv\
     --img_file /scratch-ssd/oatml/data/gz2\
-    --dir_name deeper\
-    --arch encoder_decoder_deeper.py  --lr 1.0e-4\
-    --num_epochs 200 --img_size 80 --crop_size 80 --z_size 100 --batch_size 100
+    --dir_name encoder_mike_softmax\
+    --arch encoder_decoder_mike.py  --lr 1.0e-4\
+    --num_epochs 500 --img_size 128 --crop_size 128 --z_size 100 --batch_size 100 --subset --subset_portion 0.001
 
