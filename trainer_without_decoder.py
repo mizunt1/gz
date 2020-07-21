@@ -149,7 +149,7 @@ def train_vae_classifier(vae, vae_optim, vae_loss_fn, classifier, classifier_opt
     total_acc_norm = total_acc /normalizer
     return total_epoch_loss_classifier, total_acc_norm
 
-def rms_calc(logits, target):
+def rms_calc(probs, target):
     """
     total rms for a single batch
     """

@@ -31,7 +31,7 @@ parser.add_argument('--z_size', default=100, type=int)
 parser.add_argument('--crop_size', default=80, type=int)
 parser.add_argument('--batch_size', default=10, type=int)
 parser.add_argument('--subset', default=False, action='store_true')
-parser.add_argument('--subset_portion', default=0.5, type=float)
+parser.add_argument('--subset_proportion', default=0.5, type=float)
 parser.add_argument('--load_checkpoint', default=None)
 parser.add_argument('--bar_no_bar', default=False, action='store_true')
 
