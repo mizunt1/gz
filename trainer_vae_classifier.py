@@ -9,7 +9,7 @@ import torch.nn as nn
 from pyro.infer import SVI, Trace_ELBO
 import pyro.distributions as D
 import importlib
-from classifier_one_layer import Classifier
+from classifier_simple_gz import Classifier
 from load_gz_data import Gz2_data, return_data_loader, return_subset
 from torch.utils.data import DataLoader
 from pyro.infer import SVI, Trace_ELBO
@@ -142,7 +142,7 @@ def train_vae_classifier(vae, vae_optim, vae_loss_fn, classifier, classifier_opt
         y_out = classifier.forward(combined_z)
         classifier_loss = classifier_loss_fn(y_out, y)
         # step through classifier
-        total_loss = vae_loss + classifier_loss
+        total_loss = vae_loss + 80*classifier_loss
         epoch_loss_vae += vae_loss.item()
         epoch_loss_classifier += classifier_loss.item()
         total_loss.backward()
