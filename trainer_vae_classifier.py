@@ -34,6 +34,7 @@ parser.add_argument('--subset', default=False, action='store_true')
 parser.add_argument('--subset_proportion', default=0.5, type=float)
 parser.add_argument('--load_checkpoint', default=None)
 parser.add_argument('--bar_no_bar', default=False, action='store_true')
+parser.add_argument('--alpha', default=1, type=int)
 
 args = parser.parse_args()
 spec = importlib.util.spec_from_file_location("module.name", args.arch)
@@ -115,8 +116,9 @@ def evaluate_vae_classifier(vae, vae_loss_fn, classifier, classifier_loss_fn, te
     return total_epoch_loss_vae, total_epoch_loss_classifier, total_epoch_acc, rms_epoch
 
 
-def train_vae_classifier(vae, vae_optim, vae_loss_fn, classifier, classifier_optim, classifier_loss_fn,
-                         train_loader, use_cuda=True, transform=False):
+def train_vae_classifier(vae, vae_optim, vae_loss_fn, classifier, classifier_optim,
+                         classifier_loss_fn,
+                         train_loader, alpha, use_cuda=True, transform=False):
     """
     train vae and classifier for one epoch
      returns loss for one epoch
@@ -142,7 +144,7 @@ def train_vae_classifier(vae, vae_optim, vae_loss_fn, classifier, classifier_opt
         y_out = classifier.forward(combined_z)
         classifier_loss = classifier_loss_fn(y_out, y)
         # step through classifier
-        total_loss = vae_loss + 80*classifier_loss
+        total_loss = vae_loss + alpha*classifier_loss
         epoch_loss_vae += vae_loss.item()
         epoch_loss_classifier += classifier_loss.item()
         total_loss.backward()
@@ -180,7 +182,7 @@ def train_log_vae_classifier(dir_name, vae, vae_optim, vae_loss_fn, classifier, 
         print("training")
         total_epoch_loss_vae, total_epoch_loss_classifier, total_epoch_acc  = train_vae_classifier(
             vae, vae_optim, vae_loss_fn, classifier,
-            classifier_optim, classifier_loss_fn, train_loader,
+            classifier_optim, classifier_loss_fn, train_loader, alpha=args.alpha,
             use_cuda=use_cuda, transform=transform)
         print("end train")
         print("[epoch %03d]  average training loss vae: %.4f" % (epoch, total_epoch_loss_vae))
