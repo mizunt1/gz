@@ -18,5 +18,5 @@ srun python trainer_without_decoder.py\
     --img_file /scratch-ssd/oatml/data/gz2\
     --dir_name trainer_wod_mike\
     --arch encoder_decoder_mike.py  --lr 1.0e-4\
-    --num_epochs 200 --img_size 80 --crop_size 80 --z_size 100 --batch_size 100 --subset --subset_proportion 0.001\
+    --num_epochs 200 --img_size 80 --crop_size 80 --z_size 100 --batch_size 100
 

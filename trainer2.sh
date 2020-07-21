@@ -19,4 +19,4 @@ srun python trainer_vae_classifier.py\
     --dir_name trainer_vae_classifier_mike\
     --arch encoder_decoder_mike.py  --lr 1.0e-4\
     --num_epochs 200 --img_size 80 --crop_size 80 --z_size 100 --batch_size 100\
-    --subset --subset_proportion 0.001\
+
