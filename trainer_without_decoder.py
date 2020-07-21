@@ -9,7 +9,7 @@ import torch.nn as nn
 from pyro.infer import SVI, Trace_ELBO
 import pyro.distributions as D
 import importlib
-from classifier_gz_blocks import Classifier
+from classifier_simple_gz import Classifier
 from load_gz_data import Gz2_data, return_data_loader, return_subset
 from torch.utils.data import DataLoader
 from pyro.infer import SVI, Trace_ELBO
@@ -154,7 +154,7 @@ def rms_calc(logits, target):
     total rms for a single batch
     """
     target = target.cpu().numpy()
-    probs = f.softmax(logits, dim=1).detach().cpu().numpy()
+    probs = probs.detach().cpu().numpy()
     total_count = np.sum(target, axis=1)
     probs_target = target / total_count[:, None]
     rms =  np.sqrt((probs - probs_target)**2)
@@ -248,8 +248,8 @@ classifier = Classifier(in_dim=args.z_size*2)
 classifier_optim = Adam(classifier.parameters(),args.lr , betas=(0.90, 0.999))
 # or optimizer = optim.SGD(classifier.parameters(), lr=0.001, momentum=0.9)?
 
-def multinomial_loss(logits, values):
-    return torch.sum(-1 *D.Multinomial(1, logits=logits).log_prob(values.float()))
+def multinomial_loss(probs, values):
+    return torch.sum(-1 *D.Multinomial(1, probs=probs).log_prob(values.float()))
 
 classifier_loss = multinomial_loss
 
