@@ -33,19 +33,23 @@ class Encoder(nn.Module):
             nn.MaxPool2d(2),
             # linear
             Reshape(-1, self.linear_size),
-            nn.ReLU(),
             # linear
+
         )
 
-        self.loc = nn.Linear(self.linear_size, z_dim)
-        self.scale = nn.Linear(self.linear_size, z_dim)
+        self.linear = nn.Linear(self.linear_size, int(self.linear_size/2))
+        self.loc = nn.Linear(int(self.linear_size/2), z_dim)
+        self.scale = nn.Linear(int(self.linear_size/2), z_dim)
+        self.relu = nn.ReLU()
         
     def forward(self, x):
         x = x - 0.222
         x = x / 0.156
         split = self.net(x)
-        z_loc = self.loc(split)
-        z_scale = torch.exp(self.scale(split))
+        to_vae = self.linear(split)
+        to_vae = self.relu(to_vae)
+        z_loc = self.loc(to_vae)
+        z_scale = torch.exp(self.scale(to_vae))
         return z_loc, z_scale, split
 
 
