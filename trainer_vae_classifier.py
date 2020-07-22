@@ -167,7 +167,7 @@ def rms_calc(probs, target):
     return np.sum(rms)
     
 def train_log_vae_classifier(dir_name, vae, vae_optim, vae_loss_fn, classifier, classifier_optim,
-                             classifier_loss_fn, train_loader, test_loader, num_epochs, plot_img_freq=1, num_img_plt=40,
+                             classifier_loss_fn, train_loader, test_loader, num_epochs, plot_img_freq=20, num_img_plt=9,
                              checkpoint_freq=20, use_cuda=True, test_freq=1, transform=False):
     num_params = sum(p.numel() for p in vae.parameters() if p.requires_grad)
     writer = SummaryWriter("tb_data_all/" + dir_name)
