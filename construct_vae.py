@@ -44,7 +44,7 @@ class VAE(nn.Module):
         pyro.module("encoder", self.encoder)
         with pyro.plate("data", x.shape[0]):
             # use the encoder to get the parameters used to define q(z|x)
-            z_loc, z_scale = self.encoder.forward(x)
+            z_loc, z_scale, split = self.encoder.forward(x)
             # sample the latent code z
             pyro.sample("latent", dist.Normal(z_loc, z_scale).to_event(1))
 #            pyro.sample("latent", dist.Delta(z_loc).to_event(1))
@@ -57,9 +57,9 @@ class VAE(nn.Module):
         batch_shape = x.shape[0]
         img_shape = x.shape[-1]
         if encoder == False:
-            z_loc, z_scale = self.encoder(x)
+            z_loc, z_scale, split = self.encoder(x)
         else:
-            z_loc, z_scale = encoder(x)
+            z_loc, z_scale, split = encoder(x)
         # sample in latent space
 #        z = dist.Delta(z_loc).sample()
         z = dist.Normal(z_loc, z_scale).sample()

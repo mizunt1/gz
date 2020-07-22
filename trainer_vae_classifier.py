@@ -99,10 +99,8 @@ def evaluate_vae_classifier(vae, vae_loss_fn, classifier, classifier_loss_fn, te
             y = y.cuda()
         # step of elbo for vae
         vae_loss = vae_loss_fn(vae.model, vae.guide, x)
-        z_loc, z_scale = vae.encoder(x)
-        combined_z = torch.cat((z_loc, z_scale), 1)
-        combined_z = combined_z.detach()
-        y_out = classifier.forward(combined_z)
+        z_loc, z_scale, split = vae.encoder(x)
+        y_out = classifier.forward(split)
         classifier_loss = classifier_loss_fn(y_out, y)
         total_acc += torch.sum(torch.eq(y_out.argmax(dim=1),y.argmax(dim=1)))
         epoch_loss_vae += vae_loss.item()
@@ -139,9 +137,8 @@ def train_vae_classifier(vae, vae_optim, vae_loss_fn, classifier, classifier_opt
         classifier_optim.zero_grad()
         vae_optim.zero_grad()
         vae_loss = vae_loss_fn(vae.model, vae.guide, x)
-        z_loc, z_scale = vae.encoder(x)
-        combined_z = torch.cat((z_loc, z_scale), 1)
-        y_out = classifier.forward(combined_z)
+        z_loc, z_scale, split = vae.encoder(x)
+        y_out = classifier.forward(split)
         classifier_loss = classifier_loss_fn(y_out, y)
         # step through classifier
         total_loss = vae_loss + alpha*classifier_loss
@@ -256,7 +253,7 @@ print("train and log")
 
 vae_optim = Adam(vae.parameters(), lr= args.lr, betas= (0.90, 0.999))
 
-classifier = Classifier(in_dim=args.z_size*2)
+classifier = Classifier(in_dim=vae.encoder.linear_size)
 
 classifier_optim = Adam(classifier.parameters(),args.lr, betas=(0.90, 0.999))
 # or optimizer = optim.SGD(classifier.parameters(), lr=0.001, momentum=0.9)?

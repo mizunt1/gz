@@ -43,11 +43,10 @@ class Encoder(nn.Module):
     def forward(self, x):
         x = x - 0.222
         x = x / 0.156
-        x = self.net(x)
-        x = x.view(x.shape[0], -1)
-        z_loc = self.loc(x)
-        z_scale = torch.exp(self.scale(x))
-        return z_loc, z_scale
+        split = self.net(x)
+        z_loc = self.loc(split)
+        z_scale = torch.exp(self.scale(split))
+        return z_loc, z_scale, split
 
 
 class Decoder(nn.Module):
