@@ -69,17 +69,6 @@ encoder_args = {'insize':args.img_size, 'z_dim':args.z_size}
 decoder_args = {'z_dim':args.z_size, 'outsize':args.img_size}
 
 
-
-
-test_proportion = 0.1
-if args.subset is True:
-    train_loader, test_loader = return_subset(data, test_proportion, 0.5, batch_size=args.batch_size, shuffle=True)
-else:
-    train_loader, test_loader  = return_data_loader(data, test_proportion, batch_size=args.batch_size, shuffle=True)
-
-print("train and log")
-
-
 def evaluate_vae_classifier(vae, vae_loss_fn, classifier, classifier_loss_fn, test_loader, use_cuda=False, transform=False):
     """
     evaluates for all test data
@@ -255,7 +244,7 @@ vae_optim = Adam(vae.parameters(), lr= args.lr, betas= (0.90, 0.999))
 
 classifier = Classifier(in_dim=vae.encoder.linear_size)
 
-classifier_optim = Adam(classifier.parameters(),args.lr, betas=(0.90, 0.999))
+classifier_optim = Adam(classifier.parameters(),args.lr , betas=(0.90, 0.999))
 # or optimizer = optim.SGD(classifier.parameters(), lr=0.001, momentum=0.9)?
 
 def multinomial_loss(probs, values):
