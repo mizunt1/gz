@@ -13,9 +13,10 @@ parser.add_argument('--no_cuda', default=False, action='store_true')
 parser.add_argument('--num_epochs', type=int, default=10)
 parser.add_argument('--img_size', default=128, type=int)
 parser.add_argument('--crop_size', default=128, type=int)
+parser.add_argument('--lr', default=1e-4, type=float)
 parser.add_argument('--batch_size', default=10, type=int)
 parser.add_argument('--subset', default=False, action='store_true')
-parser.add_argument('--subset_portion', default=0.5, type=float)
+parser.add_argument('--subset_proportion', default=0.5, type=float)
 
 parser.add_argument('--bar_no_bar', default=False, action='store_true')
 
@@ -47,13 +48,13 @@ data = Gz2_data(csv_dir=args.csv_file,
 
 test_proportion = 0.1
 if args.subset is True:
-    train_loader, test_loader = return_subset(data, test_proportion, args.subset_portion, batch_size=args.batch_size, shuffle=True)
+    train_loader, test_loader = return_subset(data, test_proportion, args.subset_proportion, batch_size=args.batch_size, shuffle=True)
 else:
     train_loader, test_loader  = return_data_loader(data, test_proportion, batch_size=args.batch_size, shuffle=True)
 
 print("train and log")
 
 classifier = Mike()
-classifier_optim = Adam(classifier.parameters(), lr=1e-4, betas=(0.90, 0.999))
-train_log(args.dir_name, classifier, train_loader,
+classifier_optim = Adam(classifier.parameters(), lr=args.lr, betas=(0.90, 0.999))
+train_log(args.dir_name, classifier, classifier_optim, train_loader,
           test_loader, test_freq=1, num_epochs=args.num_epochs, use_cuda=use_cuda)

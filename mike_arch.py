@@ -46,13 +46,13 @@ class Mike(nn.Module):
 def multinomial_loss(probs, values):
     return torch.sum(-1 * D.Multinomial(probs=probs).log_prob(values.float()))
             
-def train(train_loader, classifier, use_cuda=False):
+def train(train_loader, classifier,optim, use_cuda=False):
     """
     trains for one epoch
     """
     loss = multinomial_loss
     running_loss = 0
-    optimizer = optim.Adam(classifier.parameters(), lr=0.0001)
+    optimizer= optim
     for data in train_loader:
         x = data['image']
         y = data['data']
@@ -96,7 +96,7 @@ def evaluate(test_loader, classifier, use_cuda=False):
         rms = running_rms / len(test_loader.dataset)
     return av_loss, rms
 
-def train_log(dir_name, classifier, train_loader, test_loader, test_freq=1,
+def train_log(dir_name, classifier, optim, train_loader, test_loader, test_freq=1,
               num_epochs=10, use_cuda=False):
     num_params = sum(p.numel() for p in classifier.parameters() if p.requires_grad)
     print("num params: ", num_params)
@@ -105,7 +105,7 @@ def train_log(dir_name, classifier, train_loader, test_loader, test_freq=1,
         classifier.cuda()
     for epoch in range(num_epochs):
         print("training")
-        train_loss = train(train_loader, classifier, use_cuda=use_cuda)
+        train_loss = train(train_loader, classifier,optim, use_cuda=use_cuda)
         print("end train")
         print("[epoch %03d]  average training loss: %.4f" % (epoch, train_loss))
         writer.add_scalar("Train loss", train_loss, epoch)
