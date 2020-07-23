@@ -16,7 +16,7 @@ source /scratch-ssd/oatml/miniconda3/bin/activate gz_mizu
 srun python trainer_without_decoder.py\
     --csv_file /scratch-ssd/oatml/data/gz2/gz2_classifications_and_subjects.csv\
     --img_file /scratch-ssd/oatml/data/gz2\
-    --dir_name trainer_wod_mike_128_one_layer\
-    --arch encoder_decoder_mike.py  --lr 1.0e-4\
-    --num_epochs 200 --img_size 128 --crop_size 128 --z_size 100 --batch_size 100
+    --dir_name wod_128\
+    --arch encoder_decoder_mike.py  --lr 1.0e-3\
+    --num_epochs 400 --img_size 128 --crop_size 128 --z_size 100 --batch_size 100
 

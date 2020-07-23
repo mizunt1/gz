@@ -9,7 +9,7 @@ import torch.nn as nn
 from pyro.infer import SVI, Trace_ELBO
 import pyro.distributions as D
 import importlib
-from classifier_one_layer import Classifier
+from classifier_simple_gz import Classifier
 from load_gz_data import Gz2_data, return_data_loader, return_subset
 from torch.utils.data import DataLoader
 from pyro.infer import SVI, Trace_ELBO
@@ -98,10 +98,10 @@ def evaluate_vae_classifier(vae, vae_loss_fn, classifier, classifier_loss_fn, te
             y = y.cuda()
         # step of elbo for vae
         vae_loss = vae_loss_fn(vae.model, vae.guide, x)
-        z_loc, z_scale = vae.encoder(x)
-        combined_z = torch.cat((z_loc, z_scale), 1)
-        combined_z = combined_z.detach()
-        y_out = classifier.forward(combined_z)
+        z_loc, z_scale, split = vae.encoder(x)
+        # combined_z = torch.cat((z_loc, z_scale), 1)
+        # combined_z = combined_z.detach()
+        y_out = classifier.forward(split)
         classifier_loss = classifier_loss_fn(y_out, y)
         total_acc += torch.sum(torch.eq(y_out.argmax(dim=1),y.argmax(dim=1)))
         epoch_loss_vae += vae_loss.item()
@@ -134,9 +134,9 @@ def train_vae_classifier(vae, vae_optim, vae_loss_fn, classifier, classifier_opt
             y = y.cuda()
         # step of elbo for vae
         classifier_optim.zero_grad()
-        z_loc, z_scale = vae.encoder(x)
-        combined_z = torch.cat((z_loc, z_scale), 1)
-        y_out = classifier.forward(combined_z)
+        z_loc, z_scale, split = vae.encoder(x)
+#        combined_z = torch.cat((z_loc, z_scale), 1)
+        y_out = classifier.forward(split)
         classifier_loss = classifier_loss_fn(y_out, y)
         # step through classifier
         total_loss = classifier_loss
@@ -161,7 +161,7 @@ def rms_calc(probs, target):
     return np.sum(rms)
     
 def train_log_vae_classifier(dir_name, vae, vae_optim, vae_loss_fn, classifier, classifier_optim,
-                             classifier_loss_fn, train_loader, test_loader, num_epochs, plot_img_freq=1, num_img_plt=40,
+                             classifier_loss_fn, train_loader, test_loader, num_epochs, plot_img_freq=20, num_img_plt=10,
                              checkpoint_freq=20, use_cuda=True, test_freq=1, transform=False):
     num_params = sum(p.numel() for p in vae.parameters() if p.requires_grad)
     writer = SummaryWriter("tb_data_all/" + dir_name)
@@ -243,7 +243,7 @@ print("train and log")
 
 vae_optim = Adam(vae.parameters(), lr= args.lr, betas= (0.90, 0.999))
 
-classifier = Classifier(in_dim=args.z_size*2)
+classifier = Classifier(in_dim=vae.encoder.linear_size)
 
 classifier_optim = Adam(classifier.parameters(),args.lr , betas=(0.90, 0.999))
 # or optimizer = optim.SGD(classifier.parameters(), lr=0.001, momentum=0.9)?
