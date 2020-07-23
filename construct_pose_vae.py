@@ -30,7 +30,7 @@ class PoseVAE(nn.Module):
             data,
             transforms=None):
         
-        output_size=80
+        output_size= self.encoder.insize 
         decoder = pyro.module("decoder", self.decoder)
         # decoder takes z and std in the transformed coordinate frame
         # and the theta
@@ -164,8 +164,8 @@ def evaluate(svi, test_loader, use_cuda=False):
 
 
 def train_log(dir_name, vae, svi, train_loader, test_loader,
-                  num_epochs, plot_img_freq=1, num_img_plt=40,
-                  checkpoint_freq=1, use_cuda=True, test_freq=1):
+                  num_epochs, plot_img_freq=20, num_img_plt=10,
+                  checkpoint_freq=20, use_cuda=True, test_freq=1):
     
     num_params = sum(p.numel() for p in vae.parameters() if p.requires_grad)
 
