@@ -18,6 +18,6 @@ srun python trainer_without_decoder.py\
     --csv_file /scratch-ssd/oatml/data/gz2/gz2_classifications_and_subjects.csv\
     --img_file /scratch-ssd/oatml/data/gz2\
     --dir_name wod_new_res3\
-    --arch encoder_decoder_new_res3.py  --lr 1.0e-4\
+    --arch encoder_decoder_new_res3_split.py  --lr 1.0e-4\
     --num_epochs 200 --img_size 128 --crop_size 128 --z_size 100 --batch_size 100
 
