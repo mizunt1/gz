@@ -25,14 +25,16 @@ class Encoder(nn.Module):
         )
         self.loc = nn.Linear(self.linear_size, z_dim)
         self.scale = nn.Linear(self.linear_size, z_dim)
-        
+        self.elu = nn.ELU()
+
     def forward(self, x):
         x = x - 0.222
         x = x / 0.156
         x = self.net(x)
         x = x.view(x.shape[0], -1)
-        z_loc = self.loc(x)
-        z_scale = torch.exp(self.scale(x))
+        split = self.elu(x)
+        z_loc = self.loc(split)
+        z_scale = torch.exp(self.scale(split))
         return z_loc, z_scale, split
 
 
