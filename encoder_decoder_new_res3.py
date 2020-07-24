@@ -33,7 +33,7 @@ class Encoder(nn.Module):
         x = x.view(x.shape[0], -1)
         z_loc = self.loc(x)
         z_scale = torch.exp(self.scale(x))
-        return z_loc, z_scale, split
+        return z_loc, z_scale
 
 
 class Decoder(nn.Module):
