@@ -116,6 +116,7 @@ class PoseVAE(nn.Module):
             x = x.cuda()
         batch_shape = x.shape[0]
         img_shape = x.shape[-1]
+        transforms = T.TransformSequence(T.Translation(), T.Rotation())  
         if encoder == False:
             out, split = self.encoder(x)
         else:
