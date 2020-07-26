@@ -96,19 +96,19 @@ class PoseVAE(nn.Module):
             # pretty standard guide
             encoder_out = encoder(data)
             
-        delta_sample_transformer_params(
-            encoder.transformer.transformers, encoder_out["transform_params"]
-        )
-        # I think this is essentially "sampling" the transform params
-        # this will be used when replaying the model to create
-        # the image
+            delta_sample_transformer_params(
+                encoder.transformer.transformers, encoder_out["transform_params"]
+            )
+            # I think this is essentially "sampling" the transform params
+            # this will be used when replaying the model to create
+            # the image
         
-        z = pyro.sample(
-            "z",
-            D.Normal(
-                encoder_out["z_mu"], torch.exp(encoder_out["z_std"]) + 1e-3
-            ).to_event(1),
-        )
+            z = pyro.sample(
+                "z",
+                D.Normal(
+                    encoder_out["z_mu"], torch.exp(encoder_out["z_std"]) + 1e-3
+                ).to_event(1),
+            )
             
     def sample_img(self, x, use_cuda=False, encoder=False, decoder=False):
         # encode image x
