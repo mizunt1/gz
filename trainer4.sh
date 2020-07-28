@@ -17,7 +17,7 @@ srun python trainer_vae_classifier_ss.py\
      --arch encoder_decoder_pose_vae_split.py\
      --csv_file /scratch-ssd/oatml/data/gz2/gz2_classifications_and_subjects.csv\
      --img_file /scratch-ssd/oatml/data/gz2\
-     --dir_name trainer_classifier_ss\
+     --dir_name trainer_classifier_ss_0.8\
      --num_epochs 200 --img_size 128 --crop_size 128   --batch_size 100 \
-     --lr 1e-4 --us_proportion 0.8 --subset
+     --lr 1e-4 --us_proportion 0.8
 
