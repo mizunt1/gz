@@ -4,7 +4,7 @@
 
 #SBATCH --output=slurm-%j.out
 #SBATCH --error=slurm-%j.err
-#SBATCH --job-name="ss_0.4"
+#SBATCH --job-name="ss_0.3"
 #SBATCH --partition="msc"
 
 export CONDA_ENVS_PATH=/scratch-ssd/$USER/conda_envs
@@ -17,7 +17,7 @@ srun python trainer_vae_classifier_ss.py\
      --arch encoder_decoder_pose_vae_split.py\
      --csv_file /scratch-ssd/oatml/data/gz2/gz2_classifications_and_subjects.csv\
      --img_file /scratch-ssd/oatml/data/gz2\
-     --dir_name trainer_classifier_ss_0.4\
+     --dir_name trainer_classifier_ss_0.3\
      --num_epochs 200 --img_size 128 --crop_size 128   --batch_size 100 \
-     --lr 1e-4 --us_proportion 0.4
+     --lr 1e-4 --us_proportion 0.3
 
