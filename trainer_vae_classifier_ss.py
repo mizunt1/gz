@@ -278,7 +278,7 @@ vae_optim = Adam(vae.parameters(), lr= args.lr, betas= (0.90, 0.999))
 classifier = Classifier(in_dim=vae.encoder.linear_size)
 params = list(classifier.parameters()) + list(vae.encoder.parameters())
 
-classifier_optim = Adam(params, args.lr , betas=(0.90, 0.999), weight_decay=0.001)
+classifier_optim = Adam(params, args.lr , betas=(0.90, 0.999), weight_decay=0.0001)
 # or optimizer = optim.SGD(classifier.parameters(), lr=0.001, momentum=0.9)?
 
 def multinomial_loss(probs, values):
