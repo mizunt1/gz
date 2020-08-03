@@ -64,7 +64,8 @@ def return_data_loader(data, test_proportion, batch_size, shuffle=True):
     train_loader = torch.utils.data.DataLoader(dataset=train_set, batch_size=batch_size, shuffle=shuffle)
     return train_loader, test_loader
     
-def return_ss_loader(data, test_proportion, us_portion, batch_size, subset=False, shuffle=True, subset_portion=None):
+def return_ss_loader(data, test_proportion, s_portion, batch_size, subset=False, shuffle=True, subset_portion=None):
+    us_portion = 1.0 - s_portion
     if subset_portion != None:
         len_data = len(data)*subset_portion
     else:
