@@ -12,8 +12,8 @@ class Classifier(nn.Module):
     def forward(self, x):
         x = self.fc1(x)
         x = self.relu(x)
-        x = drop(x)
+        x = self.drop(x)
         x = self.fc2(x)
         x = self.softmax(x)
-        x = drop(x)
+        x = self.drop(x)
         return x
