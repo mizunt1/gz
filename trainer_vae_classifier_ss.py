@@ -10,7 +10,7 @@ import torch.nn as nn
 from pyro.infer import SVI, Trace_ELBO
 import pyro.distributions as D
 import importlib
-from classifier_simple_gz import Classifier
+from classifier_2layer_drop import Classifier
 from galaxy_gen.etn import transforms as T 
 from galaxy_gen.etn import transformers, networks
 
@@ -35,7 +35,7 @@ parser.add_argument('--z_size', default=100, type=int)
 parser.add_argument('--crop_size', default=80, type=int)
 parser.add_argument('--batch_size', default=10, type=int)
 parser.add_argument('--subset', default=False, action='store_true')
-parser.add_argument('--subset_proportion', default=0.5, type=float)
+parser.add_argument('--subset_proportion', default=0.001, type=float)
 parser.add_argument('--load_checkpoint', default=None)
 parser.add_argument('--bar_no_bar', default=False, action='store_true')
 parser.add_argument('--s_proportion', default=0.8, type=float)
@@ -78,6 +78,8 @@ def evaluate_vae_classifier(vae, vae_loss_fn, classifier, classifier_loss_fn, te
     evaluates for all test data
     test data is in batches, all batches in test loader tested
     """
+    # classifier is in eval mode
+    classifier.eval() 
     epoch_loss_vae = 0.
     epoch_loss_classifier = 0.
     total_acc = 0.
@@ -118,6 +120,9 @@ def train_ss_vae_classifier(vae, vae_optim, vae_loss_fn, classifier, classifier_
     returns loss for one epoch
     in each batch, when the svi takes a step, the optimiser of classifier takes a step
     """
+    # classifier is in train mode for dropout
+    classifier.train() 
+    
     epoch_loss_vae = 0.
     epoch_loss_classifier = 0.
     total_acc = 0.
@@ -278,7 +283,7 @@ vae_optim = Adam(vae.parameters(), lr= args.lr, betas= (0.90, 0.999))
 classifier = Classifier(in_dim=vae.encoder.linear_size)
 params = list(classifier.parameters()) + list(vae.encoder.parameters())
 
-classifier_optim = Adam(params, args.lr , betas=(0.90, 0.999), weight_decay=0.01)
+classifier_optim = Adam(params, args.lr , betas=(0.90, 0.999))
 # or optimizer = optim.SGD(classifier.parameters(), lr=0.001, momentum=0.9)?
 
 def multinomial_loss(probs, values):
