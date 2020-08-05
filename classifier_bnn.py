@@ -52,6 +52,7 @@ class ClassifierBnn(PyroModule):
 def predict(x, model, guide, num_samples=30):
     predictive = Predictive(model, guide=guide, num_samples=num_samples)
     # for a single image, output a mean and sd for each multivariate answer?
+    
     yhats = predictive(x)["obs"].double()
     # yhats[0] seems to be integers 0 to 9, len 256
     # prediction for one model, for all items in batch

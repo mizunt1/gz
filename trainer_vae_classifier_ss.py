@@ -93,7 +93,8 @@ def evaluate_vae_classifier(vae, vae_loss_fn, classifier, classifier_loss_fn, te
             x = x.cuda()
             y = y.cuda()
         # step of elbo for vae
-        vae_loss = vae_loss_fn(vae.model, vae.guide, x)
+        transforms = T.TransformSequence(T.Translation(), T.Rotation())  
+        vae_loss = vae_loss_fn(vae.model, vae.guide, x, transforms)
         out, split = vae.encoder(x)
         # combined_z = torch.cat((z_loc, z_scale), 1)
         # combined_z = combined_z.detach()

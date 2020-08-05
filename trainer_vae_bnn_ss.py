@@ -95,16 +95,20 @@ def evaluate_vae_classifier(vae, vae_loss_fn, classifier, classifier_loss_fn, te
             x = x.cuda()
             y = y.cuda()
         # step of elbo for vae
-        vae_loss = vae_loss_fn(vae.model, vae.guide, x)
+        transforms = T.TransformSequence(T.Translation(), T.Rotation())
+        vae_loss = vae_loss_fn(vae.model, vae.guide, x, transforms)
         out, split = vae.encoder(x)
         classifier_guide = AutoDiagonalNormal(classifier, init_scale=1e-1) 
-        mean, std = predict(split, classifier, classifier_guide)
-        y_out = mean
         classifier_loss = classifier_loss_fn(classifier, classifier_guide, split, y)
-        total_acc += torch.sum(torch.eq(y_out.argmax(dim=1),y.argmax(dim=1)))
         epoch_loss_vae += vae_loss.item()
         epoch_loss_classifier += classifier_loss.item()
+
+        
+        mean, std = predict(split, classifier, classifier_guide)
+        y_out = mean
+        total_acc += torch.sum(torch.eq(y_out.argmax(dim=1),y.argmax(dim=1)))
         rms += rms_calc(y_out, y)
+        
     normalizer = len(test_loader.dataset)
     total_epoch_loss_vae = epoch_loss_vae / normalizer
     total_epoch_loss_classifier = epoch_loss_classifier / normalizer
@@ -155,6 +159,7 @@ def train_ss_vae_classifier(vae, vae_optim, vae_loss_fn, classifier, classifier_
         epoch_loss_classifier += classifier_loss.item()
         # there is no y_out anymore
         mean, st = predict(split, classifier, classifier_guide)
+
         y_out = mean
         total_acc += torch.sum(torch.eq(y_out.argmax(dim=1),ys.argmax(dim=1)))
         total_loss.backward()
