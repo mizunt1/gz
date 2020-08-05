@@ -1,4 +1,6 @@
 from torch.utils.tensorboard import SummaryWriter
+import pyro
+from pyro.infer.autoguide import AutoDiagonalNormal
 from itertools import cycle
 import numpy as np
 from construct_pose_vae_split import PoseVAE
@@ -10,7 +12,7 @@ import torch.nn as nn
 from pyro.infer import SVI, Trace_ELBO
 import pyro.distributions as D
 import importlib
-from classifier_4layer_drop import Classifier
+from classifier_bnn import ClassifierBnn, predict
 from galaxy_gen.etn import transforms as T 
 from galaxy_gen.etn import transformers, networks
 
@@ -93,17 +95,20 @@ def evaluate_vae_classifier(vae, vae_loss_fn, classifier, classifier_loss_fn, te
             x = x.cuda()
             y = y.cuda()
         # step of elbo for vae
-        transforms = T.TransformSequence(T.Translation(), T.Rotation())  
+        transforms = T.TransformSequence(T.Translation(), T.Rotation())
         vae_loss = vae_loss_fn(vae.model, vae.guide, x, transforms)
         out, split = vae.encoder(x)
-        # combined_z = torch.cat((z_loc, z_scale), 1)
-        # combined_z = combined_z.detach()
-        y_out = classifier.forward(split)
-        classifier_loss = classifier_loss_fn(y_out, y)
-        total_acc += torch.sum(torch.eq(y_out.argmax(dim=1),y.argmax(dim=1)))
+        classifier_guide = AutoDiagonalNormal(classifier, init_scale=1e-1) 
+        classifier_loss = classifier_loss_fn(classifier, classifier_guide, split, y)
         epoch_loss_vae += vae_loss.item()
         epoch_loss_classifier += classifier_loss.item()
+
+        
+        mean, std = predict(split, classifier, classifier_guide)
+        y_out = mean
+        total_acc += torch.sum(torch.eq(y_out.argmax(dim=1),y.argmax(dim=1)))
         rms += rms_calc(y_out, y)
+        
     normalizer = len(test_loader.dataset)
     total_epoch_loss_vae = epoch_loss_vae / normalizer
     total_epoch_loss_classifier = epoch_loss_classifier / normalizer
@@ -140,19 +145,22 @@ def train_ss_vae_classifier(vae, vae_optim, vae_loss_fn, classifier, classifier_
             xs = xs.cuda()
             ys = ys.cuda()
             xus = xus.cuda()
-        transforms = T.TransformSequence(T.Translation(), T.Rotation())  
+        transforms = T.TransformSequence(T.Translation(), T.Rotation())
         classifier_optim.zero_grad()
         vae_optim.zero_grad()
         # supervised step
         vae_loss = vae_loss_fn(vae.model, vae.guide, xs, transforms)
         out, split = vae.encoder(xs)
-        y_out = classifier.forward(split)
-        
-        classifier_loss = classifier_loss_fn(y_out, ys)
+        classifier_guide = AutoDiagonalNormal(classifier, init_scale=1e-1)  
+        classifier_loss = classifier_loss_fn(classifier, classifier_guide, split, ys)
 
         total_loss = vae_loss + classifier_loss
         epoch_loss_vae += vae_loss.item()
         epoch_loss_classifier += classifier_loss.item()
+        # there is no y_out anymore
+        mean, st = predict(split, classifier, classifier_guide)
+
+        y_out = mean
         total_acc += torch.sum(torch.eq(y_out.argmax(dim=1),ys.argmax(dim=1)))
         total_loss.backward()
         
@@ -281,16 +289,15 @@ if args.load_checkpoint != None:
 
 vae_optim = Adam(vae.parameters(), lr= args.lr, betas= (0.90, 0.999))
 
-classifier = Classifier(in_dim=vae.encoder.linear_size)
+classifier = ClassifierBnn(in_dim=vae.encoder.linear_size)
 params = list(classifier.parameters()) + list(vae.encoder.parameters())
+
+classifier_loss = Trace_ELBO().differentiable_loss
+
 
 classifier_optim = Adam(params, args.lr , betas=(0.90, 0.999))
 # or optimizer = optim.SGD(classifier.parameters(), lr=0.001, momentum=0.9)?
 
-def multinomial_loss(probs, values):
-    return torch.sum(-1 *D.Multinomial(1, probs=probs).log_prob(values.float()))
-
-classifier_loss = multinomial_loss
 
 train_ss_log_vae_classifier(args.dir_name, vae, vae_optim, Trace_ELBO().differentiable_loss,
                             classifier, classifier_optim,
