@@ -1,18 +1,11 @@
 from pyro.nn import PyroSample, PyroModule
-from pyro.distributions import Normal, Categorical
 import torch
 import pyro
 import pyro.distributions as D
 from pyro.infer import Predictive
 class ClassifierBnn(PyroModule):
-    
-    def __init__(self, in_dim = 100, num_hidden = 200, num_out = 3, prior_std = 1.):
-        
-        # call to father constructor
-        super().__init__()
-        
-        # define prior
-        prior = Normal(0, prior_std)
+    def __init__(self, in_dim = 100, num_hidden = 128, num_out = 3, prior_std = 1., use_cuda=False):
+        super(ClassifierBnn, self).__init__()
         
         # Define layers
         
@@ -20,24 +13,27 @@ class ClassifierBnn(PyroModule):
         self.linear_layer = PyroModule[torch.nn.Linear](in_dim, num_hidden)
         
         # linear alyer parameters as random variables
-        self.linear_layer.weights = PyroSample(prior.expand([num_hidden, in_dim]).to_event(2))
-        self.linear_layer.bias = PyroSample(prior.expand([num_hidden]).to_event(1))
-        
+        self.linear_layer.weight = PyroSample(D.Normal(0., 1.).expand([num_hidden, in_dim]).to_event(1))
+        self.linear_layer.bias = PyroSample(D.Normal(0., 10.).expand([num_hidden]).to_event(1))
+
+
         # linear layer 2
         # output dimension is 3 because of the number of classes
         self.output_layer = PyroModule[torch.nn.Linear](num_hidden, num_out)
         
         # linear alyer parameters as random variables
-        self.output_layer.weights = PyroSample(prior.expand([num_out, num_hidden]).to_event(2))
-        self.output_layer.bias = PyroSample(prior.expand([num_out]).to_event(1))
-        
+        self.output_layer.weight = PyroSample(D.Normal(0., 1.).expand([num_out, num_hidden]).to_event(1))
+        self.output_layer.bias = PyroSample(D.Normal(0., 10.).expand([num_out]).to_event(1))
         # activation function
         #self.activation = torch.nn.functional.softmax()
-        
-    def forward(self, x, y = None):
-            
+
+    def forward(self, x, y = None):            
         # latent variable
+        
+        print("weights device2", self.linear_layer.weight.device)
+        print("weights device2", self.linear_layer.bias.device)
         z = self.linear_layer(x)
+        z = torch.nn.functional.relu(z)
         z = self.output_layer(z)
         z = torch.nn.functional.softmax(z, dim=1)
         # likelihood
@@ -48,6 +44,9 @@ class ClassifierBnn(PyroModule):
         # return latent variable
         return z
 
+#class ClassifierBnn(PyroModule):
+    
+#    def __init__(self, in_dim=100m num_hidden=200, num_out=3)
 
 def predict(x, model, guide, num_samples=30):
     predictive = Predictive(model, guide=guide, num_samples=num_samples)

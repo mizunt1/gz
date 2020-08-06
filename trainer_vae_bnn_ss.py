@@ -9,10 +9,14 @@ import torch.nn.functional as f
 import torchvision as tv
 import os
 import torch.nn as nn
+from pyro.nn import PyroSample, PyroModule
+from pyro.nn.module import to_pyro_module_
+import pyro.distributions as dist
 from pyro.infer import SVI, Trace_ELBO
 import pyro.distributions as D
 import importlib
 from classifier_bnn import ClassifierBnn, predict
+from classifier_bnn2 import Classifier
 from galaxy_gen.etn import transforms as T 
 from galaxy_gen.etn import transformers, networks
 
@@ -289,14 +293,36 @@ if args.load_checkpoint != None:
 
 vae_optim = Adam(vae.parameters(), lr= args.lr, betas= (0.90, 0.999))
 
+
 classifier = ClassifierBnn(in_dim=vae.encoder.linear_size)
+method_two = True
+if method_two == True:
+    classifier = Classifier(in_dim=vae.encoder.linear_size)
+    to_pyro_module_(classifier)
+
+
+
+    # Now we can attempt to be fully Bayesian:
+    for m in classifier.modules():
+        for name, value in list(m.named_parameters(recurse=False)):
+            setattr(m, name, PyroSample(prior=dist.Normal(0, 1)
+                                        .expand(value.shape)
+                                        .to_event(value.dim())))
+
+guide = AutoDiagonalNormal(classifier)
+
+#classifier = ClassifierBnn(in_dim=vae.encoder.linear_size,use_cuda=use_cuda)
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")  
+pyro.clear_param_store()
+
+classifier.to(device)
+
 params = list(classifier.parameters()) + list(vae.encoder.parameters())
 
 classifier_loss = Trace_ELBO().differentiable_loss
 
 
 classifier_optim = Adam(params, args.lr , betas=(0.90, 0.999))
-# or optimizer = optim.SGD(classifier.parameters(), lr=0.001, momentum=0.9)?
 
 
 train_ss_log_vae_classifier(args.dir_name, vae, vae_optim, Trace_ELBO().differentiable_loss,
