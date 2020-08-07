@@ -6,7 +6,7 @@ class Classifier(nn.Module):
         self.fc1 = nn.Linear(in_dim, hidden)
         self.fc2 = nn.Linear(hidden, out_dim)
         self.relu = nn.ReLU()
-        self.drop = nn.Dropout(p=0.5)
+        self.drop = nn.Dropout(p=0.2)
         self.softmax = nn.Softmax(dim=1)
         
     def forward(self, x):

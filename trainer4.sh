@@ -4,7 +4,7 @@
 
 #SBATCH --output=slurm-%j.out
 #SBATCH --error=slurm-%j.err
-#SBATCH --job-name="0.001"
+#SBATCH --job-name="0.2drop"
 #SBATCH --partition="msc"
 
 export CONDA_ENVS_PATH=/scratch-ssd/$USER/conda_envs
@@ -17,7 +17,7 @@ srun python trainer_vae_classifier_ss.py\
      --arch encoder_decoder_pose_vae_split.py\
      --csv_file /scratch-ssd/oatml/data/gz2/gz2_classifications_and_subjects.csv\
      --img_file /scratch-ssd/oatml/data/gz2\
-     --dir_name one_layer_class_0.001\
-     --num_epochs 200 --img_size 128 --crop_size 128  --batch_size 10\
-     --lr 1e-4 --s_proportion 0.001
+     --dir_name 2layer_drop_0.2\
+     --num_epochs 200 --img_size 128 --crop_size 128  --batch_size 100\
+     --lr 1e-4 --s_proportion 0.05
 
