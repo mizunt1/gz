@@ -294,8 +294,10 @@ if args.load_checkpoint != None:
 vae_optim = Adam(vae.parameters(), lr= args.lr, betas= (0.90, 0.999))
 
 
-classifier = ClassifierBnn(in_dim=vae.encoder.linear_size)
-method_two = True
+classifier = ClassifierBnn(in_dim=vae.encoder.linear_size, use_cuda=True)
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")  
+classifier.to(device)
+method_two = False
 if method_two == True:
     classifier = Classifier(in_dim=vae.encoder.linear_size)
     to_pyro_module_(classifier)
@@ -312,10 +314,8 @@ if method_two == True:
 guide = AutoDiagonalNormal(classifier)
 
 #classifier = ClassifierBnn(in_dim=vae.encoder.linear_size,use_cuda=use_cuda)
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")  
 pyro.clear_param_store()
 
-classifier.to(device)
 
 params = list(classifier.parameters()) + list(vae.encoder.parameters())
 

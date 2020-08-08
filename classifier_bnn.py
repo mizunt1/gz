@@ -3,6 +3,11 @@ import torch
 import pyro
 import pyro.distributions as D
 from pyro.infer import Predictive
+
+
+def random_weight_helper(size, device):
+    return PyroSample(D.Normal(torch.zeros(size, device=device), torch.ones(size, device=device)).to_event(len(size)))
+
 class ClassifierBnn(PyroModule):
     def __init__(self, in_dim = 100, num_hidden = 128, num_out = 3, prior_std = 1., use_cuda=False):
         super(ClassifierBnn, self).__init__()
@@ -14,7 +19,10 @@ class ClassifierBnn(PyroModule):
         
         # linear alyer parameters as random variables
         self.linear_layer.weight = PyroSample(D.Normal(0., 1.).expand([num_hidden, in_dim]).to_event(1))
-        self.linear_layer.bias = PyroSample(D.Normal(0., 10.).expand([num_hidden]).to_event(1))
+        device = torch.device('cuda') if use_cuda else None
+        self.linear_layer.weight = random_weight_helper([num_hidden, in_dim], device)
+
+        self.linear_layer.bias = random_weight_helper([num_hidden], device)
 
 
         # linear layer 2
@@ -22,8 +30,8 @@ class ClassifierBnn(PyroModule):
         self.output_layer = PyroModule[torch.nn.Linear](num_hidden, num_out)
         
         # linear alyer parameters as random variables
-        self.output_layer.weight = PyroSample(D.Normal(0., 1.).expand([num_out, num_hidden]).to_event(1))
-        self.output_layer.bias = PyroSample(D.Normal(0., 10.).expand([num_out]).to_event(1))
+        self.output_layer.weight = random_weight_helper([num_out, num_hidden], device)
+        self.output_layer.bias = random_weight_helper([num_out], device)
         # activation function
         #self.activation = torch.nn.functional.softmax()
 
@@ -57,7 +65,7 @@ def predict(x, model, guide, num_samples=30):
     # prediction for one model, for all items in batch
     # 20, 256
     mean = torch.mean(yhats, axis=0)
-    std = torch.std(yhats.float(), 0).numpy()
+    std = torch.std(yhats.float(), 0).cpu().numpy()
     # yhats outputs a batch size number of predictions for 20 models
     # yhats seem to be a dictionary of weights
     return mean, std
