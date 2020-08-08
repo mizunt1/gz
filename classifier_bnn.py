@@ -38,8 +38,6 @@ class ClassifierBnn(PyroModule):
     def forward(self, x, y = None):            
         # latent variable
         
-        print("weights device2", self.linear_layer.weight.device)
-        print("weights device2", self.linear_layer.bias.device)
         z = self.linear_layer(x)
         z = torch.nn.functional.relu(z)
         z = self.output_layer(z)
