@@ -1,7 +1,7 @@
 from torch.utils.tensorboard import SummaryWriter
 from itertools import cycle
 import numpy as np
-from construct_pose_vae import PoseVAE
+from construct_pose_vae_split import PoseVAE
 import torch
 import torch.nn.functional as f
 import torchvision as tv
@@ -10,7 +10,7 @@ import torch.nn as nn
 from pyro.infer import SVI, Trace_ELBO
 import pyro.distributions as D
 import importlib
-from classifier_2layer_drop import Classifier
+from classifier_conv import Classifier
 from galaxy_gen.etn import transforms as T 
 from galaxy_gen.etn import transformers, networks
 
@@ -144,7 +144,7 @@ def train_ss_vae_classifier(vae, vae_optim, vae_loss_fn, classifier, classifier_
         classifier_optim.zero_grad()
         vae_optim.zero_grad()
         # supervised step
-        vae_loss = vae_loss_fn(vae.model, vae.guide, xs)#, transforms)
+        vae_loss = vae_loss_fn(vae.model, vae.guide, xs, transforms)
         out, split = vae.encoder(xs)
         y_out = classifier.forward(split)
         
