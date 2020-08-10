@@ -1,7 +1,7 @@
 from torch.utils.tensorboard import SummaryWriter
 from itertools import cycle
 import numpy as np
-from construct_pose_vae import PoseVAE
+from construct_vae import VAE
 import torch
 import torch.nn.functional as f
 import torchvision as tv
@@ -94,7 +94,7 @@ def evaluate_vae_classifier(vae, vae_loss_fn, classifier, classifier_loss_fn, te
             y = y.cuda()
         # step of elbo for vae
         transforms = T.TransformSequence(T.Translation(), T.Rotation())  
-        out, split = vae.encoder(x)
+        simga, mu, split = vae.encoder(x)
         vae_loss = vae_loss_fn(vae.model, vae.guide, x, transforms)
         # combined_z = torch.cat((z_loc, z_scale), 1)
         # combined_z = combined_z.detach()
@@ -145,7 +145,7 @@ def train_ss_vae_classifier(vae, vae_optim, vae_loss_fn, classifier, classifier_
         vae_optim.zero_grad()
         # supervised step
         vae_loss = vae_loss_fn(vae.model, vae.guide, xs)#, transforms)
-        out, split = vae.encoder(xs)
+        z_loc, z_sigma, split = vae.encoder(xs)
         y_out = classifier.forward(split)
         
         classifier_loss = classifier_loss_fn(y_out, ys)
@@ -162,7 +162,7 @@ def train_ss_vae_classifier(vae, vae_optim, vae_loss_fn, classifier, classifier_
         # unsupervised step
         vae_optim.zero_grad()
         transforms = T.TransformSequence(T.Translation(), T.Rotation())  
-        vae_loss = vae_loss_fn(vae.model, vae.guide, xus, transforms)
+        vae_loss = vae_loss_fn(vae.model, vae.guide, xus)#, transforms)
         vae_loss.backward()
         vae_optim.step()
         epoch_loss_vae += vae_loss.item()
@@ -256,8 +256,8 @@ trans = transformers.TransformerSequence(
     transformers.Translation(networks.EquivariantPosePredictor, 1, 32),
     transformers.Rotation(networks.EquivariantPosePredictor, 1, 32))
 
-encoder_args = {'transformer':trans, 'insize':args.img_size, 'z_dim':args.z_size}
-
+#encoder_args = {'transformer':trans, 'insize':args.img_size, 'z_dim':args.z_size}
+encoder_args = {'insize':args.img_size, 'z_dim':args.z_size}
 decoder_args = {'z_dim':args.z_size, 'outsize':args.img_size}
 
 if args.subset is True:
@@ -275,7 +275,7 @@ print("num data points in train_us_loader:", len(train_us_loader.dataset))
 print("train and log")
 
 
-vae = PoseVAE(Encoder, Decoder, args.z_size, encoder_args, decoder_args, use_cuda=use_cuda)
+vae = VAE(Encoder, Decoder, args.z_size, encoder_args, decoder_args, use_cuda=use_cuda)
 if args.load_checkpoint != None:
     vae.encoder.load_state_dict(torch.load("checkpoints/" + args.load_checkpoint + "/encoder.checkpoint"))
     vae.decoder.load_state_dict(torch.load("checkpoints/" + args.load_checkpoint + "/decoder.checkpoint"))
