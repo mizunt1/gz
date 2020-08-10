@@ -66,7 +66,7 @@ class Encoder(nn.Module):
             nn.ReLU(),
             nn.MaxPool2d(2),
             # linear
-            Reshape(-1, self.linear_size),
+
             # linear
 
         )
@@ -95,12 +95,13 @@ class Encoder(nn.Module):
         
         split = self.net(view)
         split = self.relu(split)
-        z_loc = self.loc(split)
-        z_scale = torch.exp(self.scale(split))
+        reshape = split.view(-1, self.linear_size)
+        z_loc = self.loc(reshape)
+        z_scale = torch.exp(self.scale(reshape))
 
         output["z_mu"] = z_loc
         output["z_std"] = z_scale
-        
+
         return output, split
 
 class Decoder(nn.Module):
