@@ -95,7 +95,7 @@ def evaluate_vae_classifier(vae, vae_loss_fn, classifier, classifier_loss_fn, te
         # step of elbo for vae
         transforms = T.TransformSequence(T.Translation(), T.Rotation())  
         simga, mu, split = vae.encoder(x)
-        vae_loss = vae_loss_fn(vae.model, vae.guide, x, transforms)
+        vae_loss = vae_loss_fn(vae.model, vae.guide, x)
         # combined_z = torch.cat((z_loc, z_scale), 1)
         # combined_z = combined_z.detach()
         y_out = classifier.forward(split)
@@ -144,7 +144,7 @@ def train_ss_vae_classifier(vae, vae_optim, vae_loss_fn, classifier, classifier_
         classifier_optim.zero_grad()
         vae_optim.zero_grad()
         # supervised step
-        vae_loss = vae_loss_fn(vae.model, vae.guide, xs)#, transforms)
+        vae_loss = vae_loss_fn(vae.model, vae.guide, xs)
         z_loc, z_sigma, split = vae.encoder(xs)
         y_out = classifier.forward(split)
         

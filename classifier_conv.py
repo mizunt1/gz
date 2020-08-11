@@ -12,18 +12,16 @@ class Classifier(nn.Module):
         super().__init__()
         self.net = nn.Sequential(
             # first conv pair
+            nn.Dropout(p=0.2)
             nn.Conv2d(16, 16, kernel_size=3, padding=1),
             nn.ReLU(),
+            nn.Dropout(p=0.2)
             nn.Conv2d(16, 8, kernel_size=3, padding=1),
             nn.ReLU(),
             Reshape(-1,int(in_dim/2)),
             nn.Dropout(p=0.2),
-            nn.Linear(int(in_dim/2), hidden_dim),
-            nn.Dropout(p=0.2),
-            nn.ReLU(),
-            nn.Linear(hidden_dim, 3),
+            nn.Linear(int(in_dim/2), 3),
             nn.Softmax(dim=1),
-            # second conv pair
         )
 
     def forward(self, x):

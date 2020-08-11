@@ -14,10 +14,10 @@ export CONDA_PKGS_DIRS=/scratch-ssd/$USER/conda_pkgs
 source /scratch-ssd/oatml/miniconda3/bin/activate gz_mizu
 
 srun python trainer_vae_classifier_ss.py\
-     --arch encoder_decoder_pose_vae_split.py\
+     --arch encoder_decoder_new_res3_split.py\
      --csv_file /scratch-ssd/oatml/data/gz2/gz2_classifications_and_subjects.csv\
      --img_file /scratch-ssd/oatml/data/gz2\
-     --dir_name mike_split_conv_class\
+     --dir_name mike_split_small_conv_class_nr3\
      --num_epochs 100 --img_size 128 --crop_size 128  --batch_size 10\
      --lr 1e-4 --s_proportion 0.005
 
