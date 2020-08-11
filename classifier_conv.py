@@ -13,9 +13,6 @@ class Classifier(nn.Module):
         self.net = nn.Sequential(
             # first conv pair
             nn.Dropout(p=0.2)
-            nn.Conv2d(16, 16, kernel_size=3, padding=1),
-            nn.ReLU(),
-            nn.Dropout(p=0.2)
             nn.Conv2d(16, 8, kernel_size=3, padding=1),
             nn.ReLU(),
             Reshape(-1,int(in_dim/2)),
