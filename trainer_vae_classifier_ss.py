@@ -25,6 +25,7 @@ img = "gz2_data/"
 
 parser.add_argument('--dir_name', required=True)
 parser.add_argument('--arch', required=True)
+parser.add_argument('--class_arch', required=True)
 parser.add_argument('--csv_file', metavar='c', type=str, default=csv)
 parser.add_argument('--img_file', metavar='i', type=str, default=img)
 parser.add_argument('--no_cuda', default=False, action='store_true')
@@ -46,6 +47,11 @@ arch = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(arch)
 Encoder = arch.Encoder
 Decoder = arch.Decoder
+
+spec = importlib.util.spec_from_file_location("module.name", args.class_arch)
+class_arch = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(class_arch)
+Classifier = class_arch.Classifier
 
 use_cuda = not args.no_cuda
 a01 = "t01_smooth_or_features_a01_smooth_count"

@@ -12,7 +12,7 @@ class Classifier(nn.Module):
         super().__init__()
         self.net = nn.Sequential(
             # first conv pair
-            nn.Dropout(p=0.2)
+            nn.Dropout(p=0.2),
             nn.Conv2d(16, 8, kernel_size=3, padding=1),
             nn.ReLU(),
             Reshape(-1,int(in_dim/2)),
