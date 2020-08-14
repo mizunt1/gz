@@ -132,6 +132,7 @@ class PoseVAE(nn.Module):
 def train(svi, train_loader, use_cuda=False):
     # initialize loss accumulator
     epoch_loss = 0.
+    num_steps = 0
     # do a training epoch over each mini-batch x returned
     # by the data loader
     transforms = T.TransformSequence(T.Translation(), T.Rotation())
@@ -142,9 +143,10 @@ def train(svi, train_loader, use_cuda=False):
             x = x.cuda()
         # do ELBO gradient and accumulate loss
         epoch_loss += svi.step(x, transforms)
+        num_steps += 1
     normalizer_train = len(train_loader.dataset)
     total_epoch_loss_train = epoch_loss / normalizer_train
-    return total_epoch_loss_train
+    return total_epoch_loss_train, num_steps
 
 def evaluate(svi, test_loader, use_cuda=False):
     # initialize loss accumulator
@@ -168,13 +170,14 @@ def train_log(dir_name, vae, svi, train_loader, test_loader,
                   checkpoint_freq=20, use_cuda=True, test_freq=1):
     
     num_params = sum(p.numel() for p in vae.parameters() if p.requires_grad)
-
+    total_steps = 0
     writer = SummaryWriter("tb_data_all/" + dir_name)
     if not os.path.exists("checkpoints/" + dir_name):
         os.makedirs("checkpoints/" + dir_name)
     for epoch in range(num_epochs):
         print("training")
-        total_epoch_loss_train = train(svi, train_loader, use_cuda=use_cuda)
+        total_epoch_loss_train, num_steps = train(svi, train_loader, use_cuda=use_cuda)
+        total_steps += num_steps
         print("end train")
         print("[epoch %03d]  average training loss: %.4f" % (epoch, total_epoch_loss_train))
         if epoch % test_freq == 0:
@@ -183,16 +186,16 @@ def train_log(dir_name, vae, svi, train_loader, test_loader,
             total_epoch_loss_test = evaluate(svi, test_loader, use_cuda)
             print("[epoch %03d] average test loss: %.4f" % (epoch, total_epoch_loss_test))
             print("evaluate end")
-            writer.add_scalar('Train loss', total_epoch_loss_train, epoch)
-            writer.add_scalar('Test loss', total_epoch_loss_test, epoch)
+            writer.add_scalar('Train loss', total_epoch_loss_train, total_steps)
+            writer.add_scalar('Test loss', total_epoch_loss_test, total_steps)
             print(epoch)
         if epoch % plot_img_freq == 0:
             image_in = next(iter(train_loader))['image'][0:num_img_plt]
             images_out = vae.sample_img(image_in, use_cuda=use_cuda)
             img_grid_in = tv.utils.make_grid(image_in)
             img_grid = tv.utils.make_grid(images_out)
-            writer.add_image('images in, from epoch' + str(epoch), img_grid_in)
-            writer.add_image(str(num_params) + ' images out, from epoch'+ str(epoch), img_grid)
+            writer.add_image('images in, from step' + str(total_steps), img_grid_in)
+            writer.add_image(str(num_params) + ' images out, from step'+ str(total_steps), img_grid)
 
         if epoch % checkpoint_freq == 0:
 
