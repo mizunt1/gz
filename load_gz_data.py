@@ -67,7 +67,10 @@ def return_data_loader(data, test_proportion, batch_size, shuffle=True):
 def return_ss_loader(data, test_proportion, s_portion, batch_size, subset=False, shuffle=True, subset_portion=None):
     us_portion = 1.0 - s_portion
     if subset_portion != None:
-        len_data = len(data)*subset_portion
+        if subset_portion < 1.0:
+            len_data = len(data)*subset_portion
+        else:
+            len_data = subset_portion
     else:
         if subset is False:
             len_data = len(data)
@@ -99,7 +102,12 @@ def return_ss_loader(data, test_proportion, s_portion, batch_size, subset=False,
     return test_s_loader, test_us_loader, train_s_loader, train_us_loader
 
 def return_subset(data, test_proportion, subset_portion, batch_size, shuffle=False):
-    num_data = int(len(data)*subset_portion)
+
+    if subset_portion > 1.0:
+        num_data = int(len(data)*subset_portion)
+    else:
+        num_data = int(subset_portion)
+    
     num_tests = int(num_data * test_proportion)
     test_indices = list(i for i in range(0, num_tests))
     train_indices = list(i for i in range(num_tests, num_data))
