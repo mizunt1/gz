@@ -171,6 +171,7 @@ def train_ss_vae_classifier(vae, vae_optim, vae_loss_fn, classifier, classifier_
         vae_loss = vae_loss_fn(vae.model, vae.guide, xus, transforms)
         vae_loss.backward()
         vae_optim.step()
+        num_steps +=1
         epoch_loss_vae += vae_loss.item()
     if supervised_len > unsupervised_len:
         normaliser = len(train_s_loader.dataset)
@@ -179,7 +180,7 @@ def train_ss_vae_classifier(vae, vae_optim, vae_loss_fn, classifier, classifier_
     total_epoch_loss_vae = epoch_loss_vae / 2*normaliser
     total_epoch_loss_classifier = epoch_loss_classifier / normaliser
     total_acc_norm = total_acc / normaliser
-    return total_epoch_loss_vae, total_epoch_loss_classifier, total_acc_norm
+    return total_epoch_loss_vae, total_epoch_loss_classifier, total_acc_norm, num_steps
 
 def rms_calc(probs, target):
     """
@@ -200,16 +201,18 @@ def train_ss_log_vae_classifier(dir_name, vae, vae_optim, vae_loss_fn, classifie
                              checkpoint_freq=20, use_cuda=True, test_freq=1, transform=False):
     num_params = sum(p.numel() for p in vae.parameters() if p.requires_grad)
     writer = SummaryWriter("tb_data_all/" + dir_name)
+    total_steps = 0
     if not os.path.exists("checkpoints/" + dir_name):
         os.makedirs("checkpoints/" + dir_name)
     if use_cuda:
         classifier.cuda()
     for epoch in range(num_epochs):
         print("training")
-        total_epoch_loss_vae, total_epoch_loss_classifier, total_epoch_acc  = train_ss_vae_classifier(
+        total_epoch_loss_vae, total_epoch_loss_classifier, total_epoch_acc, num_steps  = train_ss_vae_classifier(
             vae, vae_optim, vae_loss_fn, classifier,
             classifier_optim, classifier_loss_fn, train_s_loader, 
             train_us_loader, use_cuda=use_cuda)
+        total_steps += num_steps
         print("end train")
         print("[epoch %03d]  average training loss vae: %.4f" % (epoch, total_epoch_loss_vae))
         print("[epoch %03d]  average training loss classifier: %.4f" % (epoch, total_epoch_loss_classifier))
@@ -225,13 +228,13 @@ def train_ss_log_vae_classifier(dir_name, vae, vae_optim, vae_loss_fn, classifie
             print("[epoch %03d] average test loss classifier: %.4f" % (epoch, total_epoch_loss_test_classifier))
             print("[epoch %03d] average accuracy: %.4f" % (epoch, accuracy))
             print("evaluate end")
-            writer.add_scalar('Train loss vae', total_epoch_loss_vae, epoch)
-            writer.add_scalar('Train loss classifier', total_epoch_loss_classifier, epoch)
-            writer.add_scalar('Train accuracy', total_epoch_acc, epoch)
-            writer.add_scalar('Test loss vae', total_epoch_loss_test_vae, epoch)
-            writer.add_scalar('Test loss classifier', total_epoch_loss_test_classifier, epoch)
-            writer.add_scalar('Test accuracy', accuracy, epoch)
-            writer.add_scalar('rms normalised', rms, epoch)
+            writer.add_scalar('Train loss vae', total_epoch_loss_vae, total_steps)
+            writer.add_scalar('Train loss classifier', total_epoch_loss_classifier, total_steps)
+            writer.add_scalar('Train accuracy', total_epoch_acc, total_steps)
+            writer.add_scalar('Test loss vae', total_epoch_loss_test_vae, total_steps)
+            writer.add_scalar('Test loss classifier', total_epoch_loss_test_classifier, total_steps)
+            writer.add_scalar('Test accuracy', accuracy, total_steps)
+            writer.add_scalar('rms normalised', rms, total_steps)
             
         if epoch % plot_img_freq == 0:
             
@@ -239,8 +242,8 @@ def train_ss_log_vae_classifier(dir_name, vae, vae_optim, vae_loss_fn, classifie
             images_out = vae.sample_img(image_in, use_cuda=use_cuda)
             img_grid_in = tv.utils.make_grid(image_in)
             img_grid = tv.utils.make_grid(images_out)
-            writer.add_image('images in, from epoch' + str(epoch), img_grid_in)
-            writer.add_image(str(num_params) + ' images out, from epoch'+ str(epoch), img_grid)
+            writer.add_image('images in, from step' + str(total_steps), img_grid_in)
+            writer.add_image(str(num_params) + ' images out, from step'+ str(total_steps), img_grid)
 
         if epoch % checkpoint_freq == 0:
 
