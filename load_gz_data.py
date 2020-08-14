@@ -67,20 +67,27 @@ def return_data_loader(data, test_proportion, batch_size, shuffle=True):
 def return_ss_loader(data, test_proportion, s_portion, batch_size, subset=False, shuffle=True, subset_portion=None):
     us_portion = 1.0 - s_portion
     if subset_portion != None:
-        if subset_portion < 1.0:
-            len_data = len(data)*subset_portion
-        else:
-            len_data = subset_portion
-    else:
+        len_data = len(data)*subset_portion
+    else:            
         if subset is False:
             len_data = len(data)
         else:
             len_data = 124
     num_tests = round(len_data * test_proportion)
     num_train = len_data - num_tests
-    us_tests = round(num_tests * us_portion)
-    s_tests = num_tests - us_tests
-    us_train = round(num_train * us_portion)
+
+    if s_portion < 1.0:
+        us_portion = 1.0 - s_portion
+        us_tests = round(num_tests * us_portion)
+        s_tests = num_tests - us_tests
+        us_train = round(num_train * us_portion)
+    else:
+        us_amount = len(data) - s_portion
+        us_tests = round(us_amount * test_proportion)
+        s_tests = num_tests - us_tests
+        us_train = num_train - us_tests
+
+
     s_train = num_train - us_train
     us_train = num_train - us_tests
     supervised_train = num_train - s_tests
