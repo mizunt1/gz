@@ -112,14 +112,14 @@ def train_log(dir_name, classifier, optim, train_loader, test_loader, test_freq=
         total_steps += num_steps
         print("end train")
         print("[epoch %03d]  average training loss: %.4f" % (total_steps, train_loss))
-        writer.add_scalar("Train loss", train_loss, total_steps)
+        writer.add_scalar("Train loss classifier", train_loss, total_steps)
         if epoch % test_freq == 0:
             print("evaluating")
             eval_loss, rms = evaluate(test_loader, classifier, use_cuda=use_cuda)
             print("[epoch %03d] average test_loss: %.4f" % (total_steps, eval_loss))
             print("[epoch %03d] average rms: %.4f" % (total_steps, rms))
-            writer.add_scalar("Test loss", eval_loss, total_steps)
-            writer.add_scalar("Rms loss", rms, total_steps)
+            writer.add_scalar("Test loss classifier", eval_loss, total_steps)
+            writer.add_scalar("rms normalised", rms, total_steps)
             
     writer.close()
     

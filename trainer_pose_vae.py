@@ -1,4 +1,4 @@
-from construct_pose_vae import PoseVAE, train_log
+from construct_pose_vae_split import PoseVAE, train_log
 import importlib
 from galaxy_gen.etn import transformers, networks
 from load_gz_data import Gz2_data, return_data_loader, return_subset
