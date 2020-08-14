@@ -53,6 +53,7 @@ def train(train_loader, classifier,optim, use_cuda=False):
     loss = multinomial_loss
     running_loss = 0
     optimizer= optim
+    num_steps = 0
     for data in train_loader:
         x = data['image']
         y = data['data']
@@ -64,8 +65,9 @@ def train(train_loader, classifier,optim, use_cuda=False):
         classifier_loss = loss(x_out, y)
         classifier_loss.backward()
         optimizer.step()
+        num_steps += 1
         running_loss += classifier_loss.item()
-    return running_loss / len(train_loader.dataset)
+    return running_loss / len(train_loader.dataset), num_steps
 
 
 def rms_calc(probs, target):
@@ -99,23 +101,25 @@ def evaluate(test_loader, classifier, use_cuda=False):
 def train_log(dir_name, classifier, optim, train_loader, test_loader, test_freq=1,
               num_epochs=10, use_cuda=False):
     num_params = sum(p.numel() for p in classifier.parameters() if p.requires_grad)
+    total_steps = 0
     print("num params: ", num_params)
     writer = SummaryWriter("tb_data_all/" + dir_name)
     if use_cuda:
         classifier.cuda()
     for epoch in range(num_epochs):
         print("training")
-        train_loss = train(train_loader, classifier,optim, use_cuda=use_cuda)
+        train_loss, num_steps = train(train_loader, classifier,optim, use_cuda=use_cuda)
+        total_steps += num_steps
         print("end train")
-        print("[epoch %03d]  average training loss: %.4f" % (epoch, train_loss))
-        writer.add_scalar("Train loss", train_loss, epoch)
+        print("[epoch %03d]  average training loss: %.4f" % (total_steps, train_loss))
+        writer.add_scalar("Train loss", train_loss, total_steps)
         if epoch % test_freq == 0:
             print("evaluating")
             eval_loss, rms = evaluate(test_loader, classifier, use_cuda=use_cuda)
-            print("[epoch %03d] average test_loss: %.4f" % (epoch, eval_loss))
-            print("[epoch %03d] average rms: %.4f" % (epoch, rms))
-            writer.add_scalar("Test loss", eval_loss, epoch)
-            writer.add_scalar("Rms loss", rms, epoch)
+            print("[epoch %03d] average test_loss: %.4f" % (total_steps, eval_loss))
+            print("[epoch %03d] average rms: %.4f" % (total_steps, rms))
+            writer.add_scalar("Test loss", eval_loss, total_steps)
+            writer.add_scalar("Rms loss", rms, total_steps)
             
     writer.close()
     
