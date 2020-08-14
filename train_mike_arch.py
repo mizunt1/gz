@@ -16,7 +16,7 @@ parser.add_argument('--crop_size', default=128, type=int)
 parser.add_argument('--lr', default=1e-4, type=float)
 parser.add_argument('--batch_size', default=10, type=int)
 parser.add_argument('--subset', default=False, action='store_true')
-parser.add_argument('--subset_proportion', default=0.5, type=float)
+parser.add_argument('--subset_proportion', default=0.05, type=float)
 
 parser.add_argument('--bar_no_bar', default=False, action='store_true')
 
