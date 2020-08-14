@@ -104,9 +104,9 @@ def return_ss_loader(data, test_proportion, s_portion, batch_size, subset=False,
 def return_subset(data, test_proportion, subset_portion, batch_size, shuffle=False):
 
     if subset_portion > 1.0:
-        num_data = int(len(data)*subset_portion)
-    else:
         num_data = int(subset_portion)
+    else:
+        num_data = int(len(data)*subset_portion)
     
     num_tests = int(num_data * test_proportion)
     test_indices = list(i for i in range(0, num_tests))
