@@ -41,6 +41,8 @@ class Mike(nn.Module):
         )
 
     def forward(self, x):
+        x = x - 0.222
+        x = x / 0.156
         return self.net(x)
 
 def multinomial_loss(probs, values):
