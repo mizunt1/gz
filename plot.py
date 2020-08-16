@@ -1,7 +1,12 @@
 ###
 # put your directory with tensorboard event files online using
 # tensorboard dev upload --logdir <logdir>.
-# then get the experiment id from there
+# then get the experiment id from there and put it in "experiment id"
+# this logdir contains two directories, for two experiments 
+# this example includes taking two lines (two different experiments)
+# on the graph "rms normalised" graph on tensorboard
+# these two lines are called "wod_mike" and "nr3"
+# the rmse for these experiments are then plotted using matplotlib
 ###
 
 from packaging import version
