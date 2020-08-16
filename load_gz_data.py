@@ -83,12 +83,12 @@ def return_ss_loader(data, test_proportion, s_portion, batch_size, subset=False,
         us_train = num_train - us_tests
 
     else:
-        s_train = s_portion
+        s_train = int(s_portion)
         remain = len_data - s_portion
         num_tests = round(remain * test_proportion)
         num_train = len_data - num_tests
 
-        s_tests = s_portion * test_proportion
+        s_tests = round(s_portion * test_proportion)
         us_tests = num_tests - s_tests
         us_train = round(remain - s_tests - us_tests)
 

@@ -260,7 +260,7 @@ data = Gz2_data(csv_dir=args.csv_file,
                 crop=args.img_size,
                 resize=args.crop_size)
 
-test_proportion = 0.1
+test_proportion = 0.01
 trans = transformers.TransformerSequence(
     transformers.Translation(networks.EquivariantPosePredictor, 1, 32),
     transformers.Rotation(networks.EquivariantPosePredictor, 1, 32))
