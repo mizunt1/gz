@@ -65,32 +65,38 @@ def return_data_loader(data, test_proportion, batch_size, shuffle=True):
     return train_loader, test_loader
     
 def return_ss_loader(data, test_proportion, s_portion, batch_size, subset=False, shuffle=True, subset_portion=None):
-    us_portion = 1.0 - s_portion
     if subset_portion != None:
         len_data = len(data)*subset_portion
-    else:            
+    else:
         if subset is False:
             len_data = len(data)
         else:
             len_data = 124
-    num_tests = round(len_data * test_proportion)
-    num_train = len_data - num_tests
-
     if s_portion < 1.0:
         us_portion = 1.0 - s_portion
+        num_tests = round(len_data * test_proportion)
+        num_train = len_data - num_tests
         us_tests = round(num_tests * us_portion)
         s_tests = num_tests - us_tests
         us_train = round(num_train * us_portion)
-    else:
-        us_amount = len(data) - s_portion
-        us_tests = round(us_amount * test_proportion)
-        s_tests = num_tests - us_tests
+        s_train = num_train - us_train
         us_train = num_train - us_tests
 
+    else:
+        len_data = 2000
+        s_train = s_portion
+        remain = len_data - s_portion
+        num_tests = round(remain * test_proportion)
+        num_train = len_data - num_tests
 
-    s_train = num_train - us_train
-    us_train = num_train - us_tests
-    supervised_train = num_train - s_tests
+        s_tests = s_portion * test_proportion
+        us_tests = num_tests - s_tests
+        us_train = round(remain - s_tests - us_tests)
+
+
+    import pdb
+    pdb.set_trace()
+
     test_supervised = list(i for i in range(0,s_tests))
     test_unsup = list(i for i in range(s_tests, num_tests))
     
@@ -107,6 +113,7 @@ def return_ss_loader(data, test_proportion, s_portion, batch_size, subset=False,
     train_us_loader = torch.utils.data.DataLoader(dataset=train_us_set, batch_size=batch_size, shuffle=shuffle)
 
     return test_s_loader, test_us_loader, train_s_loader, train_us_loader
+
 
 def return_subset(data, test_proportion, subset_portion, batch_size, shuffle=False):
 
