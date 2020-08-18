@@ -17,7 +17,7 @@ srun python trainer_pose_vae.py\
     --arch encoder_decoder_pose_vae_split.py\
     --csv_file /scratch-ssd/oatml/data/gz2/gz2_classifications_and_subjects.csv\
     --img_file /scratch-ssd/oatml/data/gz2\
-    --dir_name pose_vae_only\
+    --dir_name pose_vae_only_mike\
     --lr 1.0e-4 --z_size 100\
     --num_epochs 200 --img_size 128 --crop_size 128  --batch_size 100\
 
