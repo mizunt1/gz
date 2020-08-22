@@ -4,7 +4,7 @@
 
 #SBATCH --output=slurm-%j.out
 #SBATCH --error=slurm-%j.err
-#SBATCH --job-name="pose_wod_300"
+#SBATCH --job-name="pose_wod_800"
 #SBATCH --partition="msc"
 
 export CONDA_ENVS_PATH=/scratch-ssd/$USER/conda_envs
@@ -17,7 +17,7 @@ srun python trainer_without_decoder.py\
      --arch encoder_decoder_pose_vae_split.py\
      --csv_file /scratch-ssd/oatml/data/gz2/gz2_classifications_and_subjects.csv\
      --img_file /scratch-ssd/oatml/data/gz2\
-     --dir_name wod_pose_conv_300\
+     --dir_name wod_pose_conv_800\
      --num_epochs 200 --img_size 128 --crop_size 128  --batch_size 10\
-     --lr 1e-4 --subset --subset_proportion 300
+     --lr 1e-4 --subset --subset_proportion 800
 
