@@ -15,7 +15,7 @@ source /scratch-ssd/oatml/miniconda3/bin/activate gz_mizu
 srun python trainer_classifier_checkpoint_vae.py\
     --csv_file /scratch-ssd/oatml/data/gz2/gz2_classifications_and_subjects.csv\
     --img_file /scratch-ssd/oatml/data/gz2\
-    --dir_name 2step1200 --class_arch classifier_conv.py\
+    --dir_name 2step_100 --class_arch classifier_conv.py\
     --arch encoder_decoder_pose_vae_split.py  --lr 1.0e-3 --load_checkpoint pose_vae_only_mike\
-    --num_epochs 300 --img_size 128 --crop_size 128 --z_size 100 --batch_size 10 --subset_proportion 1200
+    --num_epochs 400 --img_size 128 --crop_size 128 --z_size 100 --batch_size 10 --subset_proportion 100
 
