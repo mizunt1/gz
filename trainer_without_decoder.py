@@ -127,6 +127,7 @@ def train_vae_classifier(vae, vae_optim, vae_loss_fn, classifier, classifier_opt
     """
     epoch_loss_classifier = 0.
     total_acc = 0.
+    num_steps = 0
     for data in train_loader:
         x = data['image']
         y = data['data']
@@ -147,10 +148,11 @@ def train_vae_classifier(vae, vae_optim, vae_loss_fn, classifier, classifier_opt
         total_loss.backward()
         classifier_optim.step()
         total_acc += torch.sum(torch.eq(y_out.argmax(dim=1),y.argmax(dim=1)))
+        num_steps += 1
     normalizer = len(train_loader.dataset)
     total_epoch_loss_classifier = epoch_loss_classifier / normalizer
     total_acc_norm = total_acc /normalizer
-    return total_epoch_loss_classifier, total_acc_norm
+    return total_epoch_loss_classifier, total_acc_norm, num_steps
 
 def rms_calc(probs, target):
     """
@@ -168,16 +170,18 @@ def train_log_vae_classifier(dir_name, vae, vae_optim, vae_loss_fn, classifier, 
                              checkpoint_freq=20, use_cuda=True, test_freq=1, transform=False):
     num_params = sum(p.numel() for p in vae.parameters() if p.requires_grad)
     writer = SummaryWriter("tb_data_all/" + dir_name)
+    total_steps = 0
     if not os.path.exists("checkpoints/" + dir_name):
         os.makedirs("checkpoints/" + dir_name)
     if use_cuda:
         classifier.cuda()
     for epoch in range(num_epochs):
         print("training")
-        total_epoch_loss_classifier, total_epoch_acc  = train_vae_classifier(
+        total_epoch_loss_classifier, total_epoch_acc, num_steps  = train_vae_classifier(
             vae, vae_optim, vae_loss_fn, classifier,
             classifier_optim, classifier_loss_fn, train_loader,
             use_cuda=use_cuda, transform=transform)
+        total_steps += num_steps
         print("end train")
         print("[epoch %03d]  average training loss classifier: %.4f" % (epoch, total_epoch_loss_classifier))
         print("[epoch %03d]  average training accuracy: %.4f" % (epoch, total_epoch_acc))
@@ -191,11 +195,11 @@ def train_log_vae_classifier(dir_name, vae, vae_optim, vae_loss_fn, classifier, 
             print("[epoch %03d] average test loss classifier: %.4f" % (epoch, total_epoch_loss_test_classifier))
             print("[epoch %03d] average test accuracy: %.4f" % (epoch, accuracy))
             print("evaluate end")
-            writer.add_scalar('Train loss classifier', total_epoch_loss_classifier, epoch)
-            writer.add_scalar('Train accuracy', total_epoch_acc, epoch)
-            writer.add_scalar('Test loss classifier', total_epoch_loss_test_classifier, epoch)
-            writer.add_scalar('Test accuracy', accuracy, epoch)
-            writer.add_scalar('rms normalised', rms, epoch)
+            writer.add_scalar('Train loss classifier', total_epoch_loss_classifier, total_steps)
+            writer.add_scalar('Train accuracy', total_epoch_acc, total_steps)
+            writer.add_scalar('Test loss classifier', total_epoch_loss_test_classifier, total_steps)
+            writer.add_scalar('Test accuracy', accuracy, total_steps)
+            writer.add_scalar('rms normalised', rms, total_steps)
             
         if epoch % plot_img_freq == 0:
             
@@ -254,7 +258,7 @@ classifier = Classifier(in_dim=vae.encoder.linear_size)
 
 params = list(classifier.parameters()) + list(vae.encoder.parameters())
 classifier_optim = Adam(params, args.lr , betas=(0.90, 0.999))
-# or optimizer = optim.SGD(classifier.parameters(), lr=0.001, momentum=0.9)?
+
 
 def multinomial_loss(probs, values):
     return torch.sum(-1 *D.Multinomial(1, probs=probs).log_prob(values.float()))
