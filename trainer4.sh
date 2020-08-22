@@ -17,7 +17,7 @@ srun python trainer_without_decoder.py\
      --arch encoder_decoder_pose_vae_split.py\
      --csv_file /scratch-ssd/oatml/data/gz2/gz2_classifications_and_subjects.csv\
      --img_file /scratch-ssd/oatml/data/gz2\
-     --dir_name wod_pose_conv_100\
+     --dir_name wod_pose_conv_300\
      --num_epochs 200 --img_size 128 --crop_size 128  --batch_size 10\
-     --lr 1e-4 --subset --subset_proportion 100
+     --lr 1e-4 --subset --subset_proportion 300
 
