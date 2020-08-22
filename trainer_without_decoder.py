@@ -1,6 +1,9 @@
 from torch.utils.tensorboard import SummaryWriter
 import numpy as np
-from construct_vae import VAE, evaluate, train_log_vae
+from construct_pose_vae_split import PoseVAE
+from galaxy_gen.etn import transforms as T 
+from galaxy_gen.etn import transformers, networks
+
 import torch
 import torch.nn.functional as f
 import torchvision as tv
@@ -9,7 +12,7 @@ import torch.nn as nn
 from pyro.infer import SVI, Trace_ELBO
 import pyro.distributions as D
 import importlib
-from classifier_simple_gz import Classifier
+from classifier_conv import Classifier
 from load_gz_data import Gz2_data, return_data_loader, return_subset
 from torch.utils.data import DataLoader
 from pyro.infer import SVI, Trace_ELBO
@@ -64,8 +67,8 @@ data = Gz2_data(csv_dir=args.csv_file,
                 crop=args.img_size,
                 resize=args.crop_size)
 
-encoder_args = {'insize':args.img_size, 'z_dim':args.z_size}
-decoder_args = {'z_dim':args.z_size, 'outsize':args.img_size}
+
+
 
 
 
@@ -98,7 +101,7 @@ def evaluate_vae_classifier(vae, vae_loss_fn, classifier, classifier_loss_fn, te
             y = y.cuda()
         # step of elbo for vae
         vae_loss = vae_loss_fn(vae.model, vae.guide, x)
-        z_loc, z_scale, split = vae.encoder(x)
+        out, split = vae.encoder(x)
         # combined_z = torch.cat((z_loc, z_scale), 1)
         # combined_z = combined_z.detach()
         y_out = classifier.forward(split)
@@ -134,7 +137,7 @@ def train_vae_classifier(vae, vae_optim, vae_loss_fn, classifier, classifier_opt
             y = y.cuda()
         # step of elbo for vae
         classifier_optim.zero_grad()
-        z_loc, z_scale, split = vae.encoder(x)
+        out, split = vae.encoder(x)
         # combined_z = torch.cat((z_loc, z_scale), 1)
         y_out = classifier.forward(split)
         classifier_loss = classifier_loss_fn(y_out, y)
@@ -219,7 +222,11 @@ data = Gz2_data(csv_dir=args.csv_file,
                 crop=args.img_size,
                 resize=args.crop_size)
 
-encoder_args = {'insize':args.img_size, 'z_dim':args.z_size}
+trans = transformers.TransformerSequence(
+    transformers.Translation(networks.EquivariantPosePredictor, 1, 32),
+    transformers.Rotation(networks.EquivariantPosePredictor, 1, 32))
+
+encoder_args = {'transformer':trans, 'insize':args.img_size, 'z_dim':args.z_size}
 decoder_args = {'z_dim':args.z_size, 'outsize':args.img_size}
 
 test_proportion = 0.1
@@ -232,7 +239,7 @@ print("train and log")
 
 
 
-vae = VAE(Encoder, Decoder, args.z_size, encoder_args, decoder_args, use_cuda=use_cuda)
+vae = PoseVAE(Encoder, Decoder, args.z_size, encoder_args, decoder_args, use_cuda=use_cuda)
 if args.load_checkpoint != None:
     vae.encoder.load_state_dict(torch.load("checkpoints/" + args.load_checkpoint + "/encoder.checkpoint"))
     vae.decoder.load_state_dict(torch.load("checkpoints/" + args.load_checkpoint + "/decoder.checkpoint"))
