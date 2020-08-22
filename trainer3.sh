@@ -4,7 +4,7 @@
 
 #SBATCH --output=slurm-%j.out
 #SBATCH --error=slurm-%j.err
-#SBATCH --job-name="ss1200"
+#SBATCH --job-name="2step"
 #SBATCH --partition="msc"
 
 export CONDA_ENVS_PATH=/scratch-ssd/$USER/conda_envs
@@ -12,11 +12,10 @@ export CONDA_PKGS_DIRS=/scratch-ssd/$USER/conda_pkgs
 
 /scratch-ssd/oatml/scripts/run_locked.sh /scratch-ssd/oatml/miniconda3/bin/conda-env update -f gz_mizu.yml
 source /scratch-ssd/oatml/miniconda3/bin/activate gz_mizu
- 
-srun python trainer_vae_classifier_ss.py\
+srun python trainer_classifier_checkpoint_vae.py\
     --csv_file /scratch-ssd/oatml/data/gz2/gz2_classifications_and_subjects.csv\
     --img_file /scratch-ssd/oatml/data/gz2\
-    --dir_name ss1200 --class_arch classifier_conv.py\
-    --arch encoder_decoder_pose_vae_split.py  --lr 1.0e-4\
-    --num_epochs 100 --img_size 128 --crop_size 128 --z_size 100 --batch_size 10 --s_proportion 1200
+    --dir_name 2step1200 --class_arch classifier_conv.py\
+    --arch encoder_decoder_pose_vae_split.py  --lr 1.0e-3 --load_checkpoint pose_vae_only_mike\
+    --num_epochs 300 --img_size 128 --crop_size 128 --z_size 100 --batch_size 10 --subset_proportion 1200
 
