@@ -55,9 +55,9 @@ class Encoder(nn.Module):
         view = T.broadcasting_grid_sample(x, transformed_grid)
         
 
-        x = self.net(view)
-        x = x.view(x.shape[0], -1)
-        split = self.elu(x)
+        split = self.net(view)
+        out = split.view(split.shape[0], -1)
+        out = self.elu(out)
         output["z_mu"] = z_loc
         output["z_std"] = z_scale
 

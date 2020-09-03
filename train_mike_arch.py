@@ -1,4 +1,4 @@
-from mike_arch_drop import Mike, train_log
+from mike_arch import Mike, train_log
 from torch.optim import Adam
 from load_gz_data import Gz2_data, return_data_loader, return_subset
 import argparse

@@ -17,7 +17,7 @@ class Mike(nn.Module):
             nn.Dropout(p=0.5),
             nn.Conv2d(32, 32, kernel_size=3, padding=1),
             nn.ReLU(),
-            nn.Dropout(p=0.5)
+            nn.Dropout(p=0.5),
             nn.MaxPool2d(2),
             # second conv pair
             nn.Conv2d(32, 32, kernel_size=3, padding=1),
