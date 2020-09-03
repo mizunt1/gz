@@ -105,6 +105,8 @@ def evaluate_vae_classifier(vae, vae_loss_fn, classifier, classifier_loss_fn, te
         # combined_z = torch.cat((z_loc, z_scale), 1)
         # combined_z = combined_z.detach()
         y_out = classifier.forward(split)
+        # detaching for detaching exp!!!!
+        y_out = y_out.detach()
         classifier_loss = classifier_loss_fn(y_out, y)
         total_acc += torch.sum(torch.eq(y_out.argmax(dim=1),y.argmax(dim=1)))
         epoch_loss_vae += vae_loss.item()
@@ -289,7 +291,7 @@ if args.load_checkpoint != None:
     vae.encoder.load_state_dict(torch.load("checkpoints/" + args.load_checkpoint + "/encoder.checkpoint"))
     vae.decoder.load_state_dict(torch.load("checkpoints/" + args.load_checkpoint + "/decoder.checkpoint"))
 
-vae_optim = Adam(vae.parameters(), lr= args.lr, betas= (0.90, 0.999))
+vae_optim = Adam(vae.parameters(), lr= args.lr/100, betas= (0.90, 0.999))
 
 classifier = Classifier(in_dim=vae.encoder.linear_size)
 params = list(classifier.parameters()) + list(vae.encoder.parameters())
