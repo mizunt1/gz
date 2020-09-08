@@ -16,6 +16,7 @@ from matplotlib import pyplot as plt
 import seaborn as sns
 from scipy import stats
 import tensorboard as tb
+
 experiment_id = "HR0KIPDWSW2OuY1CK08nng"
 plot_name = "two_step_1200_test.png"
 experiment = tb.data.experimental.ExperimentFromDev(experiment_id)
@@ -73,18 +74,3 @@ ax1.legend(lines + lines2, labels + labels2, loc=1)
 
 
 plt.savefig(plot_name)
-
-
-"""
-a=(data1['step']/scale2).to_numpy()
-plt.plot((data1['step']/scale2).to_numpy()[0:num_epochs], data1['value'].to_numpy()[0:num_epochs], label='fully-supervised')
-plt.plot(data_ss['step']/scale, data_ss['value'], label='semi-supervised')
-print("fully sup", np.min(data1['value']))
-print("semi", np.min(data_ss['value']))
-plt.legend()
-plt.ylabel(plot_what)
-plt.xlabel('epochs')
-
-"""
-
-    
