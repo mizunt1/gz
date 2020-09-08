@@ -84,4 +84,3 @@ if __name__ == "__main__":
     x = encoder(x)
     x = x[0]
     x = decoder(x)
-    
