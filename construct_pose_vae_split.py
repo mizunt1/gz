@@ -12,7 +12,6 @@ import torchvision as tv
 import torch
 import pyro.distributions as D
 from load_gz_data import Gz2_data, return_data_loader
-from encoder_decoder_pose_vae import Encoder, Decoder
 from galaxy_gen.backward_models import delta_sample_transformer_params
 
 class PoseVAE(nn.Module):
