@@ -118,10 +118,12 @@ def evaluate_vae_classifier(vae, vae_loss_fn, classifier, classifier_loss_fn, te
     return total_epoch_loss_classifier, total_epoch_acc, rms_epoch
 
 
-def train_vae_classifier(vae, vae_optim, vae_loss_fn, classifier, classifier_optim, classifier_loss_fn,
+def train_vae_classifier(vae, vae_optim, vae_loss_fn, classifier,
+                         classifier_optim, classifier_loss_fn,
                          train_loader, use_cuda=True, transform=False):
     """
-    train vae and classifier for one epoch
+    trains encoder and classifier for one epoch
+    designed for fully supervised training
     returns loss for one epoch
     in each batch, when the svi takes a step, the optimiser of classifier takes a step
     """

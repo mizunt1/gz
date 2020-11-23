@@ -129,7 +129,6 @@ def train_ss_vae_classifier(vae, vae_optim, vae_loss_fn, classifier, classifier_
     """
     # classifier is in train mode for dropout
     classifier.train() 
-    
     epoch_loss_vae = 0.
     epoch_loss_classifier = 0.
     total_acc = 0.
@@ -188,7 +187,6 @@ def rms_calc(probs, target):
     """
     probs = probs.detach().cpu().numpy()
     target = target.cpu().numpy()
-#    probs = f.softmax(logits, dim=1).detach().cpu().numpy()
     total_count = np.sum(target, axis=1)
     probs_target = target / total_count[:, None]
     rms =  np.sqrt((probs - probs_target)**2)
