@@ -5,7 +5,7 @@ import torch.optim as optim
 import numpy as np
 import torch
 import torch.distributions as D
-from layers import Reshape
+from neural_networks.layers import Reshape
 
 class Classifier(nn.Module):
     def __init__(self, in_dim=1024, hidden_dim=128):

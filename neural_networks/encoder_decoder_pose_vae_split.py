@@ -7,7 +7,7 @@ from torch import nn
 from torch.distributions import constraints
 from torchvision.datasets import MNIST
 from torchvision import transforms as tvt
-from layers import ConvBlock, UpResBloc, Reshape
+from neural_networks.layers import ConvBlock, UpResBloc, Reshape
 import pyro
 from pyro import infer, optim, poutine
 from pyro import distributions as D

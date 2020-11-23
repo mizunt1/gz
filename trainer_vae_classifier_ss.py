@@ -10,7 +10,6 @@ import torch.nn as nn
 from pyro.infer import SVI, Trace_ELBO
 import pyro.distributions as D
 import importlib
-from classifier_conv import Classifier
 from galaxy_gen.etn import transforms as T 
 from galaxy_gen.etn import transformers, networks
 
@@ -39,7 +38,8 @@ parser.add_argument('--subset', default=False, action='store_true')
 parser.add_argument('--subset_proportion', default=0.001, type=float)
 parser.add_argument('--load_checkpoint', default=None)
 parser.add_argument('--bar_no_bar', default=False, action='store_true')
-parser.add_argument('--s_proportion', default=0.8, type=float)
+parser.add_argument('--supervised_proportion', default=0.8, type=float)
+parser.add_argument('--without_decoder', default=False, action='store_true')
 
 args = parser.parse_args()
 spec = importlib.util.spec_from_file_location("module.name", args.arch)
@@ -271,10 +271,10 @@ decoder_args = {'z_dim':args.z_size, 'outsize':args.img_size}
 
 if args.subset is True:
     test_s_loader, test_us_loader, train_s_loader, train_us_loader = return_ss_loader(
-        data, test_proportion, args.s_proportion, batch_size=args.batch_size, shuffle=True, subset=True)
+        data, test_proportion, args.supervised_proportion, batch_size=args.batch_size, shuffle=True, subset=True)
 else:
     test_s_loader, test_us_loader, train_s_loader, train_us_loader  = return_ss_loader(
-        data, test_proportion, args.s_proportion, batch_size=args.batch_size, shuffle=True, subset=False)
+        data, test_proportion, args.supervised_proportion, batch_size=args.batch_size, shuffle=True, subset=False)
 
 print("total data:",  len(data))
 print("num data points in test_s_loader:", len(test_s_loader.dataset))
