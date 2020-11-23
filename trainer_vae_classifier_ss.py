@@ -14,7 +14,7 @@ from classifier_conv import Classifier
 from galaxy_gen.etn import transforms as T 
 from galaxy_gen.etn import transformers, networks
 
-from load_gz_data import Gz2_data, return_data_loader, return_subset, return_ss_loader
+from utils.load_gz_data import Gz2_data, return_data_loader, return_subset, return_ss_loader
 from torch.utils.data import DataLoader
 from pyro.infer import SVI, Trace_ELBO
 import argparse
