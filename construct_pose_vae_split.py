@@ -11,7 +11,7 @@ from pyro.optim import Adam
 import torchvision as tv
 import torch
 import pyro.distributions as D
-from load_gz_data import Gz2_data, return_data_loader
+from utils.load_gz_data import Gz2_data, return_data_loader
 from galaxy_gen.backward_models import delta_sample_transformer_params
 
 class PoseVAE(nn.Module):
