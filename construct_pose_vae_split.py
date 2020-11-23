@@ -1,18 +1,21 @@
-import torch.nn as nn
 import os
+
+import torch.nn as nn
 import pyro
-from galaxy_gen.etn import transforms as T 
+
+from pyro.infer import SVI, Trace_ELBO
+from pyro.optim import Adam
+import torch
+import torchvision as tv
 from torch.utils.tensorboard import SummaryWriter
+import pyro.distributions as D
+
+from galaxy_gen.backward_models import delta_sample_transformer_params
+from galaxy_gen.etn import transforms as T 
 from galaxy_gen.etn import transformers, networks
 from galaxy_gen.etn import coordinates
 from galaxy_gen.forward_models import random_pose_transform 
-from pyro.infer import SVI, Trace_ELBO
-from pyro.optim import Adam
-import torchvision as tv
-import torch
-import pyro.distributions as D
 from utils.load_gz_data import Gz2_data, return_data_loader
-from galaxy_gen.backward_models import delta_sample_transformer_params
 
 class PoseVAE(nn.Module):
     def __init__(self, encoder, decoder, z_dim, kwargs_encoder,
