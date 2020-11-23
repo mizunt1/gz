@@ -216,8 +216,7 @@ def train_log(train_fn,
             writer.add_scalar('rms normalised', rms, total_steps)
             
         if epoch % plot_img_freq == 0:
-            
-            image_in = next(iter(train_s_loader))['image'][0:num_img_plt]
+            image_in = next(iter(test_loader))['image'][0:num_img_plt]
             images_out = vae.sample_img(image_in, use_cuda=use_cuda)
             img_grid_in = tv.utils.make_grid(image_in)
             img_grid = tv.utils.make_grid(images_out)
