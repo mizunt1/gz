@@ -113,6 +113,7 @@ if args.semi_supervised is True:
         test_s_loader, test_us_loader, train_s_loader, train_us_loader  = return_ss_loader(
             data, args.test_proportion, args.supervised_proportion, batch_size=args.batch_size, shuffle=True, subset=False)
     test_loader = test_us_loader
+    print("semi supervised training")
     print("total data:",  len(data))
     print("num data points in test_s_loader:", len(test_s_loader.dataset))
     print("num data points in test_us_loader:", len(test_us_loader.dataset))
@@ -128,9 +129,14 @@ else:
                                                   batch_size=args.batch_size, shuffle=True)
     else:
         train_loader, test_loader  = return_data_loader(data, args.test_proportion, batch_size=args.batch_size, shuffle=True)
+    print("Fully supervised training")
+    print("num data points in test_loader:", len(test_loader.dataset))
+    print("num data points in test_loader:", len(train_loader.dataset))
+
     kwargs = {'train_loader':train_loader}
     train_fn = train_fs_epoch
-        
+
+    
 train_log(train_fn, vae, vae_optim, Trace_ELBO().differentiable_loss,
           classifier, classifier_optim,
           classifier_loss, args.dir_name, args.num_epochs,
