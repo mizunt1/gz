@@ -13,7 +13,7 @@ export CONDA_PKGS_DIRS=/scratch-ssd/$USER/conda_pkgs
 /scratch-ssd/oatml/scripts/run_locked.sh /scratch-ssd/oatml/miniconda3/bin/conda-env update -f gz_mizu.yml
 source /scratch-ssd/oatml/miniconda3/bin/activate gz_mizu
 
-srun python trainer_vae_classifier_ss.py\
+srun python trainer.py\
      --arch neural_networks/encoder_decoder_pose_vae_split.py\
      --class_arch neural_networks/classifier_conv.py\
      --csv_file /scratch-ssd/oatml/data/gz2/gz2_classifications_and_subjects.csv\
