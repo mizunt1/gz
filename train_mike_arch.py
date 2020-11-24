@@ -1,7 +1,10 @@
-from neural_networks.mike_arch import Mike, train_log
-from torch.optim import Adam
-from load_gz_data import Gz2_data, return_data_loader, return_subset
 import argparse
+
+from torch.optim import Adam
+
+from neural_networks.mike_arch import Mike, train_log
+from utils.load_gz_data import Gz2_data, return_data_loader, return_subset
+
 parser = argparse.ArgumentParser()
 csv = "gz2_data/gz_amended.csv"
 img = "gz2_data/"
