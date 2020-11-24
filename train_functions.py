@@ -1,16 +1,12 @@
-import argparse
 import os
 from itertools import cycle
 
 import numpy as np
 import torch
-import torch.nn.functional as f
 from torch.utils.tensorboard import SummaryWriter
 import torchvision as tv
 
-from galaxy_gen.etn import transforms as T 
-from galaxy_gen.etn import transformers, networks
-
+from galaxy_gen.etn import transforms as T
 
 def train_fs_epoch(vae, vae_optim, vae_loss_fn,
                    classifier, classifier_optim,
@@ -28,7 +24,7 @@ def train_fs_epoch(vae, vae_optim, vae_loss_fn,
     for data in train_loader:
         x = data['image']
         y = data['data']
-        transforms = T.TransformSequence(T.Translation(), T.Rotation())  
+        transforms = T.TransformSequence(T.Translation(), T.Rotation())
         if use_cuda:
             x = x.cuda()
             y = y.cuda()
@@ -48,12 +44,13 @@ def train_fs_epoch(vae, vae_optim, vae_loss_fn,
         vae_optim.step()
         classifier_optim.step()
         num_steps += 1
-        total_acc += torch.sum(torch.eq(y_out.argmax(dim=1),y.argmax(dim=1)))
+        total_acc += torch.sum(torch.eq(y_out.argmax(dim=1), y.argmax(dim=1)))
     normalizer = len(train_loader.dataset)
     total_epoch_loss_vae = epoch_loss_vae / normalizer
     total_epoch_loss_classifier = epoch_loss_classifier / normalizer
     total_acc_norm = total_acc /normalizer
     return total_epoch_loss_vae, total_epoch_loss_classifier, total_acc_norm, num_steps
+
 
 def train_ss_epoch(vae, vae_optim, vae_loss_fn,
                    classifier, classifier_optim,
@@ -63,10 +60,11 @@ def train_ss_epoch(vae, vae_optim, vae_loss_fn,
     """
     train vae and classifier for one epoch
     returns loss for one epoch
-    in each batch, when the svi takes a step, the optimiser of classifier takes a step
+    in each batch, when the svi takes a step, the optimiser of
+    classifier takes a step
     """
     # classifier is in train mode for dropout
-    classifier.train() 
+    classifier.train()
     epoch_loss_vae = 0.
     epoch_loss_classifier = 0.
     total_acc = 0.
@@ -78,37 +76,36 @@ def train_ss_epoch(vae, vae_optim, vae_loss_fn,
         xs = data_sup['image']
         ys = data_sup['data']
         xus = data_unsup['image']
-        yus = data_unsup['data']
         if use_cuda:
             xs = xs.cuda()
             ys = ys.cuda()
             xus = xus.cuda()
-        transforms = T.TransformSequence(T.Translation(), T.Rotation())  
+        transforms = T.TransformSequence(T.Translation(), T.Rotation())
         classifier_optim.zero_grad()
         vae_optim.zero_grad()
         # supervised step
         vae_loss = vae_loss_fn(vae.model, vae.guide, xs, transforms)
         out, split = vae.encoder(xs)
         y_out = classifier.forward(split)
-        
+
         classifier_loss = classifier_loss_fn(y_out, ys)
 
         total_loss = vae_loss + classifier_loss
         epoch_loss_vae += vae_loss.item()
         epoch_loss_classifier += classifier_loss.item()
-        total_acc += torch.sum(torch.eq(y_out.argmax(dim=1),ys.argmax(dim=1)))
+        total_acc += torch.sum(torch.eq(y_out.argmax(dim=1), ys.argmax(dim=1)))
         total_loss.backward()
-        
+
         vae_optim.step()
         classifier_optim.step()
 
         # unsupervised step
         vae_optim.zero_grad()
-        transforms = T.TransformSequence(T.Translation(), T.Rotation())  
+        transforms = T.TransformSequence(T.Translation(), T.Rotation())
         vae_loss = vae_loss_fn(vae.model, vae.guide, xus, transforms)
         vae_loss.backward()
         vae_optim.step()
-        num_steps +=1
+        num_steps += 1
         epoch_loss_vae += vae_loss.item()
     if supervised_len > unsupervised_len:
         normaliser = len(train_s_loader.dataset)
@@ -118,6 +115,7 @@ def train_ss_epoch(vae, vae_optim, vae_loss_fn,
     total_epoch_loss_classifier = epoch_loss_classifier / normaliser
     total_acc_norm = total_acc / normaliser
     return total_epoch_loss_vae, total_epoch_loss_classifier, total_acc_norm, num_steps
+
 
 def rms_calc(probs, target):
     """
@@ -131,13 +129,15 @@ def rms_calc(probs, target):
     rms =  np.sqrt((probs - probs_target)**2)
     return np.sum(rms)
 
-def evaluate(vae, vae_loss_fn, classifier, classifier_loss_fn, test_loader, use_cuda=False, transform=False):
+
+def evaluate(vae, vae_loss_fn, classifier,
+             classifier_loss_fn, test_loader, use_cuda=False, transform=False):
     """
     evaluates for all test data
     test data is in batches, all batches in test loader tested
     """
     # classifier is in eval mode
-    classifier.eval() 
+    classifier.eval()
     epoch_loss_vae = 0.
     epoch_loss_classifier = 0.
     total_acc = 0.
@@ -145,20 +145,20 @@ def evaluate(vae, vae_loss_fn, classifier, classifier_loss_fn, test_loader, use_
     for data in test_loader:
         x = data['image']
         y = data['data']
-        if transform != False:
+        if transform is not False:
             x = transform(x)
         if use_cuda:
             x = x.cuda()
             y = y.cuda()
         # step of elbo for vae
-        transforms = T.TransformSequence(T.Translation(), T.Rotation())  
+        transforms = T.TransformSequence(T.Translation(), T.Rotation())
         out, split = vae.encoder(x)
         vae_loss = vae_loss_fn(vae.model, vae.guide, x, transforms)
         # combined_z = torch.cat((z_loc, z_scale), 1)
         # combined_z = combined_z.detach()
         y_out = classifier.forward(split)
         classifier_loss = classifier_loss_fn(y_out, y)
-        total_acc += torch.sum(torch.eq(y_out.argmax(dim=1),y.argmax(dim=1)))
+        total_acc += torch.sum(torch.eq(y_out.argmax(dim=1), y.argmax(dim=1)))
         epoch_loss_vae += vae_loss.item()
         epoch_loss_classifier += classifier_loss.item()
         rms += rms_calc(y_out, y)
@@ -168,7 +168,6 @@ def evaluate(vae, vae_loss_fn, classifier, classifier_loss_fn, test_loader, use_
     total_epoch_acc = total_acc / normalizer
     rms_epoch = rms / normalizer
     return total_epoch_loss_vae, total_epoch_loss_classifier, total_epoch_acc, rms_epoch
-
 
 
 def train_log(train_fn,
@@ -196,7 +195,7 @@ def train_log(train_fn,
         print("[epoch %03d]  average training loss vae: %.4f" % (epoch, total_epoch_loss_vae))
         print("[epoch %03d]  average training loss classifier: %.4f" % (epoch, total_epoch_loss_classifier))
         print("[epoch %03d]  average training accuracy: %.4f" % (epoch, total_epoch_acc))
-        
+
         if epoch % test_freq == 0:
             # report test diagnostics
             print("evaluating")
@@ -214,7 +213,7 @@ def train_log(train_fn,
             writer.add_scalar('Test loss classifier', total_epoch_loss_test_classifier, total_steps)
             writer.add_scalar('Test accuracy', accuracy, total_steps)
             writer.add_scalar('rms normalised', rms, total_steps)
-            
+
         if epoch % plot_img_freq == 0:
             image_in = next(iter(test_loader))['image'][0:num_img_plt]
             images_out = vae.sample_img(image_in, use_cuda=use_cuda)
@@ -228,5 +227,5 @@ def train_log(train_fn,
             torch.save(vae.encoder.state_dict(), "checkpoints/" + dir_name + "/encoder.checkpoint")
             torch.save(vae.decoder.state_dict(),  "checkpoints/" + dir_name +  "/decoder.checkpoint")
             torch.save(classifier.state_dict(),  "checkpoints/" + dir_name +  "/classfier.checkpoint")
-            
+
         writer.close()
