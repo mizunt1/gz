@@ -1,7 +1,8 @@
-import pandas as pd
-import torch
 import os
+
+import pandas as pd
 from PIL import Image
+import torch
 import torchvision as tv
 
 class Gz2_data(torch.utils.data.Dataset):
@@ -60,18 +61,19 @@ def return_data_loader(data, test_proportion, batch_size, shuffle=True):
     train_indices = list(i for i in range(num_tests, len_data))
     test_set = torch.utils.data.Subset(data, test_indices)
     train_set = torch.utils.data.Subset(data, train_indices)
-    test_loader = torch.utils.data.DataLoader(dataset=test_set, batch_size=batch_size, shuffle=shuffle)
-    train_loader = torch.utils.data.DataLoader(dataset=train_set, batch_size=batch_size, shuffle=shuffle)
+    test_loader = torch.utils.data.DataLoader(
+        dataset=test_set, batch_size=batch_size, shuffle=shuffle)
+    train_loader = torch.utils.data.DataLoader(
+        dataset=train_set, batch_size=batch_size, shuffle=shuffle)
     return train_loader, test_loader
     
-def return_ss_loader(data, test_proportion, s_portion, batch_size, subset=False, shuffle=True, subset_portion=None):
-    if subset_portion != None:
-        len_data = len(data)*subset_portion
-    else:
-        if subset is False:
-            len_data = len(data)
+def return_ss_loader(data, test_proportion, s_portion,
+                     batch_size, shuffle=True, subset_proportion=None):
+    if subset_proportion != None:
+        if subset_proportion < 1.0:
+            len_data = len(data)*subset_proportion
         else:
-            len_data = 124
+            len_data = int(subset_proportion)
     if s_portion < 1.0:
         us_portion = 1.0 - s_portion
         num_tests = round(len_data * test_proportion)

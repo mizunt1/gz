@@ -12,8 +12,6 @@ from galaxy_gen.etn import transformers, networks
 from train_functions import train_ss_epoch, train_fs_epoch, evaluate, train_log
 from utils.load_gz_data import Gz2_data, return_data_loader, return_subset, return_ss_loader
 
-
-
 parser = argparse.ArgumentParser()
 csv = "gz2_data/gz_amended.csv"
 img = "gz2_data/"
@@ -24,21 +22,23 @@ parser.add_argument('--dir_name', required=True)
 
 parser.add_argument('--bar_no_bar', default=False, action='store_true')
 parser.add_argument('--batch_size', default=10, type=int)
-parser.add_argument('--crop_size', default=80, type=int)
-parser.add_argument('--csv_file', metavar='c', type=str, default=csv)
-parser.add_argument('--img_file', metavar='i', type=str, default=img)
+parser.add_argument('--crop_size', default=80, type=int, help='centre crop image to this size')
+parser.add_argument('--csv_file', metavar='c', type=str, default=csv, help='path to csv')
+parser.add_argument('--img_file', metavar='i', type=str, default=img, help='path to image files')
 parser.add_argument('--img_size', default=80, type=int)
 parser.add_argument('--load_checkpoint', default=None)
 parser.add_argument('--lr', default=1.0e-4, type=float)
 parser.add_argument('--no_cuda', default=False, action='store_true')
 parser.add_argument('--num_epochs', type=int, default=10)
 parser.add_argument('--semi-supervised', default=False, action='store_true')
-parser.add_argument('--subset', default=False, action='store_true')
-parser.add_argument('--subset_proportion', default=0.001, type=float)
-parser.add_argument('--supervised_proportion', default=0.8, type=float)
-parser.add_argument('--test_proportion', default=0.1)
-parser.add_argument('--without_decoder', default=False, action='store_true')
-parser.add_argument('--z_size', default=100, type=int)
+parser.add_argument('--subset', default=False, action='store_true', help='use a subset of data for testing')
+parser.add_argument('--subset_proportion', default=100,
+                    type=float,
+                    help='what proportion of data for subset, or acutal int amount of data to be used')
+parser.add_argument('--supervised_proportion', default=0.8, type=float,
+                    help='what proportion of data is labelled in semi-sup learning')
+parser.add_argument('--test_proportion', default=0.1, help='what proportion of total data is test')
+parser.add_argument('--z_size', default=100, type=int, help='size of vae latent vector size')
 
 args = parser.parse_args()
 use_cuda = not args.no_cuda
@@ -107,7 +107,8 @@ data = Gz2_data(csv_dir=args.csv_file,
 if args.semi_supervised is True:
     if args.subset is True:
         test_s_loader, test_us_loader, train_s_loader, train_us_loader = return_ss_loader(
-            data, args.test_proportion, args.supervised_proportion, batch_size=args.batch_size, shuffle=True, subset=True)
+            data, args.test_proportion, args.supervised_proportion, batch_size=args.batch_size,
+            shuffle=True, subset_proportion = args.subset_proportion)
     else:
         test_s_loader, test_us_loader, train_s_loader, train_us_loader  = return_ss_loader(
             data, args.test_proportion, args.supervised_proportion, batch_size=args.batch_size, shuffle=True, subset=False)
@@ -127,9 +128,9 @@ else:
                                                   batch_size=args.batch_size, shuffle=True)
     else:
         train_loader, test_loader  = return_data_loader(data, args.test_proportion, batch_size=args.batch_size, shuffle=True)
-        kwargs = {'train_loader':train_loader}
-        train_fn = train_fs_epoch
-    
+    kwargs = {'train_loader':train_loader}
+    train_fn = train_fs_epoch
+        
 train_log(train_fn, vae, vae_optim, Trace_ELBO().differentiable_loss,
           classifier, classifier_optim,
           classifier_loss, args.dir_name, args.num_epochs,
