@@ -83,7 +83,8 @@ def main():
     parser.add_argument('--subset_proportion', default=100,
                         type=float,
                         help='what proportion of data for subset,\
-                        or acutal int amount of data to be used')
+                        or acutal int amount of data to be used, \
+                        useful in fully sup')
     parser.add_argument('--supervised_proportion', default=0.8, type=float,
                         help='what proportion of data is labelled in \
                         semi-sup learning')
@@ -123,7 +124,10 @@ def main():
             torch.load("checkpoints/" + args.load_checkpoint + "/decoder.checkpoint"))
 
     ### define classifier and optims
-    classifier = Classifier(in_dim=vae.encoder.linear_size)
+    if args.split_early:
+        classifier = Classifier(in_dim=vae.encoder.linear_size)
+    else:
+        classifier = Classifier(in_dim=args.z_size)
     classifier_params = list(classifier.parameters()) + list(vae.encoder.parameters())
     classifier_optim = Adam(classifier_params, args.lr, betas=(0.90, 0.999))
     vae_optim = Adam(vae.parameters(), lr=args.lr/100, betas=(0.90, 0.999))

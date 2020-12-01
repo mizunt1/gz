@@ -36,7 +36,7 @@ def train_fs_epoch(vae, vae_optim, vae_loss_fn,
         if split_early:
             to_classifier = split
         else:
-            z_dist = D.Normal(out["z_mu"], out["z_sigma"])
+            z_dist = D.Normal(out["z_mu"], out["z_std"])
             to_classifier = z_dist.rsample()
         y_out = classifier.forward(to_classifier)
         classifier_loss = classifier_loss_fn(y_out, y)
@@ -88,11 +88,11 @@ def train_ss_epoch(vae, vae_optim, vae_loss_fn,
         vae_optim.zero_grad()
         # supervised step
         vae_loss = vae_loss_fn(vae.model, vae.guide, xs)
-        out, split_early = vae.encoder(xs)
+        out, split = vae.encoder(xs)
         if split:
             to_classifier = split
         else:
-            z_dist = D.Normal(out["z_mu"], out["z_sigma"])
+            z_dist = D.Normal(out["z_mu"], out["z_std"])
             to_classifier = z_dist.rsample()
 
             to_classifier = out
@@ -188,7 +188,7 @@ def train_log(train_fn,
               checkpoint_freq=20,
               test_freq=1, transform=False):
     num_params = sum(p.numel() for p in vae.parameters() if p.requires_grad)
-    writer = SummaryWriter("tb_data_all/" + dir_name)
+    writer = SummaryWriter("tb_data/" + dir_name)
     total_steps = 0
     if not os.path.exists("checkpoints/" + dir_name):
         os.makedirs("checkpoints/" + dir_name)

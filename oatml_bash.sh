@@ -14,9 +14,9 @@ source /scratch-ssd/oatml/miniconda3/bin/activate gz_mizu
 
 srun python trainer.py\
      --arch neural_networks/encoder_decoder_pose_vae_split.py\
-     --class_arch neural_networks/classifier_conv.py\
+     --class_arch neural_networks/classifier_fc.py\
      --csv_file /scratch-ssd/oatml/data/gz2/gz2_classifications_and_subjects.csv\
      --dir_name det_100\
      --img_file /scratch-ssd/oatml/data/gz2\
-     --num_epochs 200 --img_size 128 --crop_size 128  --batch_size 10\
+     --num_epochs 200 --img_size 128 --crop_size 128  --batch_size 100\
      --lr 1e-4 --subset --subset_proportion 0.5 --semi-supervised 
