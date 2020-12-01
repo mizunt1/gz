@@ -9,3 +9,4 @@ data/
 *.checkpoint
 slurm*
 *.ox.ac*
+tb_data/
