@@ -6,7 +6,6 @@ import torch
 from torch.utils.tensorboard import SummaryWriter
 import torchvision as tv
 
-from galaxy_gen.etn import transforms as T
 
 def train_fs_epoch(vae, vae_optim, vae_loss_fn,
                    classifier, classifier_optim,
@@ -24,14 +23,14 @@ def train_fs_epoch(vae, vae_optim, vae_loss_fn,
     for data in train_loader:
         x = data['image']
         y = data['data']
-        transforms = T.TransformSequence(T.Translation(), T.Rotation())
+
         if use_cuda:
             x = x.cuda()
             y = y.cuda()
         # step of elbo for vae
         classifier_optim.zero_grad()
         vae_optim.zero_grad()
-        vae_loss = vae_loss_fn(vae.model, vae.guide, x, transforms)
+        vae_loss = vae_loss_fn(vae.model, vae.guide, x)
         out, split = vae.encoder(x)
         # combined_z = torch.cat((z_loc, z_scale), 1)
         y_out = classifier.forward(split)
@@ -80,11 +79,10 @@ def train_ss_epoch(vae, vae_optim, vae_loss_fn,
             xs = xs.cuda()
             ys = ys.cuda()
             xus = xus.cuda()
-        transforms = T.TransformSequence(T.Translation(), T.Rotation())
         classifier_optim.zero_grad()
         vae_optim.zero_grad()
         # supervised step
-        vae_loss = vae_loss_fn(vae.model, vae.guide, xs, transforms)
+        vae_loss = vae_loss_fn(vae.model, vae.guide, xs)
         out, split = vae.encoder(xs)
         y_out = classifier.forward(split)
 
@@ -101,8 +99,7 @@ def train_ss_epoch(vae, vae_optim, vae_loss_fn,
 
         # unsupervised step
         vae_optim.zero_grad()
-        transforms = T.TransformSequence(T.Translation(), T.Rotation())
-        vae_loss = vae_loss_fn(vae.model, vae.guide, xus, transforms)
+        vae_loss = vae_loss_fn(vae.model, vae.guide, xus)
         vae_loss.backward()
         vae_optim.step()
         num_steps += 1
@@ -151,9 +148,8 @@ def evaluate(vae, vae_loss_fn, classifier,
             x = x.cuda()
             y = y.cuda()
         # step of elbo for vae
-        transforms = T.TransformSequence(T.Translation(), T.Rotation())
         out, split = vae.encoder(x)
-        vae_loss = vae_loss_fn(vae.model, vae.guide, x, transforms)
+        vae_loss = vae_loss_fn(vae.model, vae.guide, x)
         # combined_z = torch.cat((z_loc, z_scale), 1)
         # combined_z = combined_z.detach()
         y_out = classifier.forward(split)

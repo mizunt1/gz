@@ -19,8 +19,12 @@ from utils.load_gz_data import Gz2_data, return_data_loader
 
 
 class PoseVAE(nn.Module):
-    def __init__(self, encoder, decoder, z_dim, kwargs_encoder,
-                 kwargs_decoder, use_cuda=False):
+    def __init__(self,
+                 encoder,
+                 decoder,
+                 z_dim, kwargs_encoder,
+                 kwargs_decoder, transforms,
+                 use_cuda=False):
         super().__init__()
         self.encoder = encoder(**kwargs_encoder)
         self.decoder = decoder(**kwargs_decoder)
@@ -28,10 +32,10 @@ class PoseVAE(nn.Module):
             self.cuda()
         self.use_cuda = use_cuda
         self.z_dim = z_dim
+        self.transforms = transforms
 
     def model(self,
-              data,
-              transforms=None):
+              data):
 
         output_size = self.encoder.insize
         decoder = pyro.module("decoder", self.decoder)
@@ -72,8 +76,7 @@ class PoseVAE(nn.Module):
             grid = coordinates.identity_grid(
                 [output_size, output_size], device=data.device)
             grid = grid.expand(data.shape[0], *grid.shape)
-            transforms = T.TransformSequence(T.Translation(), T.Rotation())
-            transform = random_pose_transform(transforms)
+            transform = random_pose_transform(self.transforms)
 
             transform_grid = transform(grid)
 
@@ -85,7 +88,7 @@ class PoseVAE(nn.Module):
             pyro.sample(
                 "pixels", D.Bernoulli(transformed_view).to_event(3), obs=data)
 
-    def guide(self, data, transforms=None):
+    def guide(self, data):
         """
         remember the guide is p(z)
         it will sample a z given the x.
