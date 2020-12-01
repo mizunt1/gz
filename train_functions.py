@@ -4,13 +4,14 @@ from itertools import cycle
 import numpy as np
 import torch
 from torch.utils.tensorboard import SummaryWriter
+import torch.distributions as D
 import torchvision as tv
 
 
 def train_fs_epoch(vae, vae_optim, vae_loss_fn,
                    classifier, classifier_optim,
                    classifier_loss_fn, use_cuda,
-                   train_loader=None, alpha=1):
+                   train_loader=None, alpha=1, split_early=False):
     """
     FULLY SUPERVISED TRAINING FUNCTION USING POSE VAE
     train vae encoder and classifier for one epoch
@@ -32,8 +33,12 @@ def train_fs_epoch(vae, vae_optim, vae_loss_fn,
         vae_optim.zero_grad()
         vae_loss = vae_loss_fn(vae.model, vae.guide, x)
         out, split = vae.encoder(x)
-        # combined_z = torch.cat((z_loc, z_scale), 1)
-        y_out = classifier.forward(split)
+        if split_early:
+            to_classifier = split
+        else:
+            z_dist = D.Normal(out["z_mu"], out["z_sigma"])
+            to_classifier = z_dist.rsample()
+        y_out = classifier.forward(to_classifier)
         classifier_loss = classifier_loss_fn(y_out, y)
         # step through classifier
         total_loss = vae_loss + alpha*classifier_loss
@@ -55,7 +60,7 @@ def train_ss_epoch(vae, vae_optim, vae_loss_fn,
                    classifier, classifier_optim,
                    classifier_loss_fn, use_cuda,
                    train_s_loader=None,
-                   train_us_loader=None):
+                   train_us_loader=None, split_early=False):
     """
     train vae and classifier for one epoch
     returns loss for one epoch
@@ -83,8 +88,16 @@ def train_ss_epoch(vae, vae_optim, vae_loss_fn,
         vae_optim.zero_grad()
         # supervised step
         vae_loss = vae_loss_fn(vae.model, vae.guide, xs)
-        out, split = vae.encoder(xs)
-        y_out = classifier.forward(split)
+        out, split_early = vae.encoder(xs)
+        if split:
+            to_classifier = split
+        else:
+            z_dist = D.Normal(out["z_mu"], out["z_sigma"])
+            to_classifier = z_dist.rsample()
+
+            to_classifier = out
+
+        y_out = classifier.forward(to_classifier)
 
         classifier_loss = classifier_loss_fn(y_out, ys)
 

@@ -19,4 +19,4 @@ srun python trainer.py\
      --dir_name det_100\
      --img_file /scratch-ssd/oatml/data/gz2\
      --num_epochs 200 --img_size 128 --crop_size 128  --batch_size 10\
-     --lr 1e-4 --subset --subset_proportion 0.5
+     --lr 1e-4 --subset --subset_proportion 0.5 --semi-supervised 

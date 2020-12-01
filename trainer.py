@@ -77,6 +77,7 @@ def main():
     parser.add_argument('--no_cuda', default=False, action='store_true')
     parser.add_argument('--num_epochs', type=int, default=10)
     parser.add_argument('--semi-supervised', default=False, action='store_true')
+    parser.add_argument('--split_early', default=False, action='store_true')
     parser.add_argument('--subset', default=False, action='store_true',
                         help='use a subset of data for testing')
     parser.add_argument('--subset_proportion', default=100,
@@ -129,7 +130,6 @@ def main():
 
     ### count number of parameters in network
 
-
     def multinomial_loss(probs, values):
         return torch.sum(
             -1 * D.Multinomial(1, probs=probs).log_prob(values.float()))
@@ -178,7 +178,7 @@ def main():
         print("num data points in train_s_loader:", len(train_s_loader.dataset))
         print("num data points in train_us_loader:", len(train_us_loader.dataset))
         print("train and log")
-        kwargs = {'train_s_loader': train_s_loader, 'train_us_loader': train_us_loader}
+        kwargs = {'train_s_loader': train_s_loader, 'train_us_loader': train_us_loader, 'split_early': args.split_early}
         train_fn = train_ss_epoch
 
     else:
@@ -194,11 +194,11 @@ def main():
         print("num data points in test_loader:", len(test_loader.dataset))
         print("num data points in test_loader:", len(train_loader.dataset))
 
-        kwargs = {'train_loader': train_loader}
+        kwargs = {'train_loader': train_loader, 'split_early': args.split_early}
         train_fn = train_fs_epoch
 
-
-    train_log(train_fn, vae, vae_optim, Trace_ELBO().differentiable_loss,
+    train_log(train_fn, vae, vae_optim,
+              Trace_ELBO().differentiable_loss,
               classifier, classifier_optim,
               classifier_loss, args.dir_name, args.num_epochs,
               use_cuda, test_loader, kwargs)
