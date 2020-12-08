@@ -1,10 +1,15 @@
+""" trains semi-supervised or fully supervised arch given a yaml config file.
+Run with sacred ie python trainer.py with config.yaml --file_storage=my_runs"""
+
 import argparse
 import importlib
 
 from pyro.infer import Trace_ELBO
 import pyro.distributions as D
+from sacred import Experiment
 import torch
 from torch.optim import Adam
+import yaml
 
 from construct_vae import PoseVAE
 from galaxy_gen.etn import transformers, networks
@@ -52,85 +57,50 @@ def get_transformations(transform_spec):
     )
     return transforms, transformer
 
+ex = Experiment()
 
 
-def main():
-    parser = argparse.ArgumentParser()
-    csv = "gz2_data/gz_amended.csv"
-    img = "gz2_data/"
-
-    parser.add_argument('--arch', required=True)
-    parser.add_argument('--class_arch', required=True)
-    parser.add_argument('--dir_name', required=True)
-
-    parser.add_argument('--bar_no_bar', default=False, action='store_true')
-    parser.add_argument('--batch_size', default=10, type=int)
-    parser.add_argument('--crop_size', default=80, type=int,
-                        help='centre crop image to this size')
-    parser.add_argument('--csv_file', metavar='c', type=str,
-                        default=csv, help='path to csv')
-    parser.add_argument('--img_file', metavar='i', type=str,
-                        default=img, help='path to image files')
-    parser.add_argument('--img_size', default=80, type=int)
-    parser.add_argument('--load_checkpoint', default=None)
-    parser.add_argument('--lr', default=1.0e-4, type=float)
-    parser.add_argument('--no_cuda', default=False, action='store_true')
-    parser.add_argument('--num_epochs', type=int, default=10)
-    parser.add_argument('--semi-supervised', default=False, action='store_true')
-    parser.add_argument('--split_early', default=False, action='store_true')
-    parser.add_argument('--subset', default=False, action='store_true',
-                        help='use a subset of data for testing')
-    parser.add_argument('--subset_proportion', default=100,
-                        type=float,
-                        help='what proportion of data for subset,\
-                        or acutal int amount of data to be used, \
-                        useful in fully sup')
-    parser.add_argument('--supervised_proportion', default=0.8, type=float,
-                        help='what proportion of data is labelled in \
-                        semi-sup learning')
-    parser.add_argument('--test_proportion', default=0.1,
-                        help='what proportion of total data is test')
-    parser.add_argument('--z_size', default=100,
-                        type=int, help='size of vae latent vector size')
-
-    args = parser.parse_args()
+@ex.automain
+def main(dir_name, cuda, num_epochs, semi_supervised, split_early,
+         subset_proportion, lr, supervised_proportion,
+         csv_file, img_file, load_checkpoint, arch_classifier,
+         arch_vae, test_proportion, z_size, batch_size, bar_no_bar, crop_size, img_size):
     transform_spec = ['Rotation']
-    use_cuda = not args.no_cuda
-
     ### loading classifier network
-    spec = importlib.util.spec_from_file_location("module.name", args.class_arch)
+    spec = importlib.util.spec_from_file_location(
+        "module.name", arch_classifier)
     class_arch = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(class_arch)
     Classifier = class_arch.Classifier
 
     ### setting up encoder, decoder and vae
-    spec = importlib.util.spec_from_file_location("module.name", args.arch)
+    spec = importlib.util.spec_from_file_location("module.name", arch_vae)
     arch = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(arch)
     Encoder = arch.Encoder
     Decoder = arch.Decoder
     transforms, transformer = get_transformations(transform_spec)
     encoder_args = {'transformer': transformer,
-                    'insize': args.img_size, 'z_dim': args.z_size}
-    decoder_args = {'z_dim': args.z_size, 'outsize': args.img_size}
+                    'insize': img_size, 'z_dim': z_size}
+    decoder_args = {'z_dim': z_size, 'outsize': img_size}
     vae = PoseVAE(
-        Encoder, Decoder, args.z_size, encoder_args,
-        decoder_args, transforms, use_cuda=use_cuda)
+        Encoder, Decoder, z_size, encoder_args,
+        decoder_args, transforms, use_cuda=cuda)
 
-    if args.load_checkpoint is not None:
+    if load_checkpoint is not None:
         vae.encoder.load_state_dict(
-            torch.load("checkpoints/" + args.load_checkpoint + "/encoder.checkpoint"))
+            torch.load("checkpoints/" +load_checkpoint + "/encoder.checkpoint"))
         vae.decoder.load_state_dict(
-            torch.load("checkpoints/" + args.load_checkpoint + "/decoder.checkpoint"))
+            torch.load("checkpoints/" + load_checkpoint + "/decoder.checkpoint"))
 
     ### define classifier and optims
-    if args.split_early:
+    if split_early:
         classifier = Classifier(in_dim=vae.encoder.linear_size)
     else:
-        classifier = Classifier(in_dim=args.z_size)
+        classifier = Classifier(in_dim=z_size)
     classifier_params = list(classifier.parameters()) + list(vae.encoder.parameters())
-    classifier_optim = Adam(classifier_params, args.lr, betas=(0.90, 0.999))
-    vae_optim = Adam(vae.parameters(), lr=args.lr/100, betas=(0.90, 0.999))
+    classifier_optim = Adam(classifier_params, lr, betas=(0.90, 0.999))
+    vae_optim = Adam(vae.parameters(), lr=lr/100, betas=(0.90, 0.999))
 
     ### count number of parameters in network
 
@@ -146,7 +116,7 @@ def main():
     a02 = "t01_smooth_or_features_a02_features_or_disk_count"
     a03 = "t01_smooth_or_features_a03_star_or_artifact_count"
 
-    if not args.bar_no_bar:
+    if not bar_no_bar:
         a01 = "t01_smooth_or_features_a01_smooth_count"
         a02 = "t01_smooth_or_features_a02_features_or_disk_count"
         a03 = "t01_smooth_or_features_a03_star_or_artifact_count"
@@ -157,23 +127,23 @@ def main():
         list_of_ans = [a01, a02]
 
 
-    data = Gz2_data(csv_dir=args.csv_file,
-                    image_dir=args.img_file,
+    data = Gz2_data(csv_dir=csv_file,
+                    image_dir=img_file,
                     list_of_interest=list_of_ans,
-                    crop=args.img_size,
-                    resize=args.crop_size)
+                    crop=img_size,
+                    resize=crop_size)
 
     ### different dataloaders depending on whether its semi-sup or fully sup
 
 
-    if args.semi_supervised:
-        if args.subset:
+    if semi_supervised:
+        if subset_proportion>0:
             test_s_loader, test_us_loader, train_s_loader, train_us_loader = return_ss_loader(
-                data, args.test_proportion, args.supervised_proportion, batch_size=args.batch_size,
-                shuffle=True, subset_proportion = args.subset_proportion)
+                data, test_proportion, supervised_proportion, batch_size=batch_size,
+                shuffle=True, subset_proportion = subset_proportion)
         else:
             test_s_loader, test_us_loader, train_s_loader, train_us_loader  = return_ss_loader(
-                data, args.test_proportion, args.supervised_proportion, batch_size=args.batch_size, shuffle=True, subset=False)
+                data, test_proportion, supervised_proportion, batch_size=sbatch_size, shuffle=True, subset=False)
         test_loader = test_us_loader
         print("semi supervised training")
         print("total data:",  len(data))
@@ -182,31 +152,27 @@ def main():
         print("num data points in train_s_loader:", len(train_s_loader.dataset))
         print("num data points in train_us_loader:", len(train_us_loader.dataset))
         print("train and log")
-        kwargs = {'train_s_loader': train_s_loader, 'train_us_loader': train_us_loader, 'split_early': args.split_early}
+        kwargs = {'train_s_loader': train_s_loader, 'train_us_loader': train_us_loader, 'split_early': split_early}
         train_fn = train_ss_epoch
 
     else:
-        if args.subset:
+        if subset_proportion>0:
             train_loader, test_loader = return_subset(
-                data, args.test_proportion, args.subset_proportion,
-                batch_size=args.batch_size, shuffle=True)
+                data, test_proportion, subset_proportion,
+                batch_size=batch_size, shuffle=True)
         else:
             train_loader, test_loader = return_data_loader(
-                data, args.test_proportion,
-                batch_size=args.batch_size, shuffle=True)
+                data, test_proportion,
+                batch_size=batch_size, shuffle=True)
         print("Fully supervised training")
         print("num data points in test_loader:", len(test_loader.dataset))
         print("num data points in test_loader:", len(train_loader.dataset))
 
-        kwargs = {'train_loader': train_loader, 'split_early': args.split_early}
+        kwargs = {'train_loader': train_loader, 'split_early': split_early}
         train_fn = train_fs_epoch
 
     train_log(train_fn, vae, vae_optim,
               Trace_ELBO().differentiable_loss,
               classifier, classifier_optim,
-              classifier_loss, args.dir_name, args.num_epochs,
-              use_cuda, test_loader, kwargs)
-
-
-if __name__ == '__main__':
-    main()
+              classifier_loss, dir_name, num_epochs,
+              cuda, test_loader, kwargs)
