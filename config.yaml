@@ -1,0 +1,37 @@
+dir_name: test
+cuda: False
+num_epochs: 200
+semi_supervised: True
+split_early: False
+subset_proportion: 100
+csv_file: "gz2_data/gz_amended.csv"
+img_file: "gz2_data/"
+load_checkpoint: 
+lr: 1.0e-4 
+supervised_proportion: 0.8
+arch_classifier: "neural_networks/classifier_conv.py"
+arch_vae: "neural_networks/encoder_decoder.py"
+test_proportion: 0.1
+z_size: 100
+bar_no_bar: False
+batch_size: 10
+crop_size: 128
+img_size: 128
+# description of parameters, order may not be same as above
+# dir_name: directory name where tensorboard plots are saved
+# no_cuda: run with cuda or not
+# num_epochs: self-explanatory
+# semi_supervised: whether to train semi-supervised arch (train vae). Otherwise just train encoder and classifier
+# split_early: early splitting of encoder to pass in to classifier before it gets flattened for z sampling
+# subset_proprotion: subset the whole dataset for fully supervised training. type float. If number greater than
+#                    1 is provided, then it will use that number of data points.
+# csv_file: path to gz csv files
+# img_file: path to gz img dir
+# load_checkpoint: path to checkpoint files
+# lr: self-explanatory
+# supervised_proportion: what proportion of data is labelled in semi-sup learning. If number greater than 1 is
+#                        provided, then it will use that number of labelled data points.
+# test_proprotion: what proportion of the total data is test
+# z_size: latent size
+
+
