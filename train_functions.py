@@ -166,7 +166,7 @@ def evaluate(vae, vae_loss_fn, classifier,
         else:
             z_dist = D.Normal(out["z_mu"], out["z_std"])
             to_classifier = z_dist.rsample()
-        y_out = classifier(to_classifier)
+        y_out = classifier.forward(to_classifier)
         classifier_loss = classifier_loss_fn(y_out, y)
         total_acc += torch.sum(torch.eq(y_out.argmax(dim=1), y.argmax(dim=1)))
         epoch_loss_vae += vae_loss.item()
@@ -214,7 +214,7 @@ def train_log(train_fn,
                 use_cuda=use_cuda, transform=transform)
             print("[epoch %03d] average test loss vae: %.4f" % (epoch, total_epoch_loss_test_vae))
             print("[epoch %03d] average test loss classifier: %.4f" % (epoch, total_epoch_loss_test_classifier))
-            print("[epoch %03d] average accuracy: %.4f" % (epoch, accuracy))
+            print("[epoch %03d] average test accuracy: %.4f" % (epoch, accuracy))
             print("evaluate end")
             writer.add_scalar('Train loss vae', total_epoch_loss_vae, total_steps)
             writer.add_scalar('Train loss classifier', total_epoch_loss_classifier, total_steps)
