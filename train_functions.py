@@ -10,8 +10,8 @@ import torchvision as tv
 
 def train_fs_epoch(vae, vae_optim, vae_loss_fn,
                    classifier, classifier_optim,
-                   classifier_loss_fn, use_cuda,
-                   train_loader=None, alpha=1, split_early=False):
+                   classifier_loss_fn, use_cuda, split_early,
+                   train_loader=None, alpha=1):
     """
     FULLY SUPERVISED TRAINING FUNCTION USING POSE VAE
     train vae encoder and classifier for one epoch
@@ -58,9 +58,9 @@ def train_fs_epoch(vae, vae_optim, vae_loss_fn,
 
 def train_ss_epoch(vae, vae_optim, vae_loss_fn,
                    classifier, classifier_optim,
-                   classifier_loss_fn, use_cuda,
+                   classifier_loss_fn, use_cuda, split_early,
                    train_s_loader=None,
-                   train_us_loader=None, split_early=False):
+                   train_us_loader=None):
     """
     train vae and classifier for one epoch
     returns loss for one epoch
@@ -89,13 +89,11 @@ def train_ss_epoch(vae, vae_optim, vae_loss_fn,
         # supervised step
         vae_loss = vae_loss_fn(vae.model, vae.guide, xs)
         out, split = vae.encoder(xs)
-        if split:
+        if split_early:
             to_classifier = split
         else:
             z_dist = D.Normal(out["z_mu"], out["z_std"])
             to_classifier = z_dist.rsample()
-
-            to_classifier = out
 
         y_out = classifier.forward(to_classifier)
 
@@ -141,7 +139,7 @@ def rms_calc(probs, target):
 
 
 def evaluate(vae, vae_loss_fn, classifier,
-             classifier_loss_fn, test_loader, use_cuda=False, transform=False):
+             classifier_loss_fn, test_loader, split_early, use_cuda=False, transform=False):
     """
     evaluates for all test data
     test data is in batches, all batches in test loader tested
@@ -163,9 +161,12 @@ def evaluate(vae, vae_loss_fn, classifier,
         # step of elbo for vae
         out, split = vae.encoder(x)
         vae_loss = vae_loss_fn(vae.model, vae.guide, x)
-        # combined_z = torch.cat((z_loc, z_scale), 1)
-        # combined_z = combined_z.detach()
-        y_out = classifier.forward(split)
+        if split_early:
+            to_classifier = split
+        else:
+            z_dist = D.Normal(out["z_mu"], out["z_std"])
+            to_classifier = z_dist.rsample()
+        y_out = classifier(to_classifier)
         classifier_loss = classifier_loss_fn(y_out, y)
         total_acc += torch.sum(torch.eq(y_out.argmax(dim=1), y.argmax(dim=1)))
         epoch_loss_vae += vae_loss.item()
@@ -183,7 +184,7 @@ def train_log(train_fn,
               vae, vae_optim, vae_loss_fn,
               classifier, classifier_optim,
               classifier_loss_fn, dir_name, num_epochs,
-              use_cuda, test_loader, train_fn_kwargs,
+              use_cuda, test_loader, split_early, train_fn_kwargs,
               plot_img_freq=20, num_img_plt=9,
               checkpoint_freq=20,
               test_freq=1, transform=False):
@@ -198,7 +199,7 @@ def train_log(train_fn,
         print("training")
         total_epoch_loss_vae, total_epoch_loss_classifier, total_epoch_acc, num_steps = train_fn(
             vae, vae_optim, vae_loss_fn,
-            classifier, classifier_optim, classifier_loss_fn, use_cuda, **train_fn_kwargs)
+            classifier, classifier_optim, classifier_loss_fn, use_cuda, split_early, **train_fn_kwargs)
         total_steps += num_steps
         print("end train")
         print("[epoch %03d]  average training loss vae: %.4f" % (epoch, total_epoch_loss_vae))
@@ -209,7 +210,7 @@ def train_log(train_fn,
             # report test diagnostics
             print("evaluating")
             total_epoch_loss_test_vae, total_epoch_loss_test_classifier, accuracy, rms = evaluate(
-                vae, vae_loss_fn, classifier, classifier_loss_fn, test_loader,
+                vae, vae_loss_fn, classifier, classifier_loss_fn, test_loader, split_early,
                 use_cuda=use_cuda, transform=transform)
             print("[epoch %03d] average test loss vae: %.4f" % (epoch, total_epoch_loss_test_vae))
             print("[epoch %03d] average test loss classifier: %.4f" % (epoch, total_epoch_loss_test_classifier))

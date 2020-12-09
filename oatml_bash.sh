@@ -6,6 +6,7 @@
 #SBATCH --error=slurm-%j.err
 #SBATCH --job-name="gz_tst"
 
+
 export CONDA_ENVS_PATH=/scratch-ssd/$USER/conda_envs
 export CONDA_PKGS_DIRS=/scratch-ssd/$USER/conda_pkgs
 
