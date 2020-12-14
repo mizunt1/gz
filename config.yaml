@@ -1,4 +1,4 @@
-dir_name: sample_z_semi_sup
+dir_name: sample_z_semi_sup_2
 cuda: False
 num_epochs: 200
 semi_supervised: True
