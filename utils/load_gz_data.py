@@ -85,6 +85,7 @@ def return_ss_loader(data, test_proportion, supervised_portion,
         us_train = num_train - us_tests
 
     else:
+        len_data = len(data)
         s_train = int(supervised_portion)
         remain = len_data - supervised_portion
         num_tests = round(remain * test_proportion)
