@@ -10,3 +10,4 @@ data/
 slurm*
 *.ox.ac*
 tb_data/
+my_runs/
