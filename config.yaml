@@ -3,7 +3,7 @@ cuda: False
 num_epochs: 200
 semi_supervised: True
 split_early: False
-subset_proportion: 100
+subset_proportion: 
 csv_file: "/scratch-ssd/oatml/data/gz2/gz2_classifications_and_subjects.csv"
 img_file: "/scratch-ssd/oatml/data/gz2" 
 load_checkpoint: 
