@@ -94,7 +94,7 @@ def train_ss_epoch(vae, vae_optim, vae_loss_fn,
         else:
             z_dist = D.Normal(out["z_mu"], out["z_std"])
             to_classifier = z_dist.rsample()
-            to_classifier = out
+
 
         y_out = classifier.forward(to_classifier)
 

@@ -65,7 +65,7 @@ def main(dir_name, cuda, num_epochs, semi_supervised, split_early,
          subset_proportion, lr, supervised_proportion,
          csv_file, img_file, load_checkpoint, arch_classifier,
          arch_vae, test_proportion, z_size, batch_size, bar_no_bar,
-         crop_size, img_size, split_early):
+         crop_size, img_size):
     transform_spec = ['Rotation']
     ### loading classifier network
     spec = importlib.util.spec_from_file_location(
