@@ -64,7 +64,8 @@ ex = Experiment()
 def main(dir_name, cuda, num_epochs, semi_supervised, split_early,
          subset_proportion, lr, supervised_proportion,
          csv_file, img_file, load_checkpoint, arch_classifier,
-         arch_vae, test_proportion, z_size, batch_size, bar_no_bar, crop_size, img_size):
+         arch_vae, test_proportion, z_size, batch_size, bar_no_bar,
+         crop_size, img_size, split_early):
     transform_spec = ['Rotation']
     ### loading classifier network
     spec = importlib.util.spec_from_file_location(
@@ -152,7 +153,7 @@ def main(dir_name, cuda, num_epochs, semi_supervised, split_early,
         print("num data points in train_s_loader:", len(train_s_loader.dataset))
         print("num data points in train_us_loader:", len(train_us_loader.dataset))
         print("train and log")
-        kwargs = {'train_s_loader': train_s_loader, 'train_us_loader': train_us_loader, 'split_early': split_early}
+        kwargs = {'train_s_loader': train_s_loader, 'train_us_loader': train_us_loader}
         train_fn = train_ss_epoch
 
     else:
@@ -168,11 +169,11 @@ def main(dir_name, cuda, num_epochs, semi_supervised, split_early,
         print("num data points in test_loader:", len(test_loader.dataset))
         print("num data points in test_loader:", len(train_loader.dataset))
 
-        kwargs = {'train_loader': train_loader, 'split_early': split_early}
+        kwargs = {'train_loader': train_loader}
         train_fn = train_fs_epoch
 
     train_log(train_fn, vae, vae_optim,
               Trace_ELBO().differentiable_loss,
               classifier, classifier_optim,
               classifier_loss, dir_name, num_epochs,
-              cuda, test_loader, kwargs)
+              cuda, test_loader, split_early, kwargs)
