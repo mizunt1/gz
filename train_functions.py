@@ -10,8 +10,8 @@ import torchvision as tv
 
 def train_fs_epoch(vae, vae_optim, vae_loss_fn,
                    classifier, classifier_optim,
-                   classifier_loss_fn, use_cuda,
-                   train_loader=None, alpha=1, split_early=False):
+                   classifier_loss_fn, use_cuda, split_early,
+                   train_loader=None, alpha=1):
     """
     FULLY SUPERVISED TRAINING FUNCTION USING POSE VAE
     train vae encoder and classifier for one epoch
@@ -58,9 +58,9 @@ def train_fs_epoch(vae, vae_optim, vae_loss_fn,
 
 def train_ss_epoch(vae, vae_optim, vae_loss_fn,
                    classifier, classifier_optim,
-                   classifier_loss_fn, use_cuda,
+                   classifier_loss_fn, use_cuda, split_early,
                    train_s_loader=None,
-                   train_us_loader=None, split_early=False):
+                   train_us_loader=None):
     """
     train vae and classifier for one epoch
     returns loss for one epoch
@@ -94,7 +94,6 @@ def train_ss_epoch(vae, vae_optim, vae_loss_fn,
         else:
             z_dist = D.Normal(out["z_mu"], out["z_std"])
             to_classifier = z_dist.rsample()
-
 
         y_out = classifier.forward(to_classifier)
 
@@ -172,6 +171,12 @@ def evaluate(vae, vae_loss_fn, classifier,
             y_out = classifier.forward(to_classifier)
             y_out = torch.mean(y_out, 0)
         vae_loss = vae_loss_fn(vae.model, vae.guide, x)
+        if split_early:
+            to_classifier = split
+        else:
+            z_dist = D.Normal(out["z_mu"], out["z_std"])
+            to_classifier = z_dist.rsample()
+        y_out = classifier.forward(to_classifier)
         classifier_loss = classifier_loss_fn(y_out, y)
         total_acc += torch.sum(torch.eq(y_out.argmax(dim=1), y.argmax(dim=1)))
         epoch_loss_vae += vae_loss.item()
@@ -204,7 +209,7 @@ def train_log(train_fn,
         print("training")
         total_epoch_loss_vae, total_epoch_loss_classifier, total_epoch_acc, num_steps = train_fn(
             vae, vae_optim, vae_loss_fn,
-            classifier, classifier_optim, classifier_loss_fn, use_cuda, **train_fn_kwargs)
+            classifier, classifier_optim, classifier_loss_fn, use_cuda, split_early, **train_fn_kwargs)
         total_steps += num_steps
         print("end train")
         print("[epoch %03d]  average training loss vae: %.4f" % (epoch, total_epoch_loss_vae))
@@ -215,11 +220,11 @@ def train_log(train_fn,
             # report test diagnostics
             print("evaluating")
             total_epoch_loss_test_vae, total_epoch_loss_test_classifier, accuracy, rms = evaluate(
-                vae, vae_loss_fn, classifier, classifier_loss_fn, test_loader,
-                use_cuda=use_cuda, transform=transform, split_early=split_early)
+                vae, vae_loss_fn, classifier, classifier_loss_fn, test_loader, split_early,
+                use_cuda=use_cuda, transform=transform)
             print("[epoch %03d] average test loss vae: %.4f" % (epoch, total_epoch_loss_test_vae))
             print("[epoch %03d] average test loss classifier: %.4f" % (epoch, total_epoch_loss_test_classifier))
-            print("[epoch %03d] average accuracy: %.4f" % (epoch, accuracy))
+            print("[epoch %03d] average test accuracy: %.4f" % (epoch, accuracy))
             print("evaluate end")
             writer.add_scalar('Train loss vae', total_epoch_loss_vae, total_steps)
             writer.add_scalar('Train loss classifier', total_epoch_loss_classifier, total_steps)

@@ -1,14 +1,14 @@
-dir_name: test
-cuda: False
+dir_name: sample_z_semi_sup_2
+cuda: True
 num_epochs: 200
 semi_supervised: True
 split_early: False
-subset_proportion: 100
+subset_proportion: 
 csv_file: "/scratch-ssd/oatml/data/gz2/gz2_classifications_and_subjects.csv"
 img_file: "/scratch-ssd/oatml/data/gz2" 
 load_checkpoint: 
 lr: 1.0e-4 
-supervised_proportion: 10
+supervised_proportion: 100
 arch_classifier: "neural_networks/classifier_fc.py"
 arch_vae: "neural_networks/encoder_decoder.py"
 test_proportion: 0.1

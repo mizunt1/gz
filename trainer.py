@@ -138,13 +138,9 @@ def main(dir_name, cuda, num_epochs, semi_supervised, split_early,
 
 
     if semi_supervised:
-        if subset_proportion>0:
-            test_s_loader, test_us_loader, train_s_loader, train_us_loader = return_ss_loader(
-                data, test_proportion, supervised_proportion, batch_size=batch_size,
-                shuffle=True, subset_proportion = subset_proportion)
-        else:
-            test_s_loader, test_us_loader, train_s_loader, train_us_loader  = return_ss_loader(
-                data, test_proportion, supervised_proportion, batch_size=sbatch_size, shuffle=True, subset=False)
+        test_s_loader, test_us_loader, train_s_loader, train_us_loader = return_ss_loader(
+            data, test_proportion, supervised_proportion, batch_size=batch_size,
+            shuffle=True, subset_unsupervised_proportion = subset_proportion)
         test_loader = test_us_loader
         print("semi supervised training")
         print("total data:",  len(data))
