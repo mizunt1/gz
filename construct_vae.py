@@ -24,7 +24,7 @@ class PoseVAE(nn.Module):
                  decoder,
                  z_dim, kwargs_encoder,
                  kwargs_decoder, transforms,
-                 use_cuda=False):
+                 use_cuda):
         super().__init__()
         self.encoder = encoder(**kwargs_encoder)
         self.decoder = decoder(**kwargs_decoder)
@@ -117,7 +117,7 @@ class PoseVAE(nn.Module):
                 ).to_event(1),
             )
 
-    def sample_img(self, x, use_cuda=False, encoder=False, decoder=False):
+    def sample_img(self, x, use_cuda, encoder=False, decoder=False):
         # encode image x
         if use_cuda is True:
             x = x.cuda()

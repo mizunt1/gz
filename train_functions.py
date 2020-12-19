@@ -139,12 +139,13 @@ def rms_calc(probs, target):
 
 
 def evaluate(vae, vae_loss_fn, classifier,
-             classifier_loss_fn, test_loader, split_early, use_cuda=False, transform=False):
+             classifier_loss_fn, test_loader, use_cuda, transform=False, split_early=False):
     """
     evaluates for all test data
     test data is in batches, all batches in test loader tested
     """
     # classifier is in eval mode
+    num_samples = 100
     classifier.eval()
     epoch_loss_vae = 0.
     epoch_loss_classifier = 0.
@@ -158,8 +159,17 @@ def evaluate(vae, vae_loss_fn, classifier,
         if use_cuda:
             x = x.cuda()
             y = y.cuda()
-        # step of elbo for vae
+
         out, split = vae.encoder(x)
+        if split_early:
+            to_classifier = split
+            y_out = classifier.forward(to_classifier)
+
+        else:
+            z_dist = D.Normal(out["z_mu"], out["z_std"])
+            to_classifier = z_dist.rsample([num_samples])
+            y_out = classifier.forward(to_classifier)
+            y_out = torch.mean(y_out, 0)
         vae_loss = vae_loss_fn(vae.model, vae.guide, x)
         if split_early:
             to_classifier = split
@@ -211,7 +221,7 @@ def train_log(train_fn,
             print("evaluating")
             total_epoch_loss_test_vae, total_epoch_loss_test_classifier, accuracy, rms = evaluate(
                 vae, vae_loss_fn, classifier, classifier_loss_fn, test_loader, split_early,
-                use_cuda=use_cuda, transform=transform)
+                use_cuda, transform=transform)
             print("[epoch %03d] average test loss vae: %.4f" % (epoch, total_epoch_loss_test_vae))
             print("[epoch %03d] average test loss classifier: %.4f" % (epoch, total_epoch_loss_test_classifier))
             print("[epoch %03d] average test accuracy: %.4f" % (epoch, accuracy))
@@ -226,7 +236,7 @@ def train_log(train_fn,
 
         if epoch % plot_img_freq == 0:
             image_in = next(iter(test_loader))['image'][0:num_img_plt]
-            images_out = vae.sample_img(image_in, use_cuda=use_cuda)
+            images_out = vae.sample_img(image_in, use_cuda)
             img_grid_in = tv.utils.make_grid(image_in)
             img_grid = tv.utils.make_grid(images_out)
             writer.add_image('images in, from step' + str(total_steps), img_grid_in)
