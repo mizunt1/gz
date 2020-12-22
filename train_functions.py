@@ -220,8 +220,8 @@ def train_log(train_fn,
             # report test diagnostics
             print("evaluating")
             total_epoch_loss_test_vae, total_epoch_loss_test_classifier, accuracy, rms = evaluate(
-                vae, vae_loss_fn, classifier, classifier_loss_fn, test_loader, split_early,
-                use_cuda, transform=transform)
+                vae, vae_loss_fn, classifier, classifier_loss_fn, test_loader, 
+                use_cuda, transform=transform, split_early=split_early)
             print("[epoch %03d] average test loss vae: %.4f" % (epoch, total_epoch_loss_test_vae))
             print("[epoch %03d] average test loss classifier: %.4f" % (epoch, total_epoch_loss_test_classifier))
             print("[epoch %03d] average test accuracy: %.4f" % (epoch, accuracy))
