@@ -207,7 +207,7 @@ def rms_calc(probs, target):
 
 
 def evaluate(vae, vae_loss_fn, classifier,
-             classifier_loss_fn, test_loader, use_cuda=False, transform=False, split_early=False):
+             classifier_loss_fn, test_loader, use_cuda, transform=False, split_early=False):
     """
     evaluates for all test data
     test data is in batches, all batches in test loader tested
@@ -293,8 +293,8 @@ def train_log(train_fn,
             # report test diagnostics
             print("evaluating")
             total_epoch_loss_test_vae, total_epoch_loss_test_classifier, accuracy, rms = evaluate(
-                vae, vae_loss_fn, classifier, classifier_loss_fn, test_loader, split_early,
-                use_cuda=use_cuda, transform=transform)
+                vae, vae_loss_fn, classifier, classifier_loss_fn, test_loader, 
+                use_cuda, transform=transform, split_early=split_early)
             print("[epoch %03d] average test loss vae: %.4f" % (epoch, total_epoch_loss_test_vae))
             print("[epoch %03d] average test loss classifier: %.4f" % (epoch, total_epoch_loss_test_classifier))
             print("[epoch %03d] average test accuracy: %.4f" % (epoch, accuracy))
@@ -309,7 +309,7 @@ def train_log(train_fn,
 
         if epoch % plot_img_freq == 0:
             image_in = next(iter(test_loader))['image'][0:num_img_plt]
-            images_out = vae.sample_img(image_in, use_cuda=use_cuda)
+            images_out = vae.sample_img(image_in, use_cuda)
             img_grid_in = tv.utils.make_grid(image_in)
             img_grid = tv.utils.make_grid(images_out)
             writer.add_image('images in, from step' + str(total_steps), img_grid_in)
