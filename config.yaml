@@ -18,6 +18,7 @@ batch_size: 10
 crop_size: 128
 img_size: 128
 split_early: False
+transform_spec: ["Rotation"]
 # description of parameters, order may not be same as above
 # dir_name: directory name where tensorboard plots are saved
 # no_cuda: run with cuda or not
