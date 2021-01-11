@@ -14,7 +14,7 @@ import yaml
 from construct_vae import PoseVAE
 from galaxy_gen.etn import transformers, networks
 from galaxy_gen.etn import transforms as T
-from train_functions import train_ss_epoch, train_fs_epoch, train_log
+from train_functions import train_ss_epoch, train_fs_epoch, train_log, train_vae, train_log_vae
 from utils.load_gz_data import Gz2_data, return_data_loader, return_subset, return_ss_loader
 
 
@@ -61,19 +61,19 @@ ex = Experiment()
 
 
 @ex.automain
-def main(dir_name, cuda, num_epochs, semi_supervised, split_early,
+def main(dir_name, cuda, num_epochs, semi-supervised,
+         train_type, split_early,
          subset_proportion, lr, supervised_proportion,
          csv_file, img_file, load_checkpoint, arch_classifier,
          arch_vae, test_proportion, z_size, batch_size, bar_no_bar,
-         crop_size, img_size):
-    transform_spec = ['Rotation']
+         crop_size, img_size, transform_spec):
     ### loading classifier network
     spec = importlib.util.spec_from_file_location(
         "module.name", arch_classifier)
     class_arch = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(class_arch)
     Classifier = class_arch.Classifier
-
+    loss_fn = class_arch.loss
     ### setting up encoder, decoder and vae
     spec = importlib.util.spec_from_file_location("module.name", arch_vae)
     arch = importlib.util.module_from_spec(spec)
@@ -103,14 +103,7 @@ def main(dir_name, cuda, num_epochs, semi_supervised, split_early,
     classifier_optim = Adam(classifier_params, lr, betas=(0.90, 0.999))
     vae_optim = Adam(vae.parameters(), lr=lr/100, betas=(0.90, 0.999))
 
-    ### count number of parameters in network
-
-    def multinomial_loss(probs, values):
-        return torch.sum(
-            -1 * D.Multinomial(1, probs=probs).log_prob(values.float()))
-
-
-    classifier_loss = multinomial_loss
+    classifier_loss = loss_fn
 
     ### setting up data and dataloaders
     a01 = "t01_smooth_or_features_a01_smooth_count"
@@ -137,7 +130,7 @@ def main(dir_name, cuda, num_epochs, semi_supervised, split_early,
     ### different dataloaders depending on whether its semi-sup or fully sup
 
 
-    if semi_supervised:
+    if semi-supervised:
         test_s_loader, test_us_loader, train_s_loader, train_us_loader = return_ss_loader(
             data, test_proportion, supervised_proportion, batch_size=batch_size,
             shuffle=True, subset_unsupervised_proportion = subset_proportion)
@@ -149,11 +142,9 @@ def main(dir_name, cuda, num_epochs, semi_supervised, split_early,
         print("num data points in train_s_loader:", len(train_s_loader.dataset))
         print("num data points in train_us_loader:", len(train_us_loader.dataset))
         print("train and log")
-        kwargs = {'train_s_loader': train_s_loader, 'train_us_loader': train_us_loader}
-        train_fn = train_ss_epoch
 
     else:
-        if subset_proportion>0:
+        if subset_proportion > 0:
             train_loader, test_loader = return_subset(
                 data, test_proportion, subset_proportion,
                 batch_size=batch_size, shuffle=True)
@@ -165,11 +156,40 @@ def main(dir_name, cuda, num_epochs, semi_supervised, split_early,
         print("num data points in test_loader:", len(test_loader.dataset))
         print("num data points in test_loader:", len(train_loader.dataset))
 
-        kwargs = {'train_loader': train_loader}
-        train_fn = train_fs_epoch
+    if train_type == "standard_semi-supervised":
+        train_fn = train_ss_epoch
+        kwargs = {'train_s_loader': train_s_loader,
+                  'train_us_loader': train_us_loader}
+        train_log(train_fn, vae, vae_optim,
+                  Trace_ELBO().differentiable_loss,
+                  classifier, classifier_optim,
+                  classifier_loss, dir_name, num_epochs,
+                  cuda, test_loader, split_early, kwargs)
 
-    train_log(train_fn, vae, vae_optim,
-              Trace_ELBO().differentiable_loss,
-              classifier, classifier_optim,
-              classifier_loss, dir_name, num_epochs,
-              cuda, test_loader, split_early, kwargs)
+    elif train_type == "standard_fully_supervised":
+        train_fn = train_fs_epoch
+        kwargs = {'train_loader': train_loader}
+        train_log(train_fn, vae, vae_optim,
+                  Trace_ELBO().differentiable_loss,
+                  classifier, classifier_optim,
+                  classifier_loss, dir_name, num_epochs,
+                  cuda, test_loader, split_early, kwargs)
+
+    elif train_type == "vae_only":
+        train_fn = train_vae
+        train_log_vae(train_fn, vae, vae_optim, vae_loss_fn,
+                      train_loader, test_loader, transform_spec,
+                      use_cuda, split_early, dir_name)
+
+    elif train_type == "bayes_semi_supervised":
+        train_fn = train_ss_bayes
+        guide = AutoDiagonalNormal(model)
+        classifier_optim = pyro.optim.Adam({"lr": 0.03})
+        kwargs = {'train_s_loader': train_s_loader,
+                  'train_us_loader': train_us_loader, 'guide':guide}
+
+        train_log(train_ss_bayes, vae, vae_optim,
+                  Trace_ELBO().differentiable_loss,
+                  classifier, classifier_optim,
+                  Trace_ELBO.differentiable_loss, dir_name, num_epochs,
+                  cuda, test_loader, split_early, kwargs, bayesian=True)

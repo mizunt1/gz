@@ -55,6 +55,38 @@ def train_fs_epoch(vae, vae_optim, vae_loss_fn,
     total_acc_norm = total_acc /normalizer
     return total_epoch_loss_vae, total_epoch_loss_classifier, total_acc_norm, num_steps
 
+def train_vae(vae, vae_optim, vae_loss_fn, train_loader,
+              use_cuda, split_early, results_dir):
+    """
+    trains_vae only, can specify which transformations we are learning
+    """
+    epoch_loss_vae = 0.
+    num_steps = 0
+    for data in train_loader:
+        x = data['image']
+        if use_cuda:
+            x = x.cuda()
+        # step of elbo for vae
+        classifier_optim.zero_grad()
+        vae_optim.zero_grad()
+        vae_loss = vae_loss_fn(vae.model, vae.guide, x)
+        out, split = vae.encoder(x)
+        if split_early:
+            to_classifier = split
+        else:
+            z_dist = D.Normal(out["z_mu"], out["z_std"])
+            to_classifier = z_dist.rsample()
+        # step through classifier
+        epoch_loss_vae += vae_loss.item()
+        epoch_loss_classifier += classifier_loss.item()
+        vae_loss.backward()
+        vae_optim.step()
+        classifier_optim.step()
+        num_steps += 1
+    normalizer = len(train_loader.dataset)
+    total_epoch_loss_vae = epoch_loss_vae / normalizer
+    return total_epoch_loss_vae, num_steps
+
 
 def train_ss_epoch(vae, vae_optim, vae_loss_fn,
                    classifier, classifier_optim,
@@ -257,6 +289,38 @@ def evaluate(vae, vae_loss_fn, classifier,
     rms_epoch = rms / normalizer
     return total_epoch_loss_vae, total_epoch_loss_classifier, total_epoch_acc, rms_epoch
 
+def evaluate_vae(vae, vae_loss_fn,
+                 test_loader, use_cuda, split_early=False):
+    """
+    evaluates for all test data
+    test data is in batches, all batches in test loader tested
+    """
+    # classifier is in eval mode
+    num_samples = 100
+    epoch_loss_vae = 0.
+    for data in test_loader:
+        x = data['image']
+        if use_cuda:
+            x = x.cuda()
+
+        out, split = vae.encoder(x)
+        if split_early:
+            to_classifier = split
+
+        else:
+            z_dist = D.Normal(out["z_mu"], out["z_std"])
+            to_classifier = z_dist.rsample([num_samples])
+        vae_loss = vae_loss_fn(vae.model, vae.guide, x)
+        if split_early:
+            to_classifier = split
+        else:
+            z_dist = D.Normal(out["z_mu"], out["z_std"])
+            to_classifier = z_dist.rsample()
+        epoch_loss_vae += vae_loss.item()
+    normalizer = len(test_loader.dataset)
+    total_epoch_loss_vae = epoch_loss_vae / normalizer
+    return total_epoch_loss_vae
+
 
 def train_log(train_fn,
               vae, vae_optim, vae_loss_fn,
@@ -293,7 +357,7 @@ def train_log(train_fn,
             # report test diagnostics
             print("evaluating")
             total_epoch_loss_test_vae, total_epoch_loss_test_classifier, accuracy, rms = evaluate(
-                vae, vae_loss_fn, classifier, classifier_loss_fn, test_loader, 
+                vae, vae_loss_fn, classifier, classifier_loss_fn, test_loader,
                 use_cuda, transform=transform, split_early=split_early)
             print("[epoch %03d] average test loss vae: %.4f" % (epoch, total_epoch_loss_test_vae))
             print("[epoch %03d] average test loss classifier: %.4f" % (epoch, total_epoch_loss_test_classifier))
@@ -320,5 +384,52 @@ def train_log(train_fn,
             torch.save(vae.encoder.state_dict(), "checkpoints/" + dir_name + "/encoder.checkpoint")
             torch.save(vae.decoder.state_dict(),  "checkpoints/" + dir_name +  "/decoder.checkpoint")
             torch.save(classifier.state_dict(),  "checkpoints/" + dir_name +  "/classfier.checkpoint")
+
+        writer.close()
+
+def train_log_vae(train_fn,
+              vae, vae_optim, vae_loss_fn,
+                  train_loader, test_loader,
+                  use_cuda, split_early, results_dir,
+                  checkpoint_freq=5, num_img_plt=9,
+                  test_freq=1):
+    num_params = sum(p.numel() for p in vae.parameters() if p.requires_grad)
+    writer = SummaryWriter("tb_data/" + dir_name)
+    total_steps = 0
+    if not os.path.exists("checkpoints/" + dir_name):
+        os.makedirs("checkpoints/" + dir_name)
+    if use_cuda:
+        classifier.cuda()
+    for epoch in range(num_epochs):
+        print("training")
+        total_epoch_loss_vae, total_epoch_loss_classifier, total_epoch_acc, num_steps = train_fn(
+            vae, vae_optim, vae_loss_fn, train_loader, use_cuda, split_early, results_dir, tranformations)
+        total_steps += num_steps
+        print("end train")
+        print("[epoch %03d]  average training loss vae: %.4f" % (epoch, total_epoch_loss_vae))
+
+        if epoch % test_freq == 0:
+            # report test diagnostics
+            print("evaluating")
+            total_epoch_loss_test_vae = evaluate_vae(
+                vae, vae_loss_fn, test_loader,
+                use_cuda, split_early=split_early)
+            print("[epoch %03d] average test loss vae: %.4f" % (epoch, total_epoch_loss_test_vae))
+            print("evaluate end")
+            writer.add_scalar('Train loss vae', total_epoch_loss_vae, total_steps)
+            writer.add_scalar('Test loss vae', total_epoch_loss_test_vae, total_steps)
+
+        if epoch % plot_img_freq == 0:
+            image_in = next(iter(test_loader))['image'][0:num_img_plt]
+            images_out = vae.sample_img(image_in, use_cuda)
+            img_grid_in = tv.utils.make_grid(image_in)
+            img_grid = tv.utils.make_grid(images_out)
+            writer.add_image('images in, from step' + str(total_steps), img_grid_in)
+            writer.add_image(str(num_params) + ' images out, from step'+ str(total_steps), img_grid)
+
+        if epoch % checkpoint_freq == 0:
+
+            torch.save(vae.encoder.state_dict(), "checkpoints/" + dir_name + "/encoder.checkpoint")
+            torch.save(vae.decoder.state_dict(),  "checkpoints/" + dir_name +  "/decoder.checkpoint")
 
         writer.close()
