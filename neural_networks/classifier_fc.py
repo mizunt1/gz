@@ -1,3 +1,5 @@
+import pyro.distributions as D
+import torch
 import torch.nn as nn
 
 
@@ -15,3 +17,8 @@ class Classifier(nn.Module):
         x = self.fc2(x)
         x = self.softmax(x)
         return x
+
+
+def loss(probs, values):
+    return torch.sum(
+        -1 * D.Multinomial(1, probs=probs).log_prob(values.float()))
