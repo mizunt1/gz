@@ -180,7 +180,7 @@ def main(dir_name, cuda, num_epochs, semi_supervised,
         train_log_vae(train_fn, vae, vae_optim,
                       Trace_ELBO().differentiable_loss, transform_spec,
                       train_loader, test_loader, cuda, split_early,
-                      dir_name, num_epochs, checkpoint_freq=5, num_img_plt=9,  test_freq=1)
+                      dir_name, num_epochs, checkpoint_freq=5, num_img_plt=9,  test_freq=1, plt_img_freq=1)
 
     elif train_type == "bayes_semi_supervised":
         train_fn = train_ss_bayes
