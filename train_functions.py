@@ -426,7 +426,7 @@ def train_log_vae(train_fn, vae, vae_optim,
 
         if epoch % checkpoint_freq == 0:
 
-            torch.save(vae.encoder.state_dict(), "checkpoints/" + dir_name + "/encoder.checkpoint")
-            torch.save(vae.decoder.state_dict(),  "checkpoints/" + dir_name +  "/decoder.checkpoint")
+            torch.save(vae.encoder.state_dict(), "checkpoints/" + results_dir + "/encoder.checkpoint")
+            torch.save(vae.decoder.state_dict(),  "checkpoints/" + results_dir +  "/decoder.checkpoint")
 
         writer.close()
