@@ -388,8 +388,8 @@ def train_log_vae(train_fn, vae, vae_optim,
                   vae_loss_fn, transform_spec,
                   train_loader, test_loader,
                   use_cuda, split_early, results_dir, num_epochs=20,
-                  checkpoint_freq=5, num_img_plt=9,
-                  test_freq=1):
+                  checkpoint_freq=1, num_img_plt=9,
+                  test_freq=1, plt_img_freq=1):
     num_params = sum(p.numel() for p in vae.parameters() if p.requires_grad)
     writer = SummaryWriter("tb_data/" + results_dir)
     total_steps = 0
