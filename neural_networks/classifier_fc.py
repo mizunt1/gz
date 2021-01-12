@@ -18,7 +18,6 @@ class Classifier(nn.Module):
         x = self.softmax(x)
         return x
 
-
 def loss(probs, values):
     return torch.sum(
         -1 * D.Multinomial(1, probs=probs).log_prob(values.float()))
