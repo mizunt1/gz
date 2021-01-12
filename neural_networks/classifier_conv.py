@@ -25,6 +25,10 @@ class Classifier(nn.Module):
         return self.net(x)
 
     
+def loss(probs, values):
+    return torch.sum(
+        -1 * D.Multinomial(1, probs=probs).log_prob(values.float()))
+
 if __name__ == "__main__":
     data = torch.zeros([3, 16, 8, 8])
     model = Classifier()
