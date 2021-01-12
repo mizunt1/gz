@@ -67,7 +67,6 @@ def train_vae(vae, vae_optim, vae_loss_fn, train_loader,
         if use_cuda:
             x = x.cuda()
         # step of elbo for vae
-        classifier_optim.zero_grad()
         vae_optim.zero_grad()
         vae_loss = vae_loss_fn(vae.model, vae.guide, x)
         out, split = vae.encoder(x)
@@ -78,10 +77,8 @@ def train_vae(vae, vae_optim, vae_loss_fn, train_loader,
             to_classifier = z_dist.rsample()
         # step through classifier
         epoch_loss_vae += vae_loss.item()
-        epoch_loss_classifier += classifier_loss.item()
         vae_loss.backward()
         vae_optim.step()
-        classifier_optim.step()
         num_steps += 1
     normalizer = len(train_loader.dataset)
     total_epoch_loss_vae = epoch_loss_vae / normalizer
@@ -157,7 +154,7 @@ def train_ss_epoch(vae, vae_optim, vae_loss_fn,
     return total_epoch_loss_vae, total_epoch_loss_classifier, total_acc_norm, num_steps
 
 
- def train_ss_bayes(vae, vae_optim, vae_loss_fn,
+def train_ss_bayes(vae, vae_optim, vae_loss_fn,
                    classifier, classifier_optim,
                    classifier_loss_fn, use_cuda, split_early, guide=None,
                    train_s_loader=None,
@@ -387,23 +384,23 @@ def train_log(train_fn,
 
         writer.close()
 
-def train_log_vae(train_fn,
-              vae, vae_optim, vae_loss_fn,
+def train_log_vae(train_fn, vae, vae_optim,
+                  vae_loss_fn, transform_spec,
                   train_loader, test_loader,
-                  use_cuda, split_early, results_dir,
+                  use_cuda, split_early, results_dir, num_epochs=20,
                   checkpoint_freq=5, num_img_plt=9,
                   test_freq=1):
     num_params = sum(p.numel() for p in vae.parameters() if p.requires_grad)
-    writer = SummaryWriter("tb_data/" + dir_name)
+    writer = SummaryWriter("tb_data/" + results_dir)
     total_steps = 0
-    if not os.path.exists("checkpoints/" + dir_name):
-        os.makedirs("checkpoints/" + dir_name)
+    if not os.path.exists("checkpoints/" + results_dir):
+        os.makedirs("checkpoints/" + results_dir)
     if use_cuda:
         classifier.cuda()
     for epoch in range(num_epochs):
         print("training")
         total_epoch_loss_vae, total_epoch_loss_classifier, total_epoch_acc, num_steps = train_fn(
-            vae, vae_optim, vae_loss_fn, train_loader, use_cuda, split_early, results_dir, tranformations)
+            vae, vae_optim, vae_loss_fn, train_loader, use_cuda, split_early, results_dir)
         total_steps += num_steps
         print("end train")
         print("[epoch %03d]  average training loss vae: %.4f" % (epoch, total_epoch_loss_vae))

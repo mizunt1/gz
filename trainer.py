@@ -61,7 +61,7 @@ ex = Experiment()
 
 
 @ex.automain
-def main(dir_name, cuda, num_epochs, semi-supervised,
+def main(dir_name, cuda, num_epochs, semi_supervised,
          train_type, split_early,
          subset_proportion, lr, supervised_proportion,
          csv_file, img_file, load_checkpoint, arch_classifier,
@@ -130,7 +130,7 @@ def main(dir_name, cuda, num_epochs, semi-supervised,
     ### different dataloaders depending on whether its semi-sup or fully sup
 
 
-    if semi-supervised:
+    if semi_supervised:
         test_s_loader, test_us_loader, train_s_loader, train_us_loader = return_ss_loader(
             data, test_proportion, supervised_proportion, batch_size=batch_size,
             shuffle=True, subset_unsupervised_proportion = subset_proportion)
@@ -144,7 +144,7 @@ def main(dir_name, cuda, num_epochs, semi-supervised,
         print("train and log")
 
     else:
-        if subset_proportion > 0:
+        if subset_proportion != None:
             train_loader, test_loader = return_subset(
                 data, test_proportion, subset_proportion,
                 batch_size=batch_size, shuffle=True)
@@ -152,7 +152,7 @@ def main(dir_name, cuda, num_epochs, semi-supervised,
             train_loader, test_loader = return_data_loader(
                 data, test_proportion,
                 batch_size=batch_size, shuffle=True)
-        print("Fully supervised training")
+        print("no splitting of supervised and unsupervised data")
         print("num data points in test_loader:", len(test_loader.dataset))
         print("num data points in test_loader:", len(train_loader.dataset))
 
@@ -177,9 +177,10 @@ def main(dir_name, cuda, num_epochs, semi-supervised,
 
     elif train_type == "vae_only":
         train_fn = train_vae
-        train_log_vae(train_fn, vae, vae_optim, vae_loss_fn,
-                      train_loader, test_loader, transform_spec,
-                      use_cuda, split_early, dir_name)
+        train_log_vae(train_fn, vae, vae_optim,
+                      Trace_ELBO().differentiable_loss, transform_spec,
+                      train_loader, test_loader, cuda, split_early,
+                      dir_name, num_epochs, checkpoint_freq=5, num_img_plt=9,  test_freq=1)
 
     elif train_type == "bayes_semi_supervised":
         train_fn = train_ss_bayes
