@@ -322,7 +322,7 @@ def evaluate_vae(vae, vae_loss_fn,
 def train_log(train_fn,
               vae, vae_optim, vae_loss_fn,
               classifier, classifier_optim,
-              classifier_loss_fn, dir_name, num_epochs,
+              classifier_loss_fn, dir_name, checkpoints_path, num_epochs,
               use_cuda, test_loader, split_early,
               train_fn_kwargs, bayesian=False,
               plot_img_freq=20, num_img_plt=9,
@@ -387,17 +387,17 @@ def train_log(train_fn,
 def train_log_vae(train_fn, vae, vae_optim,
                   vae_loss_fn, transform_spec,
                   train_loader, test_loader,
-                  use_cuda, split_early, results_dir, num_epochs=20,
+                  use_cuda, split_early, results_dir, checkpoints_path, num_epochs=20,
                   checkpoint_freq=1, num_img_plt=9,
                   test_freq=1, plt_img_freq=1):
     num_params = sum(p.numel() for p in vae.parameters() if p.requires_grad)
     writer = SummaryWriter("tb_data/" + results_dir)
     total_steps = 0
-    if not os.path.exists("checkpoints/" + results_dir):
-        os.makedirs("checkpoints/" + results_dir)
+    if not os.path.exists(os.path.join(checkpoints_path, results_dir)):
+        os.makedirs(os.path.join(checkpoints_path, results_dir))
     for epoch in range(num_epochs):
         print("training")
-        total_epoch_loss_vae, total_epoch_loss_classifier, total_epoch_acc, num_steps = train_fn(
+        total_epoch_loss_vae, num_steps = train_fn(
             vae, vae_optim, vae_loss_fn, train_loader, use_cuda, split_early, results_dir)
         total_steps += num_steps
         print("end train")
@@ -414,7 +414,7 @@ def train_log_vae(train_fn, vae, vae_optim,
             writer.add_scalar('Train loss vae', total_epoch_loss_vae, total_steps)
             writer.add_scalar('Test loss vae', total_epoch_loss_test_vae, total_steps)
 
-        if epoch % plot_img_freq == 0:
+        if epoch % plt_img_freq == 0:
             image_in = next(iter(test_loader))['image'][0:num_img_plt]
             images_out = vae.sample_img(image_in, use_cuda)
             img_grid_in = tv.utils.make_grid(image_in)
@@ -424,7 +424,7 @@ def train_log_vae(train_fn, vae, vae_optim,
 
         if epoch % checkpoint_freq == 0:
 
-            torch.save(vae.encoder.state_dict(), "checkpoints/" + results_dir + "/encoder.checkpoint")
-            torch.save(vae.decoder.state_dict(),  "checkpoints/" + results_dir +  "/decoder.checkpoint")
+            torch.save(vae.encoder.state_dict(), os.path.join(checkpoints_path, results_dir + "/encoder.checkpoint"))
+            torch.save(vae.decoder.state_dict(),  os.path.join(checkpoints_path,  results_dir +  "/decoder.checkpoint"))
 
         writer.close()

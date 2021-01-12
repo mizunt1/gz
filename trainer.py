@@ -62,7 +62,7 @@ ex = Experiment()
 
 @ex.automain
 def main(dir_name, cuda, num_epochs, semi_supervised,
-         train_type, split_early,
+         train_type, split_early, checkpoints_path,
          subset_proportion, lr, supervised_proportion,
          csv_file, img_file, load_checkpoint, arch_classifier,
          arch_vae, test_proportion, z_size, batch_size, bar_no_bar,
@@ -90,9 +90,9 @@ def main(dir_name, cuda, num_epochs, semi_supervised,
 
     if load_checkpoint is not None:
         vae.encoder.load_state_dict(
-            torch.load("checkpoints/" +load_checkpoint + "/encoder.checkpoint"))
+            torch.load(load_checkpoint + "/encoder.checkpoint"))
         vae.decoder.load_state_dict(
-            torch.load("checkpoints/" + load_checkpoint + "/decoder.checkpoint"))
+            torch.load(load_checkpoint + "/decoder.checkpoint"))
 
     ### define classifier and optims
     if split_early:
@@ -180,7 +180,7 @@ def main(dir_name, cuda, num_epochs, semi_supervised,
         train_log_vae(train_fn, vae, vae_optim,
                       Trace_ELBO().differentiable_loss, transform_spec,
                       train_loader, test_loader, cuda, split_early,
-                      dir_name, num_epochs, checkpoint_freq=5, num_img_plt=9,  test_freq=1, plt_img_freq=1)
+                      dir_name, checkpoints_path, num_epochs, checkpoint_freq=5, num_img_plt=9,  test_freq=1, plt_img_freq=1)
 
     elif train_type == "bayes_semi_supervised":
         train_fn = train_ss_bayes
