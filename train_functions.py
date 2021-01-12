@@ -395,8 +395,6 @@ def train_log_vae(train_fn, vae, vae_optim,
     total_steps = 0
     if not os.path.exists("checkpoints/" + results_dir):
         os.makedirs("checkpoints/" + results_dir)
-    if use_cuda:
-        classifier.cuda()
     for epoch in range(num_epochs):
         print("training")
         total_epoch_loss_vae, total_epoch_loss_classifier, total_epoch_acc, num_steps = train_fn(
