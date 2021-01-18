@@ -6,7 +6,7 @@ import torch
 from torch.utils.tensorboard import SummaryWriter
 import torch.distributions as D
 import torchvision as tv
-
+import torch.nn as nn
 
 def train_fs_epoch(vae, vae_optim, vae_loss_fn,
                    classifier, classifier_optim,
@@ -78,6 +78,7 @@ def train_vae(vae, vae_optim, vae_loss_fn, train_loader,
         # step through classifier
         epoch_loss_vae += vae_loss.item()
         vae_loss.backward()
+        torch.nn.utils.clip_grad_norm(vae.parameters(), 1)
         vae_optim.step()
         num_steps += 1
     normalizer = len(train_loader.dataset)
@@ -324,7 +325,7 @@ def train_log(train_fn,
               classifier, classifier_optim,
               classifier_loss_fn, dir_name, checkpoints_path, num_epochs,
               use_cuda, test_loader, split_early,
-              train_fn_kwargs, bayesian=False,
+              kwargs, bayesian=False,
               plot_img_freq=20, num_img_plt=9,
               checkpoint_freq=20,
               test_freq=1, transform=False):
