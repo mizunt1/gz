@@ -343,8 +343,8 @@ def train_log(train_fn,
             total_epoch_loss_vae, total_epoch_loss_classifier, total_epoch_acc, num_steps = train_fn()
         else:
             total_epoch_loss_vae, total_epoch_loss_classifier, total_epoch_acc, num_steps = train_fn(
-            vae, vae_optim, vae_loss_fn,
-            classifier, classifier_optim, classifier_loss_fn, use_cuda, split_early, **train_fn_kwargs)
+                vae, vae_optim, vae_loss_fn,
+                classifier, classifier_optim, classifier_loss_fn, use_cuda, split_early, **kwargs)
         total_steps += num_steps
         print("end train")
         print("[epoch %03d]  average training loss vae: %.4f" % (epoch, total_epoch_loss_vae))
