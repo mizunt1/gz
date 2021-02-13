@@ -1,16 +1,16 @@
-dir_name: testing_vae
+dir_name: ss_100
 cuda: True
 num_epochs: 200
-semi_supervised: False
-split_early: False
-subset_proportion: 200 
+semi_supervised: True
+split_early: True
+subset_proportion:  
 csv_file: "/scratch-ssd/oatml/data/gz2/gz2_classifications_and_subjects.csv"
 img_file: "/scratch-ssd/oatml/data/gz2" 
-load_checkpoint: "./checkpoints/testing_vae"
-checkpoints_path: "./checkpoints"
+load_checkpoint:
+checkpoints_path:
 lr: 1.0e-4 
-supervised_proportion: 1200
-arch_classifier: "neural_networks/classifier_fc.py"
+supervised_proportion: 100
+arch_classifier: "neural_networks/classifier_conv.py"
 arch_vae: "neural_networks/encoder_decoder.py"
 test_proportion: 0.1
 z_size: 100
@@ -18,9 +18,9 @@ bar_no_bar: False
 batch_size: 10
 crop_size: 128
 img_size: 128
-split_early: False
-transform_spec: ["Rotation"]
-train_type: "vae_only"
+split_early: True
+transform_spec: ["Translation", "RotationScale"]
+train_type: "standard_semi-supervised"
 # description of parameters, order may not be same as above
 # dir_name: directory name where tensorboard plots are saved
 # no_cuda: run with cuda or not
