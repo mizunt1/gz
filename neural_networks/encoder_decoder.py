@@ -88,11 +88,13 @@ class Encoder(nn.Module):
 
         transformed_grid = output["transform"][-1](grid)
         
-        x = x - 0.222
+        x = x - 0.222 # lol this complicates switching datasets severely
         x = x / 0.156
 
         view = T.broadcasting_grid_sample(x, transformed_grid)
-        
+
+        output["view"] = view # might want this later as well
+
         split = self.net(view)
         split = self.relu(split)
         reshape = split.view(-1, self.linear_size)
