@@ -172,7 +172,7 @@ def main(dir_name, cuda, num_epochs, semi_supervised,
         train_log(train_fn, vae, vae_optim,
                   Trace_ELBO().differentiable_loss,
                   classifier, classifier_optim,
-                  classifier_loss, dir_name, num_epochs,
+                  classifier_loss, dir_name, checkpoints_path, num_epochs,
                   cuda, test_loader, split_early, kwargs)
 
     elif train_type == "vae_only":
