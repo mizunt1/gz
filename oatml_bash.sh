@@ -4,7 +4,7 @@
 
 #SBATCH --output=slurm-%j.out
 #SBATCH --error=slurm-%j.err
-#SBATCH --job-name="gz_ss_z_100"
+#SBATCH --job-name="ss100_4"
 
 
 export CONDA_ENVS_PATH=/scratch-ssd/$USER/conda_envs

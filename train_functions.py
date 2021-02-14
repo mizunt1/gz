@@ -326,7 +326,7 @@ def train_log(train_fn,
               classifier_loss_fn, dir_name, checkpoints_path, num_epochs,
               use_cuda, test_loader, split_early,
               kwargs, bayesian=False,
-              plot_img_freq=20, num_img_plt=9,
+              plot_img_freq=1, num_img_plt=20,
               checkpoint_freq=20,
               test_freq=1, transform=False):
     num_params = sum(p.numel() for p in vae.parameters() if p.requires_grad)

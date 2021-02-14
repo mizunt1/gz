@@ -1,15 +1,15 @@
-dir_name: ss_100
+dir_name: ss_100_4
 cuda: True
 num_epochs: 200
 semi_supervised: True
 split_early: True
-subset_proportion:  
+subset_proportion:
 csv_file: "/scratch-ssd/oatml/data/gz2/gz2_classifications_and_subjects.csv"
 img_file: "/scratch-ssd/oatml/data/gz2" 
 load_checkpoint:
 checkpoints_path:
-lr: 1.0e-4 
-supervised_proportion: 100
+lr: 1.0e-4
+supervised_proportion: 200
 arch_classifier: "neural_networks/classifier_conv.py"
 arch_vae: "neural_networks/encoder_decoder.py"
 test_proportion: 0.1
@@ -18,7 +18,6 @@ bar_no_bar: False
 batch_size: 10
 crop_size: 128
 img_size: 128
-split_early: True
 transform_spec: ["Translation", "RotationScale"]
 train_type: "standard_semi-supervised"
 # description of parameters, order may not be same as above

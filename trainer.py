@@ -101,7 +101,7 @@ def main(dir_name, cuda, num_epochs, semi_supervised,
         classifier = Classifier(in_dim=z_size)
     classifier_params = list(classifier.parameters()) + list(vae.encoder.parameters())
     classifier_optim = Adam(classifier_params, lr, betas=(0.90, 0.999))
-    vae_optim = Adam(vae.parameters(), lr=lr/100, betas=(0.90, 0.999))
+    vae_optim = Adam(vae.parameters(), lr=lr, betas=(0.90, 0.999))
 
     classifier_loss = loss_fn
 
