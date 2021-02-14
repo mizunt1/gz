@@ -63,7 +63,7 @@ ex = Experiment()
 @ex.automain
 def main(dir_name, cuda, num_epochs, semi_supervised,
          train_type, split_early, checkpoints_path,
-         subset_proportion, lr, supervised_proportion,
+         subset_proportion, lr_vae, lr_class, supervised_proportion,
          csv_file, img_file, load_checkpoint, arch_classifier,
          arch_vae, test_proportion, z_size, batch_size, bar_no_bar,
          crop_size, img_size, transform_spec):
@@ -100,8 +100,8 @@ def main(dir_name, cuda, num_epochs, semi_supervised,
     else:
         classifier = Classifier(in_dim=z_size)
     classifier_params = list(classifier.parameters()) + list(vae.encoder.parameters())
-    classifier_optim = Adam(classifier_params, lr, betas=(0.90, 0.999))
-    vae_optim = Adam(vae.parameters(), lr=lr, betas=(0.90, 0.999))
+    classifier_optim = Adam(classifier_params, lr_class, betas=(0.90, 0.999))
+    vae_optim = Adam(vae.parameters(), lr=lr_vae, betas=(0.90, 0.999))
 
     classifier_loss = loss_fn
 
@@ -154,7 +154,7 @@ def main(dir_name, cuda, num_epochs, semi_supervised,
                 batch_size=batch_size, shuffle=True)
         print("no splitting of supervised and unsupervised data")
         print("num data points in test_loader:", len(test_loader.dataset))
-        print("num data points in test_loader:", len(train_loader.dataset))
+        print("num data points in train_loader:", len(train_loader.dataset))
 
     if train_type == "standard_semi-supervised":
         train_fn = train_ss_epoch

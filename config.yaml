@@ -8,7 +8,8 @@ csv_file: "/scratch-ssd/oatml/data/gz2/gz2_classifications_and_subjects.csv"
 img_file: "/scratch-ssd/oatml/data/gz2" 
 load_checkpoint:
 checkpoints_path:
-lr: 1.0e-4
+lr_vae: 1.0e-4
+lr_classifier:1.0e-3
 supervised_proportion: 200
 arch_classifier: "neural_networks/classifier_conv.py"
 arch_vae: "neural_networks/encoder_decoder.py"
