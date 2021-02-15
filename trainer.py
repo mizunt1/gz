@@ -89,6 +89,7 @@ def main(dir_name, cuda, num_epochs, semi_supervised,
         decoder_args, transforms, use_cuda=cuda)
 
     if load_checkpoint is not None:
+        print("loaded checkpoints from: ", load_checkpoint )
         vae.encoder.load_state_dict(
             torch.load(load_checkpoint + "/encoder.checkpoint"))
         vae.decoder.load_state_dict(
@@ -156,7 +157,7 @@ def main(dir_name, cuda, num_epochs, semi_supervised,
         print("num data points in test_loader:", len(test_loader.dataset))
         print("num data points in train_loader:", len(train_loader.dataset))
 
-    if train_type == "standard_semi-supervised":
+    if train_type == "standard-semi-supervised":
         train_fn = train_ss_epoch
         kwargs = {'train_s_loader': train_s_loader,
                   'train_us_loader': train_us_loader}
@@ -166,7 +167,7 @@ def main(dir_name, cuda, num_epochs, semi_supervised,
                   classifier_loss, dir_name, checkpoints_path, num_epochs,
                   cuda, test_loader, split_early, kwargs)
 
-    elif train_type == "standard_fully_supervised":
+    elif train_type == "standard-fully-supervised":
         train_fn = train_fs_epoch
         kwargs = {'train_loader': train_loader}
         train_log(train_fn, vae, vae_optim,
