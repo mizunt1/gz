@@ -4,7 +4,7 @@ import torch.optim as optim
 import numpy as np
 import torch
 import torch.distributions as D
-from layers import Reshape
+from neural_networks.layers import Reshape
 
 
 class MikeArch(nn.Module):
@@ -63,8 +63,8 @@ def train(train_loader, classifier, optim, use_cuda=False):
             x = x.cuda()
             y = y.cuda()
         optimizer.zero_grad()
-        x_out = classifier(x)
-        classifier_loss = loss(x_out, y)
+        y_out = classifier.forward(x)
+        classifier_loss = loss(y_out, y)
         classifier_loss.backward()
         optimizer.step()
         num_steps += 1
@@ -83,6 +83,7 @@ def rms_calc(probs, target):
     rms =  np.sqrt((probs - probs_target)**2)
     return np.sum(rms)
 
+
 def evaluate(test_loader, classifier, use_cuda=False):
     loss = multinomial_loss
     running_loss = 0
@@ -100,11 +101,10 @@ def evaluate(test_loader, classifier, use_cuda=False):
         rms = running_rms / len(test_loader.dataset)
     return av_loss, rms
 
+
 def train_log_mike(dir_name, classifier, optim, train_loader, test_loader, test_freq=1,
-              num_epochs=10, use_cuda=False):
-    num_params = sum(p.numel() for p in classifier.parameters() if p.requires_grad)
+                   num_epochs=10, use_cuda=False):
     total_steps = 0
-    print("num params: ", num_params)
     writer = SummaryWriter("tb_data/" + dir_name)
     if use_cuda:
         classifier.cuda()

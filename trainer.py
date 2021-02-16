@@ -184,9 +184,9 @@ def main(dir_name, cuda, num_epochs, semi_supervised,
                       dir_name, checkpoints_path, num_epochs, checkpoint_freq=5, num_img_plt=9,  test_freq=1, plt_img_freq=1)
 
     elif train_type == "mike":
-        classifier = MikeArch
+        classifier = MikeArch()
         train_log_mike(dir_name, classifier, classifier_optim,
-                       train_loader, test_freq=1,
+                       train_loader, test_loader, test_freq=1,
                        num_epochs=num_epochs, use_cuda=cuda)
 
     elif train_type == "bayes_semi_supervised":
