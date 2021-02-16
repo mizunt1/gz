@@ -34,10 +34,12 @@ class MikeArch(nn.Module):
             # linear
             Reshape(-1, 1024),
             nn.Linear(1024, 128),
+            nn.Dropout(p=0.5),
             nn.ReLU(),
             # linear
             nn.Linear(128, 3),
-            nn.Softmax(dim=1)
+            nn.Softmax(dim=1),
+            nn.Dropout(p=0.5)
         )
 
     def forward(self, x):
