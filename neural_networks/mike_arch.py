@@ -34,10 +34,12 @@ class MikeArch(nn.Module):
             # linear
             Reshape(-1, 1024),
             nn.Linear(1024, 128),
+            nn.Dropout(p=0.5),
             nn.ReLU(),
             # linear
             nn.Linear(128, 3),
-            nn.Softmax(dim=1)
+            nn.Softmax(dim=1),
+            nn.Dropout(p=0.5)
         )
 
     def forward(self, x):
@@ -97,8 +99,8 @@ def evaluate(test_loader, classifier, use_cuda=False):
         x_out = classifier(x)
         running_loss += loss(x_out,y).item()
         running_rms += rms_calc(x_out, y)
-        av_loss = running_loss / len(test_loader.dataset)
-        rms = running_rms / len(test_loader.dataset)
+    av_loss = running_loss / len(test_loader.dataset)
+    rms = running_rms / len(test_loader.dataset)
     return av_loss, rms
 
 
