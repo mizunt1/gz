@@ -86,7 +86,7 @@ class PoseVAE(nn.Module):
 
             # view from decoder outputs an image
             pyro.sample(
-                "pixels", D.Bernoulli(transformed_view).to_event(3),obs=data)
+                "pixels", D.Laplace(transformed_view, 0.5).to_event(3),obs=data)
 
     def guide(self, data):
         """
