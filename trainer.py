@@ -186,6 +186,8 @@ def main(dir_name, cuda, num_epochs, semi_supervised,
 
     elif train_type == "mike":
         classifier = MikeArch()
+        classifier_optim = Adam(classifier.parameters(),
+                                lr_class, betas=(0.90, 0.999))
         train_log_mike(dir_name, classifier, classifier_optim,
                        train_loader, test_loader, test_freq=1,
                        num_epochs=num_epochs, use_cuda=cuda)
