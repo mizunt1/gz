@@ -15,6 +15,7 @@ from construct_vae import PoseVAE
 from galaxy_gen.etn import transformers, networks
 from galaxy_gen.etn import transforms as T
 from train_functions import train_ss_epoch, train_fs_epoch, train_log, train_vae, train_log_vae
+from neural_networks.mike_arch import MikeArch, train_log_mike
 from utils.load_gz_data import Gz2_data, return_data_loader, return_subset, return_ss_loader
 
 
@@ -181,6 +182,12 @@ def main(dir_name, cuda, num_epochs, semi_supervised,
                       Trace_ELBO().differentiable_loss, transform_spec,
                       train_loader, test_loader, cuda, split_early,
                       dir_name, checkpoints_path, num_epochs, checkpoint_freq=5, num_img_plt=9,  test_freq=1, plt_img_freq=1)
+
+    elif train_type == "mike":
+        classifier = MikeArch
+        train_log_mike(dir_name, classifier, classifier_optim,
+                       train_loader, test_freq=1,
+                       num_epochs=num_epochs, use_cuda=cuda)
 
     elif train_type == "bayes_semi_supervised":
         train_fn = train_ss_bayes

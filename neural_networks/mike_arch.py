@@ -1,4 +1,3 @@
-
 import torch.nn as nn
 from torch.utils.tensorboard import SummaryWriter
 import torch.optim as optim
@@ -7,7 +6,8 @@ import torch
 import torch.distributions as D
 from layers import Reshape
 
-class Mike(nn.Module):
+
+class MikeArch(nn.Module):
     def __init__(self):
         super().__init__()
         self.net = nn.Sequential(
@@ -47,8 +47,8 @@ class Mike(nn.Module):
 
 def multinomial_loss(probs, values):
     return torch.sum(-1 * D.Multinomial(probs=probs).log_prob(values.float()))
-            
-def train(train_loader, classifier,optim, use_cuda=False):
+
+def train(train_loader, classifier, optim, use_cuda=False):
     """
     trains for one epoch
     """
@@ -84,7 +84,7 @@ def rms_calc(probs, target):
     return np.sum(rms)
 
 def evaluate(test_loader, classifier, use_cuda=False):
-    loss = multinomial_loss        
+    loss = multinomial_loss
     running_loss = 0
     running_rms = 0
     for data in test_loader:
@@ -100,12 +100,12 @@ def evaluate(test_loader, classifier, use_cuda=False):
         rms = running_rms / len(test_loader.dataset)
     return av_loss, rms
 
-def train_log(dir_name, classifier, optim, train_loader, test_loader, test_freq=1,
+def train_log_mike(dir_name, classifier, optim, train_loader, test_loader, test_freq=1,
               num_epochs=10, use_cuda=False):
     num_params = sum(p.numel() for p in classifier.parameters() if p.requires_grad)
     total_steps = 0
     print("num params: ", num_params)
-    writer = SummaryWriter("tb_data_all/" + dir_name)
+    writer = SummaryWriter("tb_data/" + dir_name)
     if use_cuda:
         classifier.cuda()
     for epoch in range(num_epochs):
@@ -122,9 +122,9 @@ def train_log(dir_name, classifier, optim, train_loader, test_loader, test_freq=
             print("[epoch %03d] average rms: %.4f" % (total_steps, rms))
             writer.add_scalar("Test loss classifier", eval_loss, total_steps)
             writer.add_scalar("rms normalised", rms, total_steps)
-            
+
     writer.close()
-    
+
 if __name__ == "__main__":
     data = torch.zeros([12, 1, 128, 128])
     model = Mike()
